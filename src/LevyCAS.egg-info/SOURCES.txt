@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+src/LevyCAS.egg-info/PKG-INFO
+src/LevyCAS.egg-info/SOURCES.txt
+src/LevyCAS.egg-info/dependency_links.txt
+src/LevyCAS.egg-info/top_level.txt
+src/levycas/Lexer.py
+src/levycas/__init__.py
+tests/test.py
