@@ -1,25 +1,6 @@
 """Tokenize an input expression string"""
 import re
 
-"""Token specifications, matching regex strings"""
-TOKEN_LIST: list[tuple[str]] = [
-    ("NUMBER", r'\d+(\.\d*)?'),   #Matches an integer or decimal
-    ("VARIABLE", r'[a-z]'),       #Matches a single lowercase letter
-    ("EQ", r'='),                 #Matches a single equals sign
-    ("EXP", r'\^'),               #Matches a single exponential symbol  
-    ("PLUS", r'\+'),              #Matches a plus sign
-    ("MINUS", r'-'),              #Matches a minus sign
-    ("MULT", r'\*'),              #Matches a multiplication sign
-    ("DIV", r'/'),                #Matches a division sign
-    ("LPAREN", r'\('),            #Matches a left paren
-    ("RPAREN", '\)'),             #Matches a right paren
-    ("SPACE", r'\s+'),            #Matches any whitespace
-    ("OTHER", r'.')               #Matches any invalid characters
-]
-
-"""Regex pattern; concatenates the token specs"""
-TOKEN_PATTERN: str = '|'.join(f'(?P<{name}>{pattern})' for name, pattern in TOKEN_LIST)
-
 class Token:
     """A token object is a substring + metadata
     """
@@ -40,14 +21,20 @@ class Token:
     def __repr__(self) -> str:
         return f"<Token:: {self.type} [{self.pos}-{self.pos + self.len}]>"
 
-def tokenize(expr: str) -> list[Token]:
+def tokenize(expr: str, token_spec: list) -> list[Token]:
     """Tokenize an expression string
 
     Args:
         expr (str): The input expression to tokenize
+        token_spec (list): The token specifications
     """
+    try:
+        token_pattern = '|'.join(f'(?P<{name}>{pattern})' for name, pattern in token_spec)
+    except:
+        raise SyntaxError("Incorrect token specification")
+
     tokens = list()
-    for match in re.finditer(TOKEN_PATTERN, expr):
+    for match in re.finditer(token_pattern, expr):
         token_type = match.lastgroup
         token_value = match.group()
         token_pos = match.span()[0]
@@ -60,5 +47,4 @@ def tokenize(expr: str) -> list[Token]:
 
         else: 
             tokens.append(Token(token_type, token_value, token_pos))
-    
     return tokens

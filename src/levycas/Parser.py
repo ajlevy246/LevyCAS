@@ -1,1 +1,117 @@
 """An implementation of a Pratt Parser for simple expressions"""
+from .Lexer import Token, tokenize
+from .Expression import *
+
+"""Token specifications, matching regex strings"""
+TOKEN_SPEC: list[tuple[str]] = [
+    ("NUMBER",   r'\d+(\.\d*)?'),    #Matches an integer or decimal
+    ("VARIABLE", r'[a-z]'),          #Matches a single lowercase letter
+    ("EXP",      r'\^'),             #Matches a single exponential symbol  
+    ("PLUS",     r'\+'),             #Matches a plus sign
+    ("MINUS",    r'-'),              #Matches a minus sign
+    ("MULT",     r'\*'),             #Matches a multiplication sign
+    ("DIV",      r'/'),              #Matches a division sign
+    ("LPAREN",   r'\('),             #Matches a left paren
+    ("RPAREN",   r'\)'),             #Matches a right paren
+    ("SPACE",    r'\s+'),            #Matches any whitespace
+    ("OTHER",    r'.'),              #Matches any invalid characters
+    ("EOL",      r'$')              #Matches the End-of-Line character '$'
+]
+
+"""Token classes, matching associated Parsing classes"""
+TOKEN_CLASS = {
+    "NUMBER":   Integer,
+    "VARIABLE": Variable,
+    "EXP":      Power,
+    "PLUS":     Sum,
+    "MINUS":    Minus,
+    "MULT":     Product,
+    "DIV":      Div,
+    "LPAREN":   Special,
+    "RPAREN":   Special,
+    "SPACE":    Special,
+    "OTHER":    Special,
+    "EOL":      Special
+}
+
+"""Operator precendences, matching associated binding powers"""
+TOKEN_BP = {
+    "NUMBER":   (0, 0),
+    "VARIABLE": (0, 5),
+    "PLUS":     (10, 15),
+    "MINUS":    (10, 15),
+    "MULT":     (20, 25),
+    "DIV":      (20, 25),
+    "EXP":      (30, 35),
+    "LPAREN":   (-1, -1),
+    "RPAREN":   (-1, -1),
+    "SPACE":    (-1, -1),
+    "OTHER":    (-1, -1),
+    "EOL":      (-1, -1)
+}
+
+def parse(expression: str) -> Expression:
+    """Parse an input expression into a LevyCAS Expression tree. 
+
+    Args:
+        expression (str): A mathematical expression string
+
+    Returns:
+        Expression.Expression: The root of the AST representing the input expression.
+    """
+    tokens: list[Token] = tokenize(expression, TOKEN_SPEC)
+    tokens.append(Token("EOL", "$", -1)) #Append end of line token
+    tokens = tokens[::-1] #Reverse token list to pop from end
+    expr = pratt(tokens, 0)
+    assert tokens.pop().type == "EOL" #Check that all tokens have been parsed
+    return expr
+
+def pratt(tokens: list[Token], bp: int) -> Expression:
+    """Recursive Pratt Parsing function
+
+    Args:
+        tokens (list[Token]): List of tokens
+        bp (int): Right binding power of the preceding operator
+
+    Returns:
+        Expression.Expression: The root of the subtree parsed by this iteration
+    """
+    curr = tokens.pop()
+
+    #Parse first token as left hand side
+    if curr.type == "NUMBER":
+        left = Integer(int(curr.value))
+
+    elif curr.type == "VARIABLE":
+        left = Variable(curr.value)
+
+    elif curr.type == "LPAREN":
+        left = pratt(tokens, 0)
+        next = tokens.pop()
+        if next.type != "RPAREN":
+            raise SyntaxError(f"Expected closing parenthesis from {next}")
+    else:
+        raise SyntaxError(f"Expected null denotation from {curr}")
+
+    #Parse operator and recurse on remaining expression
+    while True:
+        next = tokens[-1]
+        if next.type == "RPAREN" or next.type == "EOL": #Check that next token is not the end of an expression
+            break #Break without consuming token
+
+        lbp, rbp = TOKEN_BP[next.type]
+
+        if lbp <= 0 or rbp <= 0: #Check that next token is an operator
+            raise SyntaxError(f"Expected operator from {next}")
+        
+        if lbp < bp: #Checks L/R associativity against previous operator
+            break
+
+        tokens.pop() #Consume token after precedence check e
+        right = pratt(tokens, rbp)
+
+        #Produce resulting expression. 
+        left = TOKEN_CLASS[next.type](left, right)
+
+    return left
+
