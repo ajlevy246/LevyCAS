@@ -42,7 +42,7 @@ TOKEN_BP = {
     "MINUS":    (10, 15),
     "MULT":     (20, 25),
     "DIV":      (20, 25),
-    "EXP":      (30, 35),
+    "EXP":      (35, 30),
     "LPAREN":   (-1, -1),
     "RPAREN":   (-1, -1),
     "SPACE":    (-1, -1),
@@ -64,7 +64,7 @@ def parse(expression: str) -> Expression:
     tokens = tokens[::-1] #Reverse token list to pop from end
     expr = pratt(tokens, 0)
     assert tokens.pop().type == "EOL" #Check that all tokens have been parsed
-    return expr
+    return expr.simplify() #Automatically simplify the expression tree
 
 def pratt(tokens: list[Token], bp: int) -> Expression:
     """Recursive Pratt Parsing function
@@ -78,7 +78,7 @@ def pratt(tokens: list[Token], bp: int) -> Expression:
     """
     curr = tokens.pop()
 
-    #Parse first token as left hand side
+    #Parse first token as left hand side (NULL DENOTATIONS)
     if curr.type == "NUMBER":
         left = Integer(int(curr.value))
 
@@ -90,6 +90,15 @@ def pratt(tokens: list[Token], bp: int) -> Expression:
         next = tokens.pop()
         if next.type != "RPAREN":
             raise SyntaxError(f"Expected closing parenthesis from {next}")
+        
+    elif curr.type == "PLUS":
+        left = pratt(tokens, 0) #Ignore unary plus operator
+
+    elif curr.type == "MINUS": #Unary minus operator is parsed into (-1) * Exp
+        minus_rbp = TOKEN_BP["MINUS"][1] 
+        right = pratt(tokens, minus_rbp)
+        left = Product(Integer(-1), right)
+
     else:
         raise SyntaxError(f"Expected null denotation from {curr}")
 
@@ -110,7 +119,7 @@ def pratt(tokens: list[Token], bp: int) -> Expression:
         tokens.pop() #Consume token after precedence check e
         right = pratt(tokens, rbp)
 
-        #Produce resulting expression. 
+        #Produce resulting expression.
         left = TOKEN_CLASS[next.type](left, right)
 
     return left
