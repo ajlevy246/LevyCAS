@@ -2,10 +2,10 @@ from levycas.Parser import parse
 from levycas.Expression import *
 from os import system
 
+assignments = dict()
+
 def main():
     """Main CAS loop"""
-    assignments = dict()
-
     while ((entered := input("Enter expression: ")) != "exit"):
         if entered == "clear":
             clear()
@@ -21,7 +21,11 @@ def main():
         if num_assignments == 0:
             expr = evaluate(entered)
             if expr:
-                print(f"{expr} = {expr.eval(**assignments)}")
+                try:
+                    print(f"{expr} = {expr.eval(**assignments)}")
+                except ValueError as e:
+                    print(e)
+                    continue
 
         elif num_assignments == 1:
             var, expr = entered.split("=")
@@ -45,9 +49,9 @@ def evaluate(string: str) -> Expression:
     try:
         return parse(string)
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         return None
-    
+
 def clear():
     system('clear')
     print("========== LevyCAS ==========")

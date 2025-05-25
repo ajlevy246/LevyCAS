@@ -1,5 +1,5 @@
 """Classes for internal representations of mathematical expressions"""
-from Math import gcd
+from math import gcd
 
 UNDEFINED = "UNDEFINED"
 
@@ -16,7 +16,9 @@ class Expression:
         """Set of simplification rules for producing Automatic-Simplified
         Arithmetic Expressions (ASAE) per Joel S. Cohen
         """
-        raise NotImplementedError(f"Could not simplify {self}")
+        # raise NotImplementedError(f"Could not simplify {self}")
+        print("Simplification not yet implemented")
+        return self
 
     def __add__(self, other):
         return Sum(self, other) if issubclass(other, Expression) else NotImplemented
@@ -143,7 +145,7 @@ class Power(Expression):
     
     def simplify_integer_power(self):
         exp = self.right.value
-        #TODO: Implement from page 115
+        #TODO: Implement from page 115ex
 
 
 class Variable:

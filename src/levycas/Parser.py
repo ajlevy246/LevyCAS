@@ -15,7 +15,7 @@ TOKEN_SPEC: list[tuple[str]] = [
     ("RPAREN",   r'\)'),             #Matches a right paren
     ("SPACE",    r'\s+'),            #Matches any whitespace
     ("OTHER",    r'.'),              #Matches any invalid characters
-    ("EOL",      r'$')              #Matches the End-of-Line character '$'
+    ("EOL",      r'\$')              #Matches the End-of-Line character '$'
 ]
 
 """Token classes, matching associated Parsing classes"""
@@ -60,11 +60,26 @@ def parse(expression: str) -> Expression:
         Expression.Expression: The root of the AST representing the input expression.
     """
     tokens: list[Token] = tokenize(expression, TOKEN_SPEC)
+    tokens = expand(tokens) #Expand token list
     tokens.append(Token("EOL", "$", -1)) #Append end of line token
     tokens = tokens[::-1] #Reverse token list to pop from end
     expr = pratt(tokens, 0)
-    assert tokens.pop().type == "EOL" #Check that all tokens have been parsed
-    return expr.simplify() #Automatically simplify the expression tree
+    assert tokens.pop().type == "EOL" and len(tokens) == 0 # Check that all tokens have been parsed
+    return expr # Return the simplified expression tree
+
+def expand(tokens: list[Token]) -> list[Token]:
+    """Expand implicit multiplications"""
+    expanded = list()
+    for i in range(len(tokens)):
+        curr = tokens[i]
+        expanded.append(curr)
+        next = tokens[i + 1] if i + 1 < len(tokens) else None
+        if next:
+            if curr.type in ("VARIABLE", "NUMBER", "RPAREN") and next.type in ("VARIABLE", "LPAREN"):
+                expanded.append(Token("MULT", "*", curr.pos + curr.len))
+    
+    return expanded
+        
 
 def pratt(tokens: list[Token], bp: int) -> Expression:
     """Recursive Pratt Parsing function
