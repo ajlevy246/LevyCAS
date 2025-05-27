@@ -11,6 +11,7 @@ TOKEN_SPEC: list[tuple[str]] = [
     ("MINUS",    r'-'),              #Matches a minus sign
     ("MULT",     r'\*'),             #Matches a multiplication sign
     ("DIV",      r'/'),              #Matches a division sign
+    ("FACT",     r'\!'),             #Matches a factorial symbol
     ("LPAREN",   r'\('),             #Matches a left paren
     ("RPAREN",   r'\)'),             #Matches a right paren
     ("SPACE",    r'\s+'),            #Matches any whitespace
@@ -22,11 +23,12 @@ TOKEN_SPEC: list[tuple[str]] = [
 TOKEN_CLASS = {
     "NUMBER":   Integer,
     "VARIABLE": Variable,
-    "EXP":      Power,
     "PLUS":     Sum,
     "MINUS":    Minus,
     "MULT":     Product,
     "DIV":      Div,
+    "EXP":      Power,
+    "FACT":     Factorial,
     "LPAREN":   Special,
     "RPAREN":   Special,
     "SPACE":    Special,
@@ -43,6 +45,7 @@ TOKEN_BP = {
     "MULT":     (20, 25),
     "DIV":      (20, 25),
     "EXP":      (35, 30),
+    "FACT":     (40, 40),
     "LPAREN":   (-1, -1),
     "RPAREN":   (-1, -1),
     "SPACE":    (-1, -1),
@@ -60,12 +63,12 @@ def parse(expression: str) -> Expression:
         Expression.Expression: The root of the AST representing the input expression.
     """
     tokens: list[Token] = tokenize(expression, TOKEN_SPEC)
-    tokens = expand(tokens) #Expand token list
+    tokens = expand(tokens) #Expand implicit multiplications, if present
     tokens.append(Token("EOL", "$", -1)) #Append end of line token
     tokens = tokens[::-1] #Reverse token list to pop from end
     expr = pratt(tokens, 0)
-    assert tokens.pop().type == "EOL" and len(tokens) == 0 # Check that all tokens have been parsed
-    return expr # Return the simplified expression tree
+    assert tokens.pop().type == "EOL" and len(tokens) == 0
+    return expr
 
 def expand(tokens: list[Token]) -> list[Token]:
     """Expand implicit multiplications"""
@@ -127,15 +130,19 @@ def pratt(tokens: list[Token], bp: int) -> Expression:
 
         if lbp <= 0 or rbp <= 0: #Check that next token is an operator
             raise SyntaxError(f"Expected operator from {next}")
-        
+
         if lbp < bp: #Checks L/R associativity against previous operator
             break
 
-        tokens.pop() #Consume token after precedence check e
-        right = pratt(tokens, rbp)
+        tokens.pop() #Consume token after precedence check
 
-        #Produce resulting expression.
-        left = TOKEN_CLASS[next.type](left, right)
+        if next.type == "FACT":
+            left = Factorial(left)
+        else:
+            right = pratt(tokens, rbp)
+
+            #Produce resulting expression.
+            left = TOKEN_CLASS[next.type](left, right)
 
     return left
 
