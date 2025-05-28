@@ -24,7 +24,6 @@ TOKEN_CLASS = {
     "NUMBER":   Integer,
     "VARIABLE": Variable,
     "PLUS":     Sum,
-    "MINUS":    Minus,
     "MULT":     Product,
     "DIV":      Div,
     "EXP":      Power,
@@ -136,7 +135,10 @@ def pratt(tokens: list[Token], bp: int) -> Expression:
 
         tokens.pop() #Consume token after precedence check
 
-        if next.type == "FACT":
+        if next.type == "MINUS":
+            right = pratt(tokens, rbp)
+            left = Sum(left, Product(Integer(-1), right))
+        elif next.type == "FACT":
             left = Factorial(left)
         else:
             right = pratt(tokens, rbp)
