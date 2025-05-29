@@ -13,7 +13,7 @@ class Expression:
         self.left = left
         self.right = right
 
-    """The following two methods allow us to treat arbitrary expressions as powers. 
+    """The following two methods allow us to treat arbitrary expressions as powers/products. 
     This is useful for automatic simplification and total ordering of expressions.
     """
     def base(self):
@@ -21,6 +21,12 @@ class Expression:
     
     def exponent(self):
         return Integer(1)
+    
+    def coefficient(self):
+        return Integer(1)
+    
+    def term(self):
+        return self
 
     @staticmethod
     def simplify_rational_expression(expr):
@@ -147,14 +153,36 @@ class Sum(Expression):
             #TODO: Implement the rest of the sum simplification routine
             if u_1_sum:
                 if u_2_sum:
-                    pass
+                    return Sum.merge_sums(u_1.operands(), u_2.operands())
                 else:
-                    pass
+                    return Sum.merge_sum(u_1.operands, [u_2])
             else:
                 if u_2_sum:
-                    pass
+                    return Sum.merge_sum([u_1], u_2.operands())
                 else:
-                    pass
+                    #Neither operand is a sum
+                    if isinstance(u_1, Constant) and isinstance(u_2, Constant):
+                        P = Expression.simplify_rational_expression(Sum(u_1, u_2))
+                        if P == Integer(0):
+                            return list()
+                        return [P]
+                    
+                    if u_1 == Integer(0):
+                        return [u_2]
+                    
+                    if u_2 == Integer(0):
+                        return [u_1]
+                    
+                    if u_1.term() == u_2.term():
+                        S = Sum(u_1.coefficient(), u_2.coefficient())
+                        P = Product(S, u_1.term())
+                        if P == Integer(0):
+                            return list()
+                        return [P]
+                    
+                    if u_2 < u_1:
+                        return [u_2, u_1]
+                    return terms
 
         elif len(terms) > 2:
             w = Sum.simplify_sum_rec(terms[1::])
@@ -162,6 +190,28 @@ class Sum(Expression):
                 return Sum.merge_sums(u_1.operands(), w)
             else:
                 return Sum.merge_sums([u_1], w)
+            
+    @staticmethod
+    def merge_sums(p, q):
+        if len(q) == 0:
+            return p
+        if len(p) == 0:
+            return q
+        
+        p_1 = p[0]
+        q_1 = q[0]
+        h = Sum.simplify_sum_rec([p_1, q_1])
+
+        if len(h) == 0:
+            return Sum.merge_sums(p[1::], q[1::])
+        if len(h) == 1:
+            return [h] + Sum.merge_sums(p[1::], q[1::])
+        if h[0] == p_1:
+            assert h[1] == q_1
+            return [p_1] + Sum.merge_sums(p[1::], q)
+        else:
+            assert h[0] == q_1 and h[1] == p_1
+            return [q_1] + Sum.merge_sums(p, q[1::])
         
 
     def operands(self):
@@ -253,7 +303,8 @@ class Product(Expression):
                     return Product.merge_products([u_1], u_2.factors)
                 
                 #S-PRD-REC (1)
-                else:
+                else: 
+                    #Neither operand is a product
                     if isinstance(u_1, Constant) and isinstance(u_2, Constant):
                         P = Expression.simplify_rational_expression(Product(u_1, u_2))
                         if P == Integer(1):
@@ -316,6 +367,12 @@ class Product(Expression):
 
     def operands(self):
         return self.factors
+    
+    def coefficient(self):
+        return self.factors[0] if isinstance(self.factors[0], Constant) else Integer(1)
+    
+    def term(self):
+        return Product(self.factors[1::]) if isinstance(self.factors[0], Constant) else self
 
 class Div(Expression):
     """A Div represents the quotient of two terms. 
