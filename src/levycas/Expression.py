@@ -1,5 +1,6 @@
 """Classes for internal representations of mathematical expressions"""
-from math import gcd
+from math import gcd, lcm
+from numbers import Number
 
 """Undefined flyweight; default value for expressions that can not be evaluated
 """
@@ -13,7 +14,7 @@ class Expression:
         self.left = left
         self.right = right
 
-    """The following two methods allow us to treat arbitrary expressions as powers/products. 
+    """The following four methods allow us to treat arbitrary expressions as powers/products/rationals. 
     This is useful for automatic simplification and total ordering of expressions.
     """
     def base(self):
@@ -27,6 +28,12 @@ class Expression:
     
     def term(self):
         return self
+    
+    def num(self):
+        return self
+    
+    def denom(self):
+        return Integer(1)
 
     @staticmethod
     def simplify_rational_expression(expr):
@@ -47,12 +54,18 @@ class Expression:
                 return UNDEFINED
             
             if isinstance(expr, Power):
-                return Power(v, operands[1]).eval()
+                #We are guaranteed a Power with rational base and integer exponent
+                # #thus the result of simp_eval is also rational
+                # computed_rational = Power(v, operands[1]).simp_eval()
+                # if isinstance(computed_rational, Integer):
+                    # return 
+                computed_rational = Power(v, operands[1]).simp_eval().simplify()
+                return computed_rational
             else:
                 w = Expression.simplify_rational_expression(operands[1])
                 if w is UNDEFINED:
                     return UNDEFINED
-                return type(expr)(v, w).eval()
+                return type(expr)(v, w).simp_eval()
             
         else:
             raise ValueError("Expected a rational expression with 1 or 2 operands")
@@ -75,7 +88,7 @@ class Expression:
         return Sum(self, other) if isinstance(other, Expression) else NotImplemented
     
     def __sub__(self, other):
-        return Minus(self, other) if isinstance(other, Expression) else NotImplemented
+        return Sum(self, Product(Integer(-1), other)) if isinstance(other, Expression) else NotImplemented
     
     def __mul__(self, other):
         return Product(self, other) if isinstance(other, Expression) else NotImplemented
@@ -89,7 +102,7 @@ class Expression:
 class Sum(Expression):
     """A Sum is the sum of two terms"""
     def __init__(self, *terms):
-        self.terms = terms
+        self.terms = list(terms)
         
     def __repr__(self):
         term_repr = [str(term) for term in self.terms]
@@ -119,6 +132,12 @@ class Sum(Expression):
 
     def eval(self, **vars):
         return sum([term.eval(**vars) for term in self.terms])
+    
+    def simp_eval(self):
+        total = Integer(0)
+        for term in self.terms:
+            total += term.simp_eval()
+        return total.simplify()
     
     def simplify(self):
         L = [term.simplify() for term in self.terms]
@@ -161,12 +180,18 @@ class Sum(Expression):
                     return Sum.merge_sum([u_1], u_2.operands())
                 else:
                     #Neither operand is a sum
+                    if isinstance(u_1, Number):
+                        u_1 = Rational(u_1).simplify()
+                    
+                    if isinstance(u_2, Number):
+                        u_2 = Rational(u_2).simplify()
+
                     if isinstance(u_1, Constant) and isinstance(u_2, Constant):
                         P = Expression.simplify_rational_expression(Sum(u_1, u_2))
                         if P == Integer(0):
                             return list()
                         return [P]
-                    
+
                     if u_1 == Integer(0):
                         return [u_2]
                     
@@ -205,7 +230,7 @@ class Sum(Expression):
         if len(h) == 0:
             return Sum.merge_sums(p[1::], q[1::])
         if len(h) == 1:
-            return [h] + Sum.merge_sums(p[1::], q[1::])
+            return h + Sum.merge_sums(p[1::], q[1::])
         if h[0] == p_1:
             assert h[1] == q_1
             return [p_1] + Sum.merge_sums(p[1::], q)
@@ -213,14 +238,13 @@ class Sum(Expression):
             assert h[0] == q_1 and h[1] == p_1
             return [q_1] + Sum.merge_sums(p, q[1::])
         
-
     def operands(self):
         return self.terms
 
 class Product(Expression):
     """A Product is the product of two factors"""
     def __init__(self, *factors):
-        self.factors = factors
+        self.factors = list(factors)
 
     def __repr__(self):
         factor_repr = [str(factor) for factor in self.factors]
@@ -254,6 +278,12 @@ class Product(Expression):
             prod *= factor.eval(**vars)
         return prod
     
+    def simp_eval(self):
+        prod = Integer(1)
+        for factor in self.factors:
+            prod *= factor.simp_eval()
+        return prod.simplify()
+
     def simplify(self):
         self.factors = [factor.simplify() for factor in self.factors]
 
@@ -280,8 +310,7 @@ class Product(Expression):
 
     @staticmethod
     def simplify_product_rec(factors):
-        assert len(factors) >= 0
-
+        assert len(factors) >= 2
         u_1 = factors[0]
         u_2 = factors[1]
         u_1_prod = isinstance(u_1, Product)
@@ -305,7 +334,13 @@ class Product(Expression):
                 #S-PRD-REC (1)
                 else: 
                     #Neither operand is a product
-                    if isinstance(u_1, Constant) and isinstance(u_2, Constant):
+                    if isinstance(u_1, Number):
+                        u_1 = Rational(u_1).simplify()
+
+                    if isinstance(u_2, Number):
+                        u_2 = Rational(u_2).simplify()
+
+                    if (isinstance(u_1, Constant) and isinstance(u_2, Constant)):
                         P = Expression.simplify_rational_expression(Product(u_1, u_2))
                         if P == Integer(1):
                             return list()
@@ -325,6 +360,7 @@ class Product(Expression):
                     
                     if u_1 < u_2:
                         return [u_1, u_2]
+                    
                     return [u_2, u_1]
                 
         if len(factors) > 2:
@@ -337,7 +373,10 @@ class Product(Expression):
             
     @staticmethod 
     def merge_products(p, q):
-        
+
+        assert p is not None
+        assert q is not None
+
         #M-PRD (1)
         if len(q) == 0:
             return p
@@ -383,11 +422,23 @@ class Div(Expression):
     def eval(self, **vars):
         return self.left.eval(**vars) / self.right.eval(**vars)
     
+    def simp_eval(self):
+        return self.left.simp_eval() / self.right.simp_eval()
+    
     def simplify(self):
         #If both left and right are integers, return a simplified fraction
         if isinstance(self.left, Integer) and isinstance(self.right, Integer):
             return Rational(self.left.value, self.right.value).simplify()
         
+        else:
+            return Product(self.left, Power(self.right, Integer(-1).simplify())).simplify()
+        
+    def num(self):
+        return self.left
+    
+    def denom(self):
+        return self.right
+
     def operands(self):
         return [self.left, self.right]
 
@@ -398,6 +449,9 @@ class Power(Expression):
     
     def eval(self, **vars):
         return self.left.eval(**vars) ** self.right.eval(**vars)
+    
+    def simp_eval(self):
+        return self.left.simp_eval() ** self.right.simp_eval()
     
     def __lt__(self, other):
         if isinstance(other, Expression):
@@ -434,10 +488,10 @@ class Power(Expression):
         
         #S-POW (5)
         if isinstance(self.right, Integer):
-
             #SINT-POW (1)
             if isinstance(self.left, Constant):
-                return Expression.simplify_rational_expression(self)
+                ret = Expression.simplify_rational_expression(self)
+                return ret
             
             #SINT-POW (2)
             if self.right == Integer(0):
@@ -456,6 +510,11 @@ class Power(Expression):
                     return Power(r, p).simplify()
                 else:
                     return Power(r, p)
+                
+            #SINT-POW (5)
+            if isinstance(self.left, Product):
+                distributed_factors = [Power(factor, self.right) for factor in self.left.factors]
+                return Product(*distributed_factors).simplify() 
 
         #S-POW (5)
         return self
@@ -483,10 +542,18 @@ class Factorial(Expression):
         return NotImplemented
     
     def eval(self, **vars):
+        print("factorial operation not yet implemented")
         return 1
+    
+    def simp_eval(self):
+        print("factorial operation not yet implemented")
+        return Integer(1)
     
     def operands(self):
         return [self.value]
+    
+    def simplify(self):
+        return Factorial(self.value.simplify())
 
 class Variable(Expression):
     """A Variable represents a variable"""
@@ -502,7 +569,6 @@ class Variable(Expression):
     def __lt__(self, other):
         """Total ordering for Variables: O-2"""
         if isinstance(other, Variable):
-            print(f"{self} vs {other}")
             return self.name < other.name
         return NotImplemented
 
@@ -511,6 +577,9 @@ class Variable(Expression):
         if val is None:
             raise ValueError(f"Variable {self.name} was not given a value")
         return val
+    
+    def simp_eval(self):
+        return self
     
     def simplify(self):
         return self
@@ -531,17 +600,96 @@ class Constant(Expression):
         
         return NotImplemented
     
+    def simp_eval(self):
+        return self
+    
+    #Treat both constants as Rationals, 
+    #perform the computation
+    #simplify the result.
+    def __add__(self, other):
+        if not isinstance(other, Constant):
+            return super().__add__(other)
+        
+        if isinstance(self, Integer):
+            self = Rational(self.eval(), 1)
+        if isinstance(other, Integer):
+            other = Rational(other.eval(), 1)
+
+        denom_lcm = lcm(self.denom(), other.denom())
+        left_num = denom_lcm * self.num()
+        right_num = denom_lcm * other.num()
+        new_num = left_num + right_num
+        return Rational(new_num, denom_lcm).simplify()
+
+    def __sub__(self, other):
+        if not isinstance(other, Constant):
+            return super().__sub__(other)
+        
+        if isinstance(self, Integer):
+            self = Rational(self.eval(), 1)
+        if isinstance(other, Integer):
+            other = Rational(other.eval(), 1)
+
+        denom_lcm = lcm(self.denom(), other.denom())
+        left_num = denom_lcm * self.num()
+        right_num = denom_lcm * other.num()
+        new_num = left_num - right_num
+        return Rational(new_num, denom_lcm).simplify()
+           
+    def __mul__(self, other):
+        if not isinstance(other, Constant):
+            return super().__mul__(other)
+        
+        if isinstance(self, Integer):
+            self = Rational(self.eval(), 1)
+        if isinstance(other, Integer):
+            other = Rational(other.eval(), 1)
+
+        new_num = self.num() * other.num()
+        new_denom = self.denom() * other.denom()
+        return Rational(new_num, new_denom).simplify()
+
+    def __pow__(self, other):
+        if not isinstance(other, Integer):
+            return super().__pow__(other)
+        
+        if other.is_negative():
+            new_num = self.denom() ** -other.eval()
+            new_denom = self.num() ** -other.eval()
+        else:
+            new_num = self.num() ** other.eval()
+            new_denom = self.denom() ** other.eval()
+        return Rational(new_num, new_denom).simplify()
+    
 class Rational(Constant):
     """A rational expression is a constant; a fraction of two integers"""
+    def __init__(self, *args):
+        for arg in args:
+            assert isinstance(arg, int), f"arg {arg} is {type(arg)}"
+
+        if len(args) == 1:
+            self.left = args[0]
+            self.right = 1
+        else:
+            super().__init__(*args)
 
     def __repr__(self):
         return f"({self.left} / {self.right})"
     
     def eval(self, **vars):
         return self.left / self.right
-    
+
     def is_positive(self):
         return (self.left < 0) if (self.right < 0) else (self.left > 0)
+    
+    def is_negative(self):
+        return (self.left < 0) if (self.right < 0) else (self.left > 0)
+    
+    def num(self):
+        return self.left
+    
+    def denom(self):
+        return self.right
 
     def simplify(self):
         """Simplifies a fraction into lowest terms"""
@@ -563,7 +711,6 @@ class Rational(Constant):
     def operands(self):
         return [self.left, self.right]
 
-
 class Integer(Constant):
     """An Integer represents a decimal integer"""
 
@@ -580,12 +727,21 @@ class Integer(Constant):
     
     def is_positive(self):
         return self.value > 0
+    
+    def is_negative(self):
+        return self.value < 0
 
     def simplify(self):
         return self
     
     def operands(self):
         return [self.value]
+    
+    def num(self):
+        return self.value
+    
+    def denom(self):
+        return 1
 
 class Special(Expression):
     """Special represents special cases"""

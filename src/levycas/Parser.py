@@ -40,7 +40,7 @@ TOKEN_BP = {
     "NUMBER":   (0, 0),
     "VARIABLE": (0, 5),
     "PLUS":     (10, 15),
-    "MINUS":    (10, 15),
+    "MINUS":    (10, 30), #Minus has the right binding power of MULT and left of PLUS
     "MULT":     (20, 25),
     "DIV":      (20, 25),
     "EXP":      (35, 30),
