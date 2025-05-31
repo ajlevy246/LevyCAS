@@ -130,6 +130,15 @@ class Sum(Expression):
         
         return NotImplemented
 
+    def copy(self) -> Expression:
+        """Return a copy of this sum
+
+        Returns:
+            Expression: A copy of the sum
+        """
+        copied_sums = [term.copy() for term in self.terms]
+        return Sum(*copied_sums)
+
     def eval(self, **vars):
         return sum([term.eval(**vars) for term in self.terms])
     
@@ -141,7 +150,7 @@ class Sum(Expression):
     
     def simplify(self):
         L = [term.simplify() for term in self.terms]
-
+        
         #S-SUM (1)
         if UNDEFINED in L:
             return UNDEFINED
@@ -278,6 +287,10 @@ class Product(Expression):
             prod *= factor.eval(**vars)
         return prod
     
+    def copy(self):
+        copied_factors = [factor.copy() for factor in self.factors]
+        return Product(*copied_factors)
+
     def simp_eval(self):
         prod = Integer(1)
         for factor in self.factors:
@@ -419,6 +432,9 @@ class Div(Expression):
     def __repr__(self):
         return f"({self.left} / {self.right})"
     
+    def copy(self):
+        return Div(self.left.copy(), self.right.copy())
+
     def eval(self, **vars):
         return self.left.eval(**vars) / self.right.eval(**vars)
     
@@ -447,6 +463,9 @@ class Power(Expression):
     def __repr__(self):
         return f"({self.left} ^ {self.right})"
     
+    def copy(self):
+        return Power(self.left.copy(), self.right.copy())
+
     def eval(self, **vars):
         return self.left.eval(**vars) ** self.right.eval(**vars)
     
@@ -541,6 +560,9 @@ class Factorial(Expression):
             return self.value < other
         return NotImplemented
     
+    def copy(self):
+        return Factorial(self.value.copy())
+
     def eval(self, **vars):
         print("factorial operation not yet implemented")
         return 1
@@ -572,6 +594,9 @@ class Variable(Expression):
             return self.name < other.name
         return NotImplemented
 
+    def copy(self):
+        return Variable(self.name)
+
     def eval(self, **vars):
         val = vars.get(self.name, None)
         if val is None:
@@ -586,6 +611,41 @@ class Variable(Expression):
     
     def operands(self):
         return [self.name]
+
+class Function(Expression):
+    def __init__(self, name):
+        print(f"Creating function {name}")
+        self.name = name
+
+    def add_args(self, arguments):
+        if isinstance(arguments, list):
+            self.args = arguments
+        
+        self.args = [arguments]
+
+    def __repr__(self):
+        print(f"{self.name}({', '.join(self.args)})")
+
+    def __lt__(self, other):
+        if isinstance(other, Function):
+            if self.name < other.name:
+                return True
+            
+            num_left = len(self.args)
+            num_right = len(other.args)
+            min_num = min(num_left, num_right)
+            for i in range(min_num):
+                if self.factors[i] == other.factors[i]:
+                    continue
+                return self.factors[i] < other.factors[i]
+            
+            #O-3 (2) If all terms are equal, compare number of terms
+            return num_left < num_right
+        
+        return NotImplemented
+                
+            
+            
 
 class Constant(Expression):
     """A Constant represents a constant value"""
@@ -676,6 +736,9 @@ class Rational(Constant):
     def __repr__(self):
         return f"({self.left} / {self.right})"
     
+    def copy(self):
+        return Rational(self.left, self.right)
+
     def eval(self, **vars):
         return self.left / self.right
 
@@ -725,6 +788,9 @@ class Integer(Constant):
     def eval(self, **vars):
         return self.value
     
+    def copy(self):
+        return Integer(self.value)
+
     def is_positive(self):
         return self.value > 0
     
