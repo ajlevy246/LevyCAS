@@ -2,6 +2,10 @@
 from .Lexer import Token, tokenize
 from .Expression import *
 
+#Global verbose vars for testing purposes
+pv = False #parsing verbose 
+lv = False #lexing verboses
+
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
     ("NUMBER",    r'\d+(\.\d*)?'),    #Matches an integer
@@ -66,19 +70,23 @@ def parse(expression: str, **symbols) -> Expression:
     tokens = expand(tokens, **symbols) #Expand implicit multiplications, if present
     tokens.append(Token("EOL", "$", -1)) #Append end of line token
     tokens = tokens[::-1] #Reverse token list to pop from end
-    expr = pratt(tokens, 0)
+    expr = pratt(tokens, 0, **symbols)
     assert tokens.pop().type == "EOL" and len(tokens) == 0
     return expr
 
 def expand(tokens: list[Token], **symbols) -> list[Token]:
     """Expand implicit multiplications"""
+    if lv:
+        print(f"Expanding with: {symbols=}")
     expanded = list()
     for i in range(len(tokens)):
         curr = tokens[i]
 
         #Symbols previously defined as functions are replaced
-        if curr.type == "VARIABLE" and curr.value in symbols:
-            curr.type = "FUNCTION" #Replace defined symbols with their function representations.
+        if curr.type == "VARIABLE":
+            sym = symbols.get(curr.value, Variable(-1))
+            if isinstance(sym, Function):
+                curr.type = "FUNCTION"
 
         expanded.append(curr)
 
@@ -99,7 +107,12 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
     Returns:
         Expression.Expression: The root of the subtree parsed by this iteration
     """
+    if lv:
+        print(f"Tokens: {tokens[-1]}")
+
     curr = tokens.pop()
+    if pv: 
+        print(f"Parsing curr: {curr.type}: {curr.value}")
 
     #Parse first token as left hand side (NULL DENOTATIONS)
     if curr.type == "NUMBER":
@@ -109,21 +122,48 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
         left = Variable(curr.value)
 
     elif curr.type == "FUNCTION":
-        left = Function(curr.value)
-        left.add_args(pratt(tokens, 0))
+        if pv:
+            print(f"Parsing FUNCTION token: {curr.value}")
+        left = symbols.get(curr.value, None) #Get the defined function from symbol table
+        if left is None:
+            raise ValueError("What??")
+        left = left.copy() #Copy it over
+        new_args = list()
+
+        assert tokens[-1].type == "LPAREN", "Please parenthesize function arguments"
+        tokens.pop() #Remove lparen before parsing arguments
+
+        next_arg = pratt(tokens, 0, **symbols).sym_eval(**symbols)
+        new_args.append(next_arg) #Get first argument
+        next = tokens[-1]
+        if pv:
+            print(f"After returning first argument: {next=}")
+        while next.type == "COMMA":
+            if pv:
+                print(f"Detected comma; looping: {new_args=}")
+            tokens.pop() #Parse comma
+            next_arg = pratt(tokens, 0, **symbols)
+            new_args.append(next_arg)
+            next = tokens[-1]
+
+        assert next.type == "RPAREN", "Please parenthesize function arguments"
+        tokens.pop() #Parse rparen
+        if pv:
+            print(f"Adding args to function {curr.value}: {new_args}")
+        left.add_args(*new_args)
 
     elif curr.type == "LPAREN":
-        left = pratt(tokens, 0)
+        left = pratt(tokens, 0, **symbols)
         next = tokens.pop()
-        if next.type != "RPAREN":
+        if next.type != "RPAREN" and next.type != "COMMA":
             raise SyntaxError(f"Expected closing parenthesis from {next}")
         
     elif curr.type == "PLUS":
-        left = pratt(tokens, 0) #Ignore unary plus operator
+        left = pratt(tokens, 0, **symbols) #Ignore unary plus operator
 
     elif curr.type == "MINUS": #Unary minus operator is parsed into (-1) * Exp
         minus_rbp = TOKEN_BP["MINUS"][1] 
-        right = pratt(tokens, minus_rbp)
+        right = pratt(tokens, minus_rbp, **symbols)
         left = Product(Integer(-1), right)
 
     else:
@@ -132,16 +172,19 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
     #Parse operator and recurse on remaining expression
     while True:
         next = tokens[-1]
+        if pv:
+            print(f"Looping {left=}, {next=}")
         if next.type == "RPAREN" or next.type == "EOL": #Check that next token is not the end of an expression
             break #Break without consuming token
 
-        if next.type == "COMMA": #End of a function argument, get the next one
-            left = [left]
-            right = pratt(tokens, 0)
-            if isinstance(right, list):
-                left = left + right
-            else:
-                left.append(right)
+        if next.type == "COMMA": #End of a function argument.
+            #Note that if an extraneous comma is present, the
+            #end-of-line token will not be next, raising an error.
+
+            #break with consuming token
+            if pv:
+                print(f"Detected comma, returning: {left}")
+            break
 
         lbp, rbp = TOKEN_BP[next.type]
 
@@ -154,16 +197,12 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
         tokens.pop() #Consume token after precedence check
 
         if next.type == "MINUS":
-            right = pratt(tokens, rbp)
+            right = pratt(tokens, rbp, **symbols)
             left = Sum(left, Product(Integer(-1), right))
         elif next.type == "FACT":
             left = Factorial(left)
-        elif next.type == "FUNCTION":
-            left = Function(left)
-            right = pratt(tokens, 0)
-            left.add_args(right)
         else:
-            right = pratt(tokens, rbp)
+            right = pratt(tokens, rbp, **symbols)
 
             #Produce resulting expression.
             left = TOKEN_CLASS[next.type](left, right)

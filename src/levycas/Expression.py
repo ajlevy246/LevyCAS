@@ -2,9 +2,29 @@
 from math import gcd, lcm
 from numbers import Number
 
+#TODO: Deal with **symbols dictionary. It should ideally be global
+#to avoid conflicts with the simplify function
+
+#TODO: Deal with redefinition of functions.
+#Error is: Please paranthesize function arguments, although the redefinition works?
+
+#TODO: Deal with errors in the following:
+#1: f(x) = x
+#2: g(x, y) = 1
+#3: g(f(1), f(2)) -> 1 (correct)
+#Prints g(1, f(1)) = 1?
+
+
 """Undefined flyweight; default value for expressions that can not be evaluated
 """
 UNDEFINED = "UNDEFINED" 
+
+class CAS_ENV:
+    """An environment class that specifies a symbol and function table"""
+    def __init__(self):
+
+        #A dictionary of symbols and their definitions.
+        self.symbols = dict()
 
 class Expression:
     """An Expression is a general mathematical object.
@@ -55,17 +75,17 @@ class Expression:
             
             if isinstance(expr, Power):
                 #We are guaranteed a Power with rational base and integer exponent
-                # #thus the result of simp_eval is also rational
-                # computed_rational = Power(v, operands[1]).simp_eval()
+                # #thus the result of sym_eval is also rational
+                # computed_rational = Power(v, operands[1]).sym_eval()
                 # if isinstance(computed_rational, Integer):
                     # return 
-                computed_rational = Power(v, operands[1]).simp_eval().simplify()
+                computed_rational = Power(v, operands[1]).sym_eval().simplify()
                 return computed_rational
             else:
                 w = Expression.simplify_rational_expression(operands[1])
                 if w is UNDEFINED:
                     return UNDEFINED
-                return type(expr)(v, w).simp_eval()
+                return type(expr)(v, w).sym_eval()
             
         else:
             raise ValueError("Expected a rational expression with 1 or 2 operands")
@@ -81,6 +101,9 @@ class Expression:
         
         return NotImplemented
     
+    def __hash__(self):
+        hash(str(self))
+
     def __gt__(self, other):
         return not (self < other)
     
@@ -138,14 +161,11 @@ class Sum(Expression):
         """
         copied_sums = [term.copy() for term in self.terms]
         return Sum(*copied_sums)
-
-    def eval(self, **vars):
-        return sum([term.eval(**vars) for term in self.terms])
     
-    def simp_eval(self):
+    def sym_eval(self, **symbols):
         total = Integer(0)
         for term in self.terms:
-            total += term.simp_eval()
+            total += term.sym_eval(**symbols)
         return total.simplify()
     
     def simplify(self):
@@ -280,21 +300,15 @@ class Product(Expression):
             return self < test_other
 
         return NotImplemented 
-
-    def eval(self, **vars):
-        prod = 1
-        for factor in self.factors:
-            prod *= factor.eval(**vars)
-        return prod
     
     def copy(self):
         copied_factors = [factor.copy() for factor in self.factors]
         return Product(*copied_factors)
 
-    def simp_eval(self):
+    def sym_eval(self, **symbols):
         prod = Integer(1)
         for factor in self.factors:
-            prod *= factor.simp_eval()
+            prod *= factor.sym_eval(**symbols)
         return prod.simplify()
 
     def simplify(self):
@@ -434,12 +448,9 @@ class Div(Expression):
     
     def copy(self):
         return Div(self.left.copy(), self.right.copy())
-
-    def eval(self, **vars):
-        return self.left.eval(**vars) / self.right.eval(**vars)
     
-    def simp_eval(self):
-        return self.left.simp_eval() / self.right.simp_eval()
+    def sym_eval(self, **symbols):
+        return self.left.sym_eval(**symbols) / self.right.sym_eval(**symbols)
     
     def simplify(self):
         #If both left and right are integers, return a simplified fraction
@@ -465,12 +476,9 @@ class Power(Expression):
     
     def copy(self):
         return Power(self.left.copy(), self.right.copy())
-
-    def eval(self, **vars):
-        return self.left.eval(**vars) ** self.right.eval(**vars)
     
-    def simp_eval(self):
-        return self.left.simp_eval() ** self.right.simp_eval()
+    def sym_eval(self, **symbols):
+        return self.left.sym_eval(**symbols) ** self.right.sym_eval(**symbols)
     
     def __lt__(self, other):
         if isinstance(other, Expression):
@@ -562,14 +570,18 @@ class Factorial(Expression):
     
     def copy(self):
         return Factorial(self.value.copy())
-
-    def eval(self, **vars):
-        print("factorial operation not yet implemented")
-        return 1
     
-    def simp_eval(self):
-        print("factorial operation not yet implemented")
-        return Integer(1)
+    def sym_eval(self, **symbols):
+        if isinstance(self.value, Integer):
+            if self.value == Integer(0):
+                return Integer(1)
+            elif self.value.is_positive():
+                computed = self.value.copy()
+                for i in range(1, self.value.eval()):
+                    computed *= Integer(i)
+                return computed.simplify()
+
+        raise NotImplementedError("Factorial is defined for non-negative integers")
     
     def operands(self):
         return [self.value]
@@ -596,15 +608,13 @@ class Variable(Expression):
 
     def copy(self):
         return Variable(self.name)
-
-    def eval(self, **vars):
-        val = vars.get(self.name, None)
-        if val is None:
-            raise ValueError(f"Variable {self.name} was not given a value")
-        return val
     
-    def simp_eval(self):
-        return self
+    def sym_eval(self, **symbols):
+        definition = symbols.get(self.name, None)
+        if definition is None:
+            print(f"Symbol {self.name} was not defined")
+            return self
+        return definition.sym_eval(**symbols)
     
     def simplify(self):
         return self
@@ -614,18 +624,43 @@ class Variable(Expression):
 
 class Function(Expression):
     def __init__(self, name):
-        print(f"Creating function {name}")
         self.name = name
+        self.args = None
+        self.parameters = None
+        self.definition = None
 
-    def add_args(self, arguments):
-        if isinstance(arguments, list):
-            self.args = arguments
+    def add_args(self, *arguments):
+        self.args = list(arguments)
+        assert len(self.args) == len(self.parameters), f"Number of arguments does not match number of parameters for {self}"
+
+    def set_parameters(self, parameters: list[Variable]):
+        self.parameters = parameters
+
+    def set_definition(self, definition: Expression):
+        self.definition = definition
+
+    def sym_eval(self, **symbols):
+        if not self.args:
+            return self
         
-        self.args = [arguments]
+        for i in range(len(self.parameters)):
+            param = str(self.parameters[i])
+            param_def = self.args[i].sym_eval(**symbols)
+            symbols[param] = param_def
+                
+        return self.definition.sym_eval(**symbols)
+
+    def simplify(self):
+        if UNDEFINED in self.args:
+            return UNDEFINED
+        return self
 
     def __repr__(self):
-        print(f"{self.name}({', '.join(self.args)})")
-
+        if self.args:
+            args_repr = [str(arg) for arg in self.args]
+            return f"{self.name}({', '.join(args_repr)})"
+        return f"<FUNCTION: {self.name}>"
+        
     def __lt__(self, other):
         if isinstance(other, Function):
             if self.name < other.name:
@@ -643,10 +678,15 @@ class Function(Expression):
             return num_left < num_right
         
         return NotImplemented
+    
+    def copy(self):
+        copied = Function(self.name)
+        copied.set_definition(self.definition.copy())
+        copied.set_parameters(self.parameters) #Parameters not copied.
+        if self.args:
+            copied.add_args(*self.args)
+        return copied
                 
-            
-            
-
 class Constant(Expression):
     """A Constant represents a constant value"""
 
@@ -660,12 +700,9 @@ class Constant(Expression):
         
         return NotImplemented
     
-    def simp_eval(self):
+    def sym_eval(self, **symbols):
         return self
-    
-    #Treat both constants as Rationals, 
-    #perform the computation
-    #simplify the result.
+
     def __add__(self, other):
         if not isinstance(other, Constant):
             return super().__add__(other)
