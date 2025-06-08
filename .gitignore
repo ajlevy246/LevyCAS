@@ -1,3 +1,5 @@
+#General python .gitignore sourced from github repo
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
