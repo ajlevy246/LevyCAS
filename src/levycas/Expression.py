@@ -714,6 +714,53 @@ class Function(Expression):
             copied.add_args(*self.args)
         return copied
                 
+class Trig(Expression):
+    """Trig functions represent the trigonometric functions"""
+    orderings = ['Sin', 'Cos', 'Tan', 'Csc', 'Sec']
+
+    def __init__(self, arg):
+        self.arg = arg
+        
+    def __lt__(self, other):
+
+        #If they are the same type, compare values
+        if isinstance(other, type(self)): 
+            return self.arg < other.arg
+        
+        #If they are both trig functions, compare via precedence rules
+        if isinstance(other, Trig):
+            self_precedence = Trig.orderings.index(type(self).__name__)
+            other_precedence = Trig.orderings.index(type(other).__name__)
+            return self_precedence < other_precedence
+        
+        #Otherwise, return false
+        if isinstance(other, Expression):
+            return False
+        
+        return NotImplemented
+    
+    def simplify(self):
+        #Trig simplify not yet implemented
+        return self
+    
+    def __repr__(self):
+        return f"{type(self).__name__}({self.arg})"
+
+class Sin(Trig):
+    pass
+
+class Cos(Trig):
+    pass
+
+class Tan(Trig):
+    pass
+
+class Csc(Trig):
+    pass
+
+class Sec(Trig):
+    pass
+
 class Constant(Expression):
     """A Constant represents a constant value"""
 
