@@ -8,7 +8,8 @@ lv = False #lexing verboses
 
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
-    ("NUMBER",    r'\d+(\.\d*)?'),    #Matches an integer
+    ("DECIMAL,    r'(\d+)?\.\d+"),    #Matches a decimal number (float)
+    ("NUMBER",    r'\d+\.?'),         #Matches an integer
     ("VARIABLE",  r'[a-z]'),          #Matches a single lowercase letter
     ("EXP",       r'\^'),             #Matches a single exponential symbol  
     ("PLUS",      r'\+'),             #Matches a plus sign
@@ -26,6 +27,7 @@ TOKEN_SPEC: list[tuple[str]] = [
 
 """Token classes, matching associated Parsing classes"""
 TOKEN_CLASS = {
+    "DECIMAL":  Special, #Will be converted to Rational specially
     "NUMBER":   Integer,
     "VARIABLE": Variable,
     "PLUS":     Sum,
@@ -42,10 +44,11 @@ TOKEN_CLASS = {
 
 """Operator precendences, matching associated binding powers"""
 TOKEN_BP = {
+    "DECIMAL":  (0, 0),
     "NUMBER":   (0, 0),
     "VARIABLE": (0, 5),
     "PLUS":     (10, 15),
-    "MINUS":    (10, 30), #Minus has the right binding power of MULT and left of PLUS
+    "MINUS":    (10, 20), 
     "MULT":     (20, 25),
     "DIV":      (20, 25),
     "EXP":      (35, 30),
@@ -93,7 +96,7 @@ def expand(tokens: list[Token], **symbols) -> list[Token]:
         #Implicit Multiplication is expanded
         next = tokens[i + 1] if i + 1 < len(tokens) else None
         if next:
-            if curr.type in ("VARIABLE", "NUMBER", "RPAREN") and next.type in ("VARIABLE", "LPAREN"):
+            if curr.type in ("VARIABLE", "NUMBER", "RPAREN") and next.type in ("VARIABLE", "LPAREN", "FUNCTION"):
                 expanded.append(Token("MULT", "*", curr.pos + curr.len))
     return expanded
         
@@ -142,7 +145,7 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
             if pv:
                 print(f"Detected comma; looping: {new_args=}")
             tokens.pop() #Parse comma
-            next_arg = pratt(tokens, 0, **symbols)
+            next_arg = pratt(tokens, 0, **symbols).sym_eval(**symbols)
             new_args.append(next_arg)
             next = tokens[-1]
 

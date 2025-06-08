@@ -6,13 +6,34 @@ from numbers import Number
 #to avoid conflicts with the simplify function
 
 #TODO: Deal with redefinition of functions.
-#Error is: Please paranthesize function arguments, although the redefinition works?
+# Recursion works (correctly raises error), but now we should store functions
+# in the symbol table differently, or copy them over differently
+# no need to copy the definition over, if the sym_eval will just 
+# get the global definition first 
+
+#TODO: Make note of the following behavior:
+#1: f(x) = x
+#2: x = 2
+#3: f(x) -> 2, but intended would be: f(x) -> x
+#No way to avoid overwriting parameters? Except manually when parsing.
+#Causes the following error:
+#1: f(x, y) = x + y
+#2: f(0, x) -> 0 (incorrect), the names of the param args shouldn't matter.
+#Possible solution, change the internal representations of the parameters
+#in a function definition so that they don't matter?
+#NOTE: More complicated, consider:
+#1: f(x) = x
+#2: g(x) = f(x)
+#3: g(1) -> Should return 1
 
 #TODO: Deal with errors in the following:
 #1: f(x) = x
-#2: g(x, y) = 1
-#3: g(f(1), f(2)) -> 1 (correct)
-#Prints g(1, f(1)) = 1?
+#2: g(y) = y
+#3: simplify f(x) + g(y) -> Error??
+
+#TODO: Parse error? 
+#1: g(x, y) = g(0, 0) + g(0, 1)
+#"None is not a valid function definition"
 
 
 """Undefined flyweight; default value for expressions that can not be evaluated
@@ -47,7 +68,7 @@ class Expression:
         return Integer(1)
     
     def term(self):
-        return self
+        return Product(self)
     
     def num(self):
         return self
@@ -196,17 +217,15 @@ class Sum(Expression):
         u_2 = terms[1]
         u_1_sum = isinstance(u_1, Sum)
         u_2_sum = isinstance(u_2, Sum)
-
         if len(terms) == 2:
-            #TODO: Implement the rest of the sum simplification routine
             if u_1_sum:
                 if u_2_sum:
                     return Sum.merge_sums(u_1.operands(), u_2.operands())
                 else:
-                    return Sum.merge_sum(u_1.operands, [u_2])
+                    return Sum.merge_sums(u_1.operands(), [u_2])
             else:
                 if u_2_sum:
-                    return Sum.merge_sum([u_1], u_2.operands())
+                    return Sum.merge_sums([u_1], u_2.operands())
                 else:
                     #Neither operand is a sum
                     if isinstance(u_1, Number):
@@ -228,8 +247,8 @@ class Sum(Expression):
                         return [u_1]
                     
                     if u_1.term() == u_2.term():
-                        S = Sum(u_1.coefficient(), u_2.coefficient())
-                        P = Product(S, u_1.term())
+                        S = Sum(u_1.coefficient(), u_2.coefficient()).simplify()
+                        P = Product(S, u_1.term()).simplify()
                         if P == Integer(0):
                             return list()
                         return [P]
@@ -438,7 +457,7 @@ class Product(Expression):
         return self.factors[0] if isinstance(self.factors[0], Constant) else Integer(1)
     
     def term(self):
-        return Product(self.factors[1::]) if isinstance(self.factors[0], Constant) else self
+        return Product(*self.factors[1::]) if isinstance(self.factors[0], Constant) else self
 
 class Div(Expression):
     """A Div represents the quotient of two terms. 
@@ -450,7 +469,8 @@ class Div(Expression):
         return Div(self.left.copy(), self.right.copy())
     
     def sym_eval(self, **symbols):
-        return self.left.sym_eval(**symbols) / self.right.sym_eval(**symbols)
+        new_div = self.left.sym_eval(**symbols) / self.right.sym_eval(**symbols)
+        return new_div.simplify()
     
     def simplify(self):
         #If both left and right are integers, return a simplified fraction
@@ -478,7 +498,8 @@ class Power(Expression):
         return Power(self.left.copy(), self.right.copy())
     
     def sym_eval(self, **symbols):
-        return self.left.sym_eval(**symbols) ** self.right.sym_eval(**symbols)
+        new_pow = self.left.sym_eval(**symbols) ** self.right.sym_eval(**symbols)
+        return new_pow.simplify()
     
     def __lt__(self, other):
         if isinstance(other, Expression):
@@ -612,9 +633,10 @@ class Variable(Expression):
     def sym_eval(self, **symbols):
         definition = symbols.get(self.name, None)
         if definition is None:
-            print(f"Symbol {self.name} was not defined")
             return self
-        return definition.sym_eval(**symbols)
+        if definition == self:
+            return self
+        return definition.sym_eval(**symbols).simplify()
     
     def simplify(self):
         return self
@@ -629,7 +651,7 @@ class Function(Expression):
         self.parameters = None
         self.definition = None
 
-    def add_args(self, *arguments):
+    def add_args(self, *arguments, **symbols):
         self.args = list(arguments)
         assert len(self.args) == len(self.parameters), f"Number of arguments does not match number of parameters for {self}"
 
@@ -647,11 +669,13 @@ class Function(Expression):
             param = str(self.parameters[i])
             param_def = self.args[i].sym_eval(**symbols)
             symbols[param] = param_def
-                
-        return self.definition.sym_eval(**symbols)
+        
+        definition = symbols.get(self.name, None).definition
+        assert definition is not None, f"Function {self.name} was cleared?"
+        return definition.sym_eval(**symbols)
 
     def simplify(self):
-        if UNDEFINED in self.args:
+        if self.args and UNDEFINED in self.args:
             return UNDEFINED
         return self
 
@@ -659,7 +683,7 @@ class Function(Expression):
         if self.args:
             args_repr = [str(arg) for arg in self.args]
             return f"{self.name}({', '.join(args_repr)})"
-        return f"<FUNCTION: {self.name}>"
+        return f"{self.definition}"
         
     def __lt__(self, other):
         if isinstance(other, Function):
@@ -701,7 +725,7 @@ class Constant(Expression):
         return NotImplemented
     
     def sym_eval(self, **symbols):
-        return self
+        return self.simplify()
 
     def __add__(self, other):
         if not isinstance(other, Constant):
