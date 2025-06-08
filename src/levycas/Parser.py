@@ -8,26 +8,24 @@ lv = False #lexing verboses
 
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
-    ("DECIMAL,    r'(\d+)?\.\d+"),    #Matches a decimal number (float)
-    ("NUMBER",    r'\d+\.?'),         #Matches an integer
-    ("VARIABLE",  r'[a-z]'),          #Matches a single lowercase letter
-    ("EXP",       r'\^'),             #Matches a single exponential symbol  
-    ("PLUS",      r'\+'),             #Matches a plus sign
-    ("MINUS",     r'-'),              #Matches a minus sign
-    ("MULT",      r'\*'),             #Matches a multiplication sign
-    ("DIV",       r'/'),              #Matches a division sign
-    ("FACT",      r'\!'),             #Matches a factorial symbol
-    ("LPAREN",    r'\('),             #Matches a left paren
-    ("RPAREN",    r'\)'),             #Matches a right paren
-    ("COMMA",     r'\,'),             #Matches a comma
-    ("SPACE",     r'\s+'),            #Matches any whitespace
-    ("OTHER",     r'.'),              #Matches any invalid characters
-    ("EOL",       r'\$')              #Matches the End-of-Line character '$'
+    ("NUMBER",    r'(\d+\.?\d*|\d*\.\d+)'),   #Matches a decimal
+    ("VARIABLE",  r'[a-z]'),                  #Matches a single lowercase letter
+    ("EXP",       r'\^'),                     #Matches a single exponential symbol  
+    ("PLUS",      r'\+'),                     #Matches a plus sign
+    ("MINUS",     r'-'),                      #Matches a minus sign
+    ("MULT",      r'\*'),                     #Matches a multiplication sign
+    ("DIV",       r'/'),                      #Matches a division sign
+    ("FACT",      r'\!'),                     #Matches a factorial symbol
+    ("LPAREN",    r'\('),                     #Matches a left paren
+    ("RPAREN",    r'\)'),                     #Matches a right paren
+    ("COMMA",     r'\,'),                     #Matches a comma
+    ("SPACE",     r'\s+'),                    #Matches any whitespace
+    ("OTHER",     r'.'),                      #Matches any invalid characters
+    ("EOL",       r'\$')                      #Matches the End-of-Line character '$'
 ]
 
 """Token classes, matching associated Parsing classes"""
 TOKEN_CLASS = {
-    "DECIMAL":  Special, #Will be converted to Rational specially
     "NUMBER":   Integer,
     "VARIABLE": Variable,
     "PLUS":     Sum,
@@ -44,7 +42,6 @@ TOKEN_CLASS = {
 
 """Operator precendences, matching associated binding powers"""
 TOKEN_BP = {
-    "DECIMAL":  (0, 0),
     "NUMBER":   (0, 0),
     "VARIABLE": (0, 5),
     "PLUS":     (10, 15),
@@ -96,7 +93,7 @@ def expand(tokens: list[Token], **symbols) -> list[Token]:
         #Implicit Multiplication is expanded
         next = tokens[i + 1] if i + 1 < len(tokens) else None
         if next:
-            if curr.type in ("VARIABLE", "NUMBER", "RPAREN") and next.type in ("VARIABLE", "LPAREN", "FUNCTION"):
+            if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and next.type in ("VARIABLE", "LPAREN", "FUNCTION"):
                 expanded.append(Token("MULT", "*", curr.pos + curr.len))
     return expanded
         
@@ -118,8 +115,22 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
         print(f"Parsing curr: {curr.type}: {curr.value}")
 
     #Parse first token as left hand side (NULL DENOTATIONS)
+
     if curr.type == "NUMBER":
-        left = Integer(int(curr.value))
+        #Parse decimal number
+        number = curr.value.split(".")
+        if len(number) == 1:
+            left = Integer(int(curr.value))
+        else:
+            assert len(number) == 2, f"Failed to parse number {curr.value}"
+            whole, partial = number
+            
+            denominator = 10 ** len(partial)
+            numerator = int(whole + partial)
+            if denominator == 1:
+                left =  Integer(numerator)
+            else:
+                left = Rational(numerator, denominator)
 
     elif curr.type == "VARIABLE":
         left = Variable(curr.value)

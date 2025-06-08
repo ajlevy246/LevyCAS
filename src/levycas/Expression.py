@@ -126,6 +126,9 @@ class Expression:
         hash(str(self))
 
     def __gt__(self, other):
+        #This method is called as the "inverse" of the lt method
+        #i.e: if (a < b) returns NotImplemented, this ensures that
+        # (not b < a) is returned
         return not (self < other)
     
     def __add__(self, other):
@@ -731,14 +734,9 @@ class Constant(Expression):
         if not isinstance(other, Constant):
             return super().__add__(other)
         
-        if isinstance(self, Integer):
-            self = Rational(self.eval(), 1)
-        if isinstance(other, Integer):
-            other = Rational(other.eval(), 1)
-
         denom_lcm = lcm(self.denom(), other.denom())
-        left_num = denom_lcm * self.num()
-        right_num = denom_lcm * other.num()
+        left_num = other.denom() * self.num()
+        right_num = self.denom() * other.num()
         new_num = left_num + right_num
         return Rational(new_num, denom_lcm).simplify()
 
