@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-levycas/LevyCAS.egg-info/PKG-INFO
-levycas/LevyCAS.egg-info/SOURCES.txt
-levycas/LevyCAS.egg-info/dependency_links.txt
-levycas/LevyCAS.egg-info/top_level.txt
-levycas/parser/Lexer.py
-levycas/parser/__init__.py
