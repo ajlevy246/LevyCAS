@@ -183,6 +183,19 @@ class Sum(Expression):
             return self < test_other
         
         return NotImplemented
+    
+    def __add__(self, other):
+        #Overrides parent method to denest the addition of two sums
+        #example: x + y + z should be Sum(x, y, z), not Sum(Sum(x, y), z)
+        if isinstance(other, Sum):
+            self.terms += other.operands
+            return self
+        
+        if isinstance(other, Expression):
+            self.terms.append(other)
+            return self
+
+        return NotImplemented
 
     def copy(self) -> Expression:
         """Return a copy of this sum
@@ -501,6 +514,17 @@ class Product(Expression):
     
     def term(self):
         return Product(*self.factors[1::]) if isinstance(self.factors[0], Constant) else self
+    
+    def __mul__(self, other):
+        if isinstance(other, Product):
+            self.factors += other.operands()
+            return self
+        
+        if isinstance(other, Expression):
+            self.factors.append(other)
+            return self
+        
+        return NotImplemented
 
 class Div(Expression):
     """A Div represents the quotient of two terms. 
@@ -841,13 +865,16 @@ class Csc(Trig):
 class Sec(Trig):
     pass
 
+class Cot(Trig):
+    pass
+
 class Constant(Expression):
     """A Constant represents a constant value"""
 
     def __lt__(self, other):
         """Total ordering for Constants: O-1"""
         if isinstance(other, Constant):
-            return self.value < other.eval()
+            return self.eval() < other.eval()
         
         if isinstance(other, Expression):
             return True

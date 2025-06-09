@@ -9,7 +9,12 @@ lv = False #lexing verboses
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
     ("NUMBER",    r'(\d+\.?\d*|\d*\.\d+)'),   #Matches a decimal
-    ("VARIABLE",  r'[a-z]'),                  #Matches a single lowercase letter
+    ("TRIG_SIN",       r'(?i)sin'),                #Matches sin function, case insensitive
+    ("TRIG_COS",       r'(?i)cos'),                #Matches cos function, case insensitive
+    ("TRIG_TAN",       r'(?i)tan'),                #Matches tan function, case insensitive
+    ("TRIG_CSC",       r'(?i)csc'),                #Matches csc function, case insensitive
+    ("TRIG_SEC",       r'(?i)sec'),                #Matches sec function, case insensitive
+    ("VARIABLE",  r'[a-zA-Z]'),               #Matches a single letter
     ("EXP",       r'\^'),                     #Matches a single exponential symbol  
     ("PLUS",      r'\+'),                     #Matches a plus sign
     ("MINUS",     r'-'),                      #Matches a minus sign
@@ -27,6 +32,11 @@ TOKEN_SPEC: list[tuple[str]] = [
 """Token classes, matching associated Parsing classes"""
 TOKEN_CLASS = {
     "NUMBER":   Integer,
+    "TRIG_SIN":      Sin,
+    "TRIG_COS":      Cos,
+    "TRIG_TAN":      Tan,
+    "TRIG_CSC":      Csc,
+    "TRIG_SEC":      Sec,
     "VARIABLE": Variable,
     "PLUS":     Sum,
     "MULT":     Product,
@@ -43,7 +53,14 @@ TOKEN_CLASS = {
 """Operator precendences, matching associated binding powers"""
 TOKEN_BP = {
     "NUMBER":   (0, 0),
-    "VARIABLE": (0, 5),
+    #Trig functions are unary operators only, and "SinSin x" should be Sin(Sin(x))
+    "TRIG_SIN": (0, 40),
+    "TRIG_COS": (0, 40),
+    "TRIG_TAN": (0, 40),
+    "TRIG_CSC": (0, 40),
+    "TRIG_SEC": (0, 40),
+    "TRIG_COT": (0, 40),
+    "VARIABLE": (0, 40),
     "PLUS":     (10, 15),
     "MINUS":    (10, 20), 
     "MULT":     (20, 25),
@@ -93,7 +110,7 @@ def expand(tokens: list[Token], **symbols) -> list[Token]:
         #Implicit Multiplication is expanded
         next = tokens[i + 1] if i + 1 < len(tokens) else None
         if next:
-            if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and next.type in ("VARIABLE", "LPAREN", "FUNCTION"):
+            if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and (next.type in ("VARIABLE", "LPAREN", "FUNCTION") or next.type.startswith("TRIG_")):
                 expanded.append(Token("MULT", "*", curr.pos + curr.len))
     return expanded
         
@@ -134,6 +151,10 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
 
     elif curr.type == "VARIABLE":
         left = Variable(curr.value)
+
+    elif curr.type.startswith("TRIG_"):
+        right = pratt(tokens, TOKEN_BP[curr.type][1])
+        left = TOKEN_CLASS[curr.type](right)
 
     elif curr.type == "FUNCTION":
         if pv:
