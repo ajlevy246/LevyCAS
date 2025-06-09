@@ -139,19 +139,57 @@ class Expression:
         return not (self < other)
     
     def __add__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
         return Sum(self, other) if isinstance(other, Expression) else NotImplemented
     
     def __sub__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
         return Sum(self, Product(Integer(-1), other)) if isinstance(other, Expression) else NotImplemented
     
     def __mul__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
         return Product(self, other) if isinstance(other, Expression) else NotImplemented
     
-    def __truediv__(self, other):
+    def __truediv__(self, other):        
+        if isinstance(other, int):
+            other = Integer(other)
         return Div(self, other) if isinstance(other, Expression) else NotImplemented
     
     def __pow__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
         return Power(self, other) if isinstance(other, Expression) else NotImplemented
+    
+    """Right hand dunder methods for treating ints as Integers"""
+    def __radd__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
+        return Sum(other, self) if isinstance(other, Expression) else NotImplemented
+
+    def __rsub__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
+        return Sum(other, Product(Integer(-1), self)) if isinstance(other, Expression) else NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
+        return Product(other, self) if isinstance(other, Expression) else NotImplemented
+
+    def __rtruediv__(self, other):
+        if isinstance(other, int):
+            if other == 0:
+                raise ZeroDivisionError
+            other = Integer(other)
+        return Div(other, self) if isinstance(other, Expression) else NotImplemented
+
+    def __rpow__(self, other):
+        if isinstance(other, int):
+            other = Integer(other)
+        return Power(other, self) if isinstance(other, Expression) else NotImplemented
 
 class Sum(Expression):
     """A Sum is the sum of two terms"""
@@ -195,7 +233,8 @@ class Sum(Expression):
             self.terms.append(other)
             return self
 
-        return NotImplemented
+        print(f"Trying to sum {self} and {other}")
+        return super().__add__(other)
 
     def copy(self) -> Expression:
         """Return a copy of this sum
@@ -524,7 +563,7 @@ class Product(Expression):
             self.factors.append(other)
             return self
         
-        return NotImplemented
+        return super().__mul__(other)
 
 class Div(Expression):
     """A Div represents the quotient of two terms. 
