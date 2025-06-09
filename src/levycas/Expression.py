@@ -1,5 +1,5 @@
 """Classes for internal representations of mathematical expressions"""
-from math import gcd, lcm
+from math import gcd, lcm, comb 
 from numbers import Number
 
 #TODO: Deal with **symbols dictionary. It should ideally be global
@@ -34,6 +34,9 @@ from numbers import Number
 #TODO: Parse error? 
 #1: g(x, y) = g(0, 0) + g(0, 1)
 #"None is not a valid function definition"
+
+#TODO: Fix algebraic expand: Elementary Algorithms page 253
+#Use example: (x + 1)(x + 2) -> (x^2) + (3*x) + 2
 
 
 """Undefined flyweight; default value for expressions that can not be evaluated
@@ -76,6 +79,9 @@ class Expression:
     def denom(self):
         return Integer(1)
 
+    def algebraic_expand(self):
+        return self
+
     @staticmethod
     def simplify_rational_expression(expr):
         """Recursively simplifies a rational expression into lowest terms."""
@@ -111,6 +117,7 @@ class Expression:
         else:
             raise ValueError("Expected a rational expression with 1 or 2 operands")
 
+    """The following dunder methods allow us to treat python statements as AST's"""
     def __eq__(self, other):
         """Check if two expressions are syntactically equal. For this to make sense, 
         both expressions should be ASAE (Automatically-Simplified Arithmetic Expressions)."""
@@ -185,13 +192,20 @@ class Sum(Expression):
         """
         copied_sums = [term.copy() for term in self.terms]
         return Sum(*copied_sums)
-    
+
     def sym_eval(self, **symbols):
         total = Integer(0)
         for term in self.terms:
             total += term.sym_eval(**symbols)
         return total.simplify()
     
+    def algebraic_expand(self):
+        if len(self.terms) == 1:
+            return self.terms[0].algebraic_expand()
+        v = self.terms[0]
+        u_minus_v = Sum(*self.terms[1::])
+        return (v.algebraic_expand() + u_minus_v.algebraic_expand())
+
     def simplify(self):
         L = [term.simplify() for term in self.terms]
         
@@ -298,8 +312,11 @@ class Product(Expression):
         self.factors = list(factors)
 
     def __repr__(self):
+        if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
+            return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
+        
         factor_repr = [str(factor) for factor in self.factors]
-        return "(" + " * ".join(factor_repr) + ")"
+        return "(" + " \u00B7 ".join(factor_repr) + ")" #\u00b7 -> \cdot
     
     def __lt__(self, other):
         """Total ordering for Products: O-3"""
@@ -332,6 +349,14 @@ class Product(Expression):
         for factor in self.factors:
             prod *= factor.sym_eval(**symbols)
         return prod.simplify()
+
+    def algebraic_expand(self):
+        if len(self.factors) == 1:
+            return self.factors[0].algebraic_expand()
+        
+        v = self.factors[0]
+        u_div_v = Product(*self.factors[1::])
+        return Product.expand_product(v.algebraic_expand(), u_div_v.algebraic_expand())
 
     def simplify(self):
         self.factors = [factor.simplify() for factor in self.factors]
@@ -453,6 +478,21 @@ class Product(Expression):
             assert h[1] == p_1
             return [q_1] + Product.merge_products(p, q[1::])
 
+    @staticmethod
+    def expand_product(r: Expression, s: Expression):
+        if isinstance(r, Sum):
+            if len(r.terms) == 1: 
+                return (r.terms[0] * s).algebraic_expand()
+            
+            f = r.terms[0]
+            r_minus_f = Sum(*r.terms[1::])
+            return Product.expand_product(f, s) + Product.expand_product(r_minus_f, s)
+        
+        if isinstance(s, Sum):
+            return Product.expand_product(s, r)
+        
+        return r * s
+
     def operands(self):
         return self.factors
     
@@ -517,6 +557,26 @@ class Power(Expression):
     def exponent(self):
         return self.right
     
+    def algebraic_expand(self):
+        #TODO: Implement for non-integer exponents. See Elementary Algorithms page 253
+        ###Original algorithm:
+        # if isinstance(self.right, Integer) and self.right.value >= 1: #Textbook requires exponent > 1, but this modification allows x(x + 1)^1 -> x^2 + x as required
+        #     return Power.expand_power(self.left.algebraic_expand(), self.right)
+        
+        # return self #Expand base whether or not integer exponent
+
+        ###Modification from original algorithm: Special cases for exponents 0 and 1
+        if isinstance(self.right, Integer):
+            if self.right.value == 0:
+                return Integer(1)
+            
+            if self.right.value == 1:
+                return self.left.algebraic_expand()
+            
+            return Power.expand_power(self.left.algebraic_expand(), self.right)
+        
+        return self 
+
     def simplify(self):
         #S-POW (1)
         self.left = self.left.simplify()
@@ -572,6 +632,26 @@ class Power(Expression):
     
     def operands(self):
         return [self.left, self.right]
+    
+    @staticmethod
+    def expand_power(u, n):
+        assert isinstance(n, Integer) and int(n) >= 0, f"Expand_power only implemented for non_negative integers"
+
+        if isinstance(u, Sum):
+            n = int(n)
+            f = u.terms[0]
+            if n == 1:
+                return f.algebraic_expand()
+            if len(u.terms) == 1:
+                return (f ** Integer(n)).algebraic_expand()
+            r = Sum(*u.terms[1::])
+            s = Integer(0)
+            for k in range(n + 1): #Binomial theorem
+                c = Integer(comb(n, k)) #{n \choose k}
+                s += Product.expand_product((c * f ** Integer(n-k)), Power.expand_power(r, Integer(k)))
+            return s.algebraic_expand()
+        
+        return u ** n
         
         
 class Factorial(Expression):
@@ -914,6 +994,9 @@ class Integer(Constant):
     
     def denom(self):
         return 1
+    
+    def __int__(self):
+        return self.value
 
 class Special(Expression):
     """Special represents special cases"""

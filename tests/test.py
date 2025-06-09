@@ -12,20 +12,20 @@ def main():
         if entered == "clear":
             clear()
             continue
-
         if entered == "symbols":
             print("========== Symbol Table ==========")
             for index, (key, value) in enumerate(symbols.items()):
                 print(f"{index}: {key} = {value}")
             print("==================================")
             continue
-
         if entered == "test":
             order()
             continue
-
         if entered == "simplify":
             simplify()
+            continue
+        if entered == "expand":
+            expand()
             continue
 
         num_assignments = entered.count("=")
@@ -99,12 +99,13 @@ def simplify():
         a = evaluate(a)
         original_a = str(a)
         simp_a = a.copy().simplify()
-        print(f"{original_a} -> {simp_a.sym_eval()}")
+        print(f">> {original_a} -> {simp_a.sym_eval()}")
         
     clear()
     return
 
 def order():
+    clear()
     """Test total ordering of objects"""
     while True:
         a = input("First Expression $>: ")     
@@ -134,11 +135,31 @@ def order():
             return
         
         if a < b:
-            print(f"{a} < {b}")
+            print(f">> {a} < {b}")
         else:
-            print(f"{b} < {a}")
+            print(f">> {b} < {a}")
     clear()
     return
+
+def expand():
+    clear()
+    while True:
+        a = input("Expand $> ")
+        if a == "clear":
+            clear()
+            continue
+        if a == "exit":
+            clear()
+            return
+
+        expr = evaluate(a)
+        if expr:
+            expanded  = expr.algebraic_expand()
+            # print(f">> {expanded}")
+            simplified = expanded.simplify()
+            print(f">> {simplified}\n")
+
+
 
 def evaluate(string: str) -> Expression:
     """Evaluate an expression string and return the result"""
