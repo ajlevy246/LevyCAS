@@ -2,6 +2,12 @@
 from math import gcd, lcm, comb 
 from numbers import Number
 
+#TODO: Rethink function implementation! Not too late!!
+#Do this before implementing derivative operator on page 182 of Elementary Algorithms
+#also, implement natural logarithm first! TEST DERIVATIVE IMPLEMENTATION 
+#Example: (x ** 2).derivative(y) -> fails
+#Implement derivative operator to simplify automatically?
+
 #TODO: Deal with **symbols dictionary. It should ideally be global
 #to avoid conflicts with the simplify function
 
@@ -54,9 +60,10 @@ class Expression:
     """An Expression is a general mathematical object.
     In this case, it is used to represent binary operations
     """
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
+    def __init__(self, *args):
+        assert len(args) == 2
+        self.left = args[0]
+        self.right = args[1]
 
     """The following four methods allow us to treat arbitrary expressions as powers/products/rationals. 
     This is useful for automatic simplification and total ordering of expressions.
@@ -81,6 +88,113 @@ class Expression:
 
     def algebraic_expand(self):
         return self
+
+    """The following dunder methods allow us to treat python statements as AST's"""
+    def __eq__(self, other):
+        """Check if two expressions are syntactically equal. For this to make sense, 
+        both expressions should be ASAE (Automatically-Simplified Arithmetic Expressions)."""
+        if isinstance(self, Constant) and isinstance(other, Constant):
+            return self.eval() == other.eval()
+        
+        if isinstance(other, Expression):
+            return str(self) == str(other)
+        
+        return NotImplemented
+    
+    def __hash__(self):
+        hash(str(self))
+
+    def __gt__(self, other):
+        #This method is called as the "inverse" of the lt method
+        #i.e: if (a < b) returns NotImplemented, this ensures that
+        # (not b < a) is returned
+        return not (self < other)
+    
+    def __add__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Sum(self, other) if isinstance(other, Expression) else NotImplemented
+    
+    def __sub__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Sum(self, Product(Integer(-1), other)) if isinstance(other, Expression) else NotImplemented
+    
+    def __mul__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Product(self, other) if isinstance(other, Expression) else NotImplemented
+    
+    def __truediv__(self, other):     
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Div(self, other) if isinstance(other, Expression) else NotImplemented
+    
+    def __pow__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Power(self, other) if isinstance(other, Expression) else NotImplemented
+    
+    """Right hand dunder methods for treating ints as Integers"""
+    def __radd__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Sum(other, self) if isinstance(other, Expression) else NotImplemented
+
+    def __rsub__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Sum(other, Product(Integer(-1), self)) if isinstance(other, Expression) else NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Product(other, self) if isinstance(other, Expression) else NotImplemented
+
+    def __rtruediv__(self, other):
+        if isinstance(other, Number):
+            if other == 0:
+                raise ZeroDivisionError
+            other = Rational.convert_float(other)
+        return Div(other, self) if isinstance(other, Expression) else NotImplemented
+
+    def __rpow__(self, other):
+        if isinstance(other, Number):
+            other = Rational.convert_float(other)
+        return Power(other, self) if isinstance(other, Expression) else NotImplemented
+
+    def contains(self, other):
+        """Return True if self contains other as a sub-expression, False otherwise
+        See "free_of" implementation on page 179 of Elementary Algorithms
+
+        Args:
+            other (Expression): Sub-expression to search for
+
+        Raises:
+            AssertionError: Other is not an Expression object
+
+        Returns:
+            bool: True if other is contained in self as a complete sub-expression, False otherwise
+        """
+        assert isinstance(other, Expression), f"Cannot search for non-Expression {other} as a sub-expression"
+
+        if self == other:
+            return True
+        
+        elif isinstance(self, Constant) or isinstance(self, Variable):
+            #Terminals contain no sub-expressions
+            return False
+        
+        operand_list = self.operands()
+        for i in range(len(operand_list)):
+            if operand_list[i].contains(other):
+                return True
+        return False
+    
+    def trig_substitute(self):
+        L = [operand.trig_substitute() for operand in self.operands()]
+        return type(self)(*L) #Substitute each operand recursively 
+        
 
     @staticmethod
     def simplify_rational_expression(expr):
@@ -116,80 +230,17 @@ class Expression:
             
         else:
             raise ValueError("Expected a rational expression with 1 or 2 operands")
-
-    """The following dunder methods allow us to treat python statements as AST's"""
-    def __eq__(self, other):
-        """Check if two expressions are syntactically equal. For this to make sense, 
-        both expressions should be ASAE (Automatically-Simplified Arithmetic Expressions)."""
-        if isinstance(self, Constant) and isinstance(other, Constant):
-            return self.eval() == other.eval()
         
-        if isinstance(other, Expression):
-            return str(self) == str(other)
+    def derivative(self, wrt):
+        #DERIV-6
+        if self.contains(wrt):
+            return Integer(0)
         
-        return NotImplemented
-    
-    def __hash__(self):
-        hash(str(self))
-
-    def __gt__(self, other):
-        #This method is called as the "inverse" of the lt method
-        #i.e: if (a < b) returns NotImplemented, this ensures that
-        # (not b < a) is returned
-        return not (self < other)
-    
-    def __add__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Sum(self, other) if isinstance(other, Expression) else NotImplemented
-    
-    def __sub__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Sum(self, Product(Integer(-1), other)) if isinstance(other, Expression) else NotImplemented
-    
-    def __mul__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Product(self, other) if isinstance(other, Expression) else NotImplemented
-    
-    def __truediv__(self, other):        
-        if isinstance(other, int):
-            other = Integer(other)
-        return Div(self, other) if isinstance(other, Expression) else NotImplemented
-    
-    def __pow__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Power(self, other) if isinstance(other, Expression) else NotImplemented
-    
-    """Right hand dunder methods for treating ints as Integers"""
-    def __radd__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Sum(other, self) if isinstance(other, Expression) else NotImplemented
-
-    def __rsub__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Sum(other, Product(Integer(-1), self)) if isinstance(other, Expression) else NotImplemented
-
-    def __rmul__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Product(other, self) if isinstance(other, Expression) else NotImplemented
-
-    def __rtruediv__(self, other):
-        if isinstance(other, int):
-            if other == 0:
-                raise ZeroDivisionError
-            other = Integer(other)
-        return Div(other, self) if isinstance(other, Expression) else NotImplemented
-
-    def __rpow__(self, other):
-        if isinstance(other, int):
-            other = Integer(other)
-        return Power(other, self) if isinstance(other, Expression) else NotImplemented
+        #DERIV-7
+        simplified = self.copy().simplify()
+        if self == simplified:
+            return Derivative(self)
+        return simplified.derivative(wrt)
 
 class Sum(Expression):
     """A Sum is the sum of two terms"""
@@ -226,7 +277,7 @@ class Sum(Expression):
         #Overrides parent method to denest the addition of two sums
         #example: x + y + z should be Sum(x, y, z), not Sum(Sum(x, y), z)
         if isinstance(other, Sum):
-            self.terms += other.operands
+            self.terms += other.operands()
             return self
         
         if isinstance(other, Expression):
@@ -357,6 +408,11 @@ class Sum(Expression):
         
     def operands(self):
         return self.terms
+    
+    def derivative(self, wrt):
+        #DERIV-3; non-recursive implementation
+        new_terms = [term.derivative(wrt) for term in self.terms]
+        return Sum(*new_terms).simplify()
 
 class Product(Expression):
     """A Product is the product of two factors"""
@@ -564,6 +620,15 @@ class Product(Expression):
             return self
         
         return super().__mul__(other)
+    
+    def derivative(self, wrt):
+        #DERIV-4
+        if len(self.factors) == 1:
+            return self.factors[0].derivative(wrt)
+        
+        v = self.factors[0]
+        w = Product(*self.factors[1::])
+        return (v.derivative(wrt) * w + v * w.derivative(wrt)).simplify()
 
 class Div(Expression):
     """A Div represents the quotient of two terms. 
@@ -696,6 +761,18 @@ class Power(Expression):
     def operands(self):
         return [self.left, self.right]
     
+    def derivative(self, wrt):
+        #DERIV-2
+        v = self.left
+        w = self.right
+        if w.contains(wrt):
+            raise NotImplementedError("DERIV-2 not yet implemented for non-constant exponents")
+        lhs = w * v ** (w + Integer(-1)) * v.derivative(wrt)
+        # rhs = w.derivative(wrt) * v ** w * ln(v)
+        # return (lhs + rhs).simplify()
+        return lhs.simplify()
+        
+
     @staticmethod
     def expand_power(u, n):
         assert isinstance(n, Integer) and int(n) >= 0, f"Expand_power only implemented for non_negative integers"
@@ -715,7 +792,6 @@ class Power(Expression):
             return s.algebraic_expand()
         
         return u ** n
-        
         
 class Factorial(Expression):
     """A Factorial represents the factorial of a number"""
@@ -789,9 +865,20 @@ class Variable(Expression):
     
     def operands(self):
         return [self.name]
+    
+    def derivative(self, wrt):
+        #DERIV-1
+        assert isinstance(wrt, Variable), f"Can only take derivative with respect to a variable"
+        if self == wrt:
+            return Integer(1)
+        return Integer(0)
+    
+    def trig_substitute(self):
+        return self
 
 class Function(Expression):
     def __init__(self, name):
+        print(f"Creating function?? {name}")
         self.name = name
         self.args = None
         self.parameters = None
@@ -801,7 +888,8 @@ class Function(Expression):
         self.args = list(arguments)
         assert len(self.args) == len(self.parameters), f"Number of arguments does not match number of parameters for {self}"
 
-    def set_parameters(self, parameters: list[Variable]):
+    def set_parameters(self, *parameters: list[Variable]):
+        assert Variable(self.name) not in parameters, f"Function {self.name} cannot depend on itself"
         self.parameters = parameters
 
     def set_definition(self, definition: Expression):
@@ -829,8 +917,12 @@ class Function(Expression):
         if self.args:
             args_repr = [str(arg) for arg in self.args]
             return f"{self.name}({', '.join(args_repr)})"
-        return f"{self.definition}"
-        
+        if self.definition:
+            return f"{self.definition}"
+        if self.definition:
+            return f"{self.name}({', '.join(self.parameters)})"
+        return f"Function({self.name})"
+
     def __lt__(self, other):
         if isinstance(other, Function):
             if self.name < other.name:
@@ -856,213 +948,20 @@ class Function(Expression):
         if self.args:
             copied.add_args(*self.args)
         return copied
-                
-class Trig(Expression):
-    """Trig functions represent the trigonometric functions"""
-    orderings = ['Sin', 'Cos', 'Tan', 'Csc', 'Sec']
-
-    def __init__(self, arg):
-        self.arg = arg
-        
-    def __lt__(self, other):
-
-        #If they are the same type, compare values
-        if isinstance(other, type(self)): 
-            return self.arg < other.arg
-        
-        #If they are both trig functions, compare via precedence rules
-        if isinstance(other, Trig):
-            self_precedence = Trig.orderings.index(type(self).__name__)
-            other_precedence = Trig.orderings.index(type(other).__name__)
-            return self_precedence < other_precedence
-        
-        #Otherwise, return false
-        if isinstance(other, Expression):
-            return False
-        
-        return NotImplemented
-    
-    def simplify(self):
-        #Trig simplify not yet implemented
-        return self
-    
-    def __repr__(self):
-        return f"{type(self).__name__}({self.arg})"
-
-class Sin(Trig):
-    pass
-
-class Cos(Trig):
-    pass
-
-class Tan(Trig):
-    pass
-
-class Csc(Trig):
-    pass
-
-class Sec(Trig):
-    pass
-
-class Cot(Trig):
-    pass
-
-class Constant(Expression):
-    """A Constant represents a constant value"""
-
-    def __lt__(self, other):
-        """Total ordering for Constants: O-1"""
-        if isinstance(other, Constant):
-            return self.eval() < other.eval()
-        
-        if isinstance(other, Expression):
-            return True
-        
-        return NotImplemented
-    
-    def sym_eval(self, **symbols):
-        return self.simplify()
-
-    def __add__(self, other):
-        if not isinstance(other, Constant):
-            return super().__add__(other)
-        
-        denom_lcm = lcm(self.denom(), other.denom())
-        left_num = other.denom() * self.num()
-        right_num = self.denom() * other.num()
-        new_num = left_num + right_num
-        return Rational(new_num, denom_lcm).simplify()
-
-    def __sub__(self, other):
-        if not isinstance(other, Constant):
-            return super().__sub__(other)
-        
-        if isinstance(self, Integer):
-            self = Rational(self.eval(), 1)
-        if isinstance(other, Integer):
-            other = Rational(other.eval(), 1)
-
-        denom_lcm = lcm(self.denom(), other.denom())
-        left_num = denom_lcm * self.num()
-        right_num = denom_lcm * other.num()
-        new_num = left_num - right_num
-        return Rational(new_num, denom_lcm).simplify()
-           
-    def __mul__(self, other):
-        if not isinstance(other, Constant):
-            return super().__mul__(other)
-        
-        if isinstance(self, Integer):
-            self = Rational(self.eval(), 1)
-        if isinstance(other, Integer):
-            other = Rational(other.eval(), 1)
-
-        new_num = self.num() * other.num()
-        new_denom = self.denom() * other.denom()
-        return Rational(new_num, new_denom).simplify()
-
-    def __pow__(self, other):
-        if not isinstance(other, Integer):
-            return super().__pow__(other)
-        
-        if other.is_negative():
-            new_num = self.denom() ** -other.eval()
-            new_denom = self.num() ** -other.eval()
-        else:
-            new_num = self.num() ** other.eval()
-            new_denom = self.denom() ** other.eval()
-        return Rational(new_num, new_denom).simplify()
-    
-class Rational(Constant):
-    """A rational expression is a constant; a fraction of two integers"""
-    def __init__(self, *args):
-        for arg in args:
-            assert isinstance(arg, int), f"arg {arg} is {type(arg)}"
-
-        if len(args) == 1:
-            self.left = args[0]
-            self.right = 1
-        else:
-            super().__init__(*args)
-
-    def __repr__(self):
-        return f"({self.left} / {self.right})"
-    
-    def copy(self):
-        return Rational(self.left, self.right)
-
-    def eval(self, **vars):
-        return self.left / self.right
-
-    def is_positive(self):
-        return (self.left < 0) if (self.right < 0) else (self.left > 0)
-    
-    def is_negative(self):
-        return (self.left < 0) if (self.right < 0) else (self.left > 0)
-    
-    def num(self):
-        return self.left
-    
-    def denom(self):
-        return self.right
-
-    def simplify(self):
-        """Simplifies a fraction into lowest terms"""
-        n = self.left
-        d = self.right
-        if d == 0:
-            return UNDEFINED
-        
-        if n % d == 0:
-            return Integer(n // d)
-        
-        g = gcd(n, d)
-        if  d > 0:
-            return Rational(n // g, d // g)
-        
-        else:
-            return Rational(-n // g, -d // g)
-        
-    def operands(self):
-        return [self.left, self.right]
-
-class Integer(Constant):
-    """An Integer represents a decimal integer"""
-
-    def __init__(self, value: int):
-        """Creates a new Integer object"""
-        self.value = value
-
-    def __repr__(self):
-        """Returns the value of the integer"""
-        return str(self.value)
-
-    def eval(self, **vars):
-        return self.value
-    
-    def copy(self):
-        return Integer(self.value)
-
-    def is_positive(self):
-        return self.value > 0
-    
-    def is_negative(self):
-        return self.value < 0
-
-    def simplify(self):
-        return self
     
     def operands(self):
-        return [self.value]
-    
-    def num(self):
-        return self.value
-    
-    def denom(self):
-        return 1
-    
-    def __int__(self):
-        return self.value
+        if self.definition:
+            return [self.definition]
+        return self
+
+class Derivative(Function):
+    """The anonymous derivative operator will be used when other derivative rules fail
+    See DERIV-7, page 183 Elementary Algorithms
+    """
+    def __repr__(self):
+        return f"Derivative({self.name})"
+
+
 
 class Special(Expression):
     """Special represents special cases"""
