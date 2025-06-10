@@ -1,10 +1,10 @@
 """An implementation of a Pratt Parser for simple expressions"""
-from .Lexer import Token, tokenize
-from .Expression import *
+from .lexer import Token, tokenize
+from ..expressions import *
 
 #Global verbose vars for testing purposes
 pv = False #parsing verbose 
-lv = False #lexing verboses
+lv = False #lexing verbose
 
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [

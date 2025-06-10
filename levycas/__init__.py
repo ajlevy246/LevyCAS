@@ -6,8 +6,13 @@ from .parser import (
 from .expressions import (
     Constant, Integer, Rational,
     CAS_ENV, Expression, Sum, Product, Div, Power, Factorial, Derivative, Special,
-    Trig, Sin, Cos, Tan, Csc, Sec, Cot,
-    Variable, Function
+    trig_substitute, Trig, Sin, Cos, Tan, Csc, Sec, Cot,
+    Variable, Function,
+    Exp, Ln
+)
+
+from .operations import (
+    contains, copy
 )
 
 __all__ = [
@@ -15,6 +20,8 @@ __all__ = [
     'TOKEN_SPEC', 'TOKEN_CLASS', 'TOKEN_BP', 'parse', 'expand', 'pratt',
     'Constant', 'Integer', 'Rational',
     'CAS_ENV', 'Expression', 'Sum', 'Product', 'Div', 'Power', 'Factorial', 'Derivative', 'Special',
-    'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot',
-    'Variable', 'Function'
+    'trig_substitute', 'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot',
+    'Variable', 'Function',
+    'Exp', 'Ln',
+    'contains', 'copy'
 ]

@@ -2,6 +2,9 @@
 from math import gcd, lcm, comb 
 from numbers import Number
 
+#TODO: Change the simplify operation to return a new expression, instead of altering in place??
+#perhaps make it a static function under Expression
+
 #TODO: Rethink function implementation! Not too late!!
 #Do this before implementing derivative operator on page 182 of Elementary Algorithms
 #also, implement natural logarithm first! TEST DERIVATIVE IMPLEMENTATION 
@@ -86,8 +89,15 @@ class Expression:
     def denom(self):
         return Integer(1)
 
+    def simplify(self):
+        #In the default case, return the same operation with simplified operands
+        simplified_operands = [operand.simplify() for operand in self.operands()]
+        return type(self)(*simplified_operands)
+
     def algebraic_expand(self):
-        return self
+        #In the default case, return the same operation with expanded operands
+        expanded_operands = [operand.algebraic_expand() for operand in self.operands()]
+        return type(self)(*expanded_operands)
 
     """The following dunder methods allow us to treat python statements as AST's"""
     def __eq__(self, other):
@@ -163,39 +173,6 @@ class Expression:
             other = Rational.convert_float(other)
         return Power(other, self) if isinstance(other, Expression) else NotImplemented
 
-    def contains(self, other):
-        """Return True if self contains other as a sub-expression, False otherwise
-        See "free_of" implementation on page 179 of Elementary Algorithms
-
-        Args:
-            other (Expression): Sub-expression to search for
-
-        Raises:
-            AssertionError: Other is not an Expression object
-
-        Returns:
-            bool: True if other is contained in self as a complete sub-expression, False otherwise
-        """
-        assert isinstance(other, Expression), f"Cannot search for non-Expression {other} as a sub-expression"
-
-        if self == other:
-            return True
-        
-        elif isinstance(self, Constant) or isinstance(self, Variable):
-            #Terminals contain no sub-expressions
-            return False
-        
-        operand_list = self.operands()
-        for i in range(len(operand_list)):
-            if operand_list[i].contains(other):
-                return True
-        return False
-    
-    def trig_substitute(self):
-        L = [operand.trig_substitute() for operand in self.operands()]
-        return type(self)(*L) #Substitute each operand recursively 
-        
-
     @staticmethod
     def simplify_rational_expression(expr):
         """Recursively simplifies a rational expression into lowest terms."""
@@ -232,12 +209,15 @@ class Expression:
             raise ValueError("Expected a rational expression with 1 or 2 operands")
         
     def derivative(self, wrt):
+        #lazy import for contains and copy
+        from ..operations import contains, copy
+
         #DERIV-6
-        if self.contains(wrt):
+        if not contains(self, wrt):
             return Integer(0)
         
         #DERIV-7
-        simplified = self.copy().simplify()
+        simplified = copy(self).simplify()
         if self == simplified:
             return Derivative(self)
         return simplified.derivative(wrt)
@@ -286,15 +266,6 @@ class Sum(Expression):
 
         print(f"Trying to sum {self} and {other}")
         return super().__add__(other)
-
-    def copy(self) -> Expression:
-        """Return a copy of this sum
-
-        Returns:
-            Expression: A copy of the sum
-        """
-        copied_sums = [term.copy() for term in self.terms]
-        return Sum(*copied_sums)
 
     def sym_eval(self, **symbols):
         total = Integer(0)
@@ -447,10 +418,6 @@ class Product(Expression):
             return self < test_other
 
         return NotImplemented 
-    
-    def copy(self):
-        copied_factors = [factor.copy() for factor in self.factors]
-        return Product(*copied_factors)
 
     def sym_eval(self, **symbols):
         prod = Integer(1)
@@ -492,6 +459,7 @@ class Product(Expression):
 
     @staticmethod
     def simplify_product_rec(factors):
+        print(f"Simplify product: {factors}")
         assert len(factors) >= 2
         u_1 = factors[0]
         u_2 = factors[1]
@@ -555,7 +523,6 @@ class Product(Expression):
             
     @staticmethod 
     def merge_products(p, q):
-
         assert p is not None
         assert q is not None
 
@@ -636,9 +603,6 @@ class Div(Expression):
     def __repr__(self):
         return f"({self.left} / {self.right})"
     
-    def copy(self):
-        return Div(self.left.copy(), self.right.copy())
-    
     def sym_eval(self, **symbols):
         new_div = self.left.sym_eval(**symbols) / self.right.sym_eval(**symbols)
         return new_div.simplify()
@@ -664,9 +628,6 @@ class Power(Expression):
     """A Power represents exponentiation"""
     def __repr__(self):
         return f"({self.left} ^ {self.right})"
-    
-    def copy(self):
-        return Power(self.left.copy(), self.right.copy())
     
     def sym_eval(self, **symbols):
         new_pow = self.left.sym_eval(**symbols) ** self.right.sym_eval(**symbols)
@@ -765,13 +726,13 @@ class Power(Expression):
         #DERIV-2
         v = self.left
         w = self.right
-        if w.contains(wrt):
-            raise NotImplementedError("DERIV-2 not yet implemented for non-constant exponents")
         lhs = w * v ** (w + Integer(-1)) * v.derivative(wrt)
-        # rhs = w.derivative(wrt) * v ** w * ln(v)
-        # return (lhs + rhs).simplify()
-        return lhs.simplify()
         
+        #Lazy import for natural log function
+        from .exp import Ln
+        rhs = w.derivative(wrt) * v ** w * Ln(v)
+        return (lhs + rhs).simplify()
+
 
     @staticmethod
     def expand_power(u, n):
@@ -810,16 +771,17 @@ class Factorial(Expression):
                 return False
             return self.value < other
         return NotImplemented
-    
-    def copy(self):
-        return Factorial(self.value.copy())
-    
+
     def sym_eval(self, **symbols):
+        #Lazy import for copy
+        from ..operations import copy
+
+        #This needs work!!
         if isinstance(self.value, Integer):
             if self.value == Integer(0):
                 return Integer(1)
             elif self.value.is_positive():
-                computed = self.value.copy()
+                computed = copy(self.value)
                 for i in range(1, self.value.eval()):
                     computed *= Integer(i)
                 return computed.simplify()
@@ -869,9 +831,6 @@ class Variable(Expression):
         if isinstance(other, Variable):
             return self.name < other.name
         return NotImplemented
-
-    def copy(self):
-        return Variable(self.name)
     
     def sym_eval(self, **symbols):
         definition = symbols.get(self.name, None)
@@ -893,9 +852,6 @@ class Variable(Expression):
         if self == wrt:
             return Integer(1)
         return Integer(0)
-    
-    def trig_substitute(self):
-        return self
 
 class Function(Expression):
     def __init__(self, name):
@@ -974,7 +930,6 @@ class Function(Expression):
         if self.definition:
             return [self.definition]
         return 
-    
 
 #=============== CONSTANTS ===============
 class Constant(Expression):
@@ -1046,9 +1001,6 @@ class Constant(Expression):
     def derivative(self, wrt):
         return Integer(0)
     
-    def trig_substitute(self):
-        return self
-    
 class Rational(Constant):
     """A rational expression is a constant; a fraction of two integers"""
     def __init__(self, *args):
@@ -1063,9 +1015,6 @@ class Rational(Constant):
 
     def __repr__(self):
         return f"({self.left} / {self.right})"
-    
-    def copy(self):
-        return Rational(self.left, self.right)
 
     def eval(self, **vars):
         return self.left / self.right
@@ -1140,9 +1089,6 @@ class Integer(Constant):
 
     def eval(self, **vars):
         return self.value
-    
-    def copy(self):
-        return Integer(self.value)
 
     def is_positive(self):
         return self.value > 0
