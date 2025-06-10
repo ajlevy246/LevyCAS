@@ -1,13 +1,14 @@
 [project]
 name = "LevyCAS"
-version = "0.0.1"
+version = "1.0"
 authors = [
     {name = "Alex Levy", email = "ajlevy246@vt.edu"},
 ]
 description = "Implementation of a Pratt Parser for simple expressions"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["levycas"]

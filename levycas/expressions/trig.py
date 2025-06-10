@@ -1,4 +1,5 @@
-from . import Expression
+from .expression import *
+from .constant import *
 
 class Trig(Expression):
     """Trig functions represent the trigonometric functions"""

@@ -832,16 +832,12 @@ class Factorial(Expression):
     def simplify(self):
         return Factorial(self.value.simplify())
 
-
-
-class Derivative(Function):
+class Derivative():
     """The anonymous derivative operator will be used when other derivative rules fail
     See DERIV-7, page 183 Elementary Algorithms
     """
     def __repr__(self):
         return f"Derivative({self.name})"
-
-
 
 class Special(Expression):
     """Special represents special cases"""
@@ -851,3 +847,320 @@ class Special(Expression):
     
     def __repr__(self):
         raise NotImplementedError("Special cases not yet implemented")
+    
+
+
+#=============== SYMBOLS ===============
+
+
+class Variable(Expression):
+    """A Variable represents a variable"""
+
+    def __init__(self, name: str):
+        """Create a new Variable object"""
+        self.name = name
+
+    def __repr__(self) -> str:
+        """Return the name of the variable"""
+        return self.name
+    
+    def __lt__(self, other):
+        """Total ordering for Variables: O-2"""
+        if isinstance(other, Variable):
+            return self.name < other.name
+        return NotImplemented
+
+    def copy(self):
+        return Variable(self.name)
+    
+    def sym_eval(self, **symbols):
+        definition = symbols.get(self.name, None)
+        if definition is None:
+            return self
+        if definition == self:
+            return self
+        return definition.sym_eval(**symbols).simplify()
+    
+    def simplify(self):
+        return self
+    
+    def operands(self):
+        return [self.name]
+    
+    def derivative(self, wrt):
+        #DERIV-1
+        assert isinstance(wrt, Variable), f"Can only take derivative with respect to a variable"
+        if self == wrt:
+            return Integer(1)
+        return Integer(0)
+    
+    def trig_substitute(self):
+        return self
+
+class Function(Expression):
+    def __init__(self, name):
+        print(f"Creating function?? {name}")
+        self.name = name
+        self.args = None
+        self.parameters = None
+        self.definition = None
+
+    def add_args(self, *arguments, **symbols):
+        self.args = list(arguments)
+        assert len(self.args) == len(self.parameters), f"Number of arguments does not match number of parameters for {self}"
+
+    def set_parameters(self, *parameters: list[Variable]):
+        assert Variable(self.name) not in parameters, f"Function {self.name} cannot depend on itself"
+        self.parameters = parameters
+
+    def set_definition(self, definition: Expression):
+        self.definition = definition
+
+    def sym_eval(self, **symbols):
+        if not self.args:
+            return self
+        
+        for i in range(len(self.parameters)):
+            param = str(self.parameters[i])
+            param_def = self.args[i].sym_eval(**symbols)
+            symbols[param] = param_def
+        
+        definition = symbols.get(self.name, None).definition
+        assert definition is not None, f"Function {self.name} was cleared?"
+        return definition.sym_eval(**symbols)
+
+    def simplify(self):
+        if self.args and UNDEFINED in self.args:
+            return UNDEFINED
+        return self
+
+    def __repr__(self):
+        if self.args:
+            args_repr = [str(arg) for arg in self.args]
+            return f"{self.name}({', '.join(args_repr)})"
+        if self.definition:
+            return f"{self.definition}"
+        if self.definition:
+            return f"{self.name}({', '.join(self.parameters)})"
+        return f"Function({self.name})"
+
+    def __lt__(self, other):
+        if isinstance(other, Function):
+            if self.name < other.name:
+                return True
+            
+            num_left = len(self.args)
+            num_right = len(other.args)
+            min_num = min(num_left, num_right)
+            for i in range(min_num):
+                if self.factors[i] == other.factors[i]:
+                    continue
+                return self.factors[i] < other.factors[i]
+            
+            #O-3 (2) If all terms are equal, compare number of terms
+            return num_left < num_right
+        
+        return NotImplemented
+    
+    def copy(self):
+        copied = Function(self.name)
+        copied.set_definition(self.definition.copy())
+        copied.set_parameters(self.parameters) #Parameters not copied.
+        if self.args:
+            copied.add_args(*self.args)
+        return copied
+    
+    def operands(self):
+        if self.definition:
+            return [self.definition]
+        return 
+    
+
+#=============== CONSTANTS ===============
+class Constant(Expression):
+    """A Constant represents a constant value"""
+
+    def __lt__(self, other):
+        """Total ordering for Constants: O-1"""
+        if isinstance(other, Constant):
+            return self.eval() < other.eval()
+        
+        if isinstance(other, Expression):
+            return True
+        
+        return NotImplemented
+    
+    def sym_eval(self, **symbols):
+        return self.simplify()
+
+    def __add__(self, other):
+        if not isinstance(other, Constant):
+            return super().__add__(other)
+        
+        denom_lcm = lcm(self.denom(), other.denom())
+        left_num = other.denom() * self.num()
+        right_num = self.denom() * other.num()
+        new_num = left_num + right_num
+        return Rational(new_num, denom_lcm).simplify()
+
+    def __sub__(self, other):
+        if not isinstance(other, Constant):
+            return super().__sub__(other)
+        
+        if isinstance(self, Integer):
+            self = Rational(self.eval(), 1)
+        if isinstance(other, Integer):
+            other = Rational(other.eval(), 1)
+
+        denom_lcm = lcm(self.denom(), other.denom())
+        left_num = denom_lcm * self.num()
+        right_num = denom_lcm * other.num()
+        new_num = left_num - right_num
+        return Rational(new_num, denom_lcm).simplify()
+           
+    def __mul__(self, other):
+        if not isinstance(other, Constant):
+            return super().__mul__(other)
+        
+        if isinstance(self, Integer):
+            self = Rational(self.eval(), 1)
+        if isinstance(other, Integer):
+            other = Rational(other.eval(), 1)
+
+        new_num = self.num() * other.num()
+        new_denom = self.denom() * other.denom()
+        return Rational(new_num, new_denom).simplify()
+
+    def __pow__(self, other):
+        if not isinstance(other, Integer):
+            return super().__pow__(other)
+        
+        if other.is_negative():
+            new_num = self.denom() ** -other.eval()
+            new_denom = self.num() ** -other.eval()
+        else:
+            new_num = self.num() ** other.eval()
+            new_denom = self.denom() ** other.eval()
+        return Rational(new_num, new_denom).simplify()
+    
+    def derivative(self, wrt):
+        return Integer(0)
+    
+    def trig_substitute(self):
+        return self
+    
+class Rational(Constant):
+    """A rational expression is a constant; a fraction of two integers"""
+    def __init__(self, *args):
+        for arg in args:
+            assert isinstance(arg, int), f"arg {arg} is {type(arg)}"
+
+        if len(args) == 1:
+            self.left = args[0]
+            self.right = 1
+        else:
+            super().__init__(*args)
+
+    def __repr__(self):
+        return f"({self.left} / {self.right})"
+    
+    def copy(self):
+        return Rational(self.left, self.right)
+
+    def eval(self, **vars):
+        return self.left / self.right
+
+    def is_positive(self):
+        return (self.left < 0) if (self.right < 0) else (self.left > 0)
+    
+    def is_negative(self):
+        return (self.left < 0) if (self.right < 0) else (self.left > 0)
+    
+    def num(self):
+        return self.left
+    
+    def denom(self):
+        return self.right
+
+    def simplify(self):
+        """Simplifies a fraction into lowest terms"""
+        n = self.left
+        d = self.right
+        if d == 0:
+            return UNDEFINED
+        
+        if n % d == 0:
+            return Integer(n // d)
+        
+        g = gcd(n, d)
+        if  d > 0:
+            return Rational(n // g, d // g)
+        
+        else:
+            return Rational(-n // g, -d // g)
+        
+    def operands(self):
+        return [self.left, self.right]
+    
+    @staticmethod 
+    def convert_float(num):
+        if isinstance(num, int):
+            return Integer(num)
+        
+        if isinstance(num, float):
+            num = str(num)
+        
+        try:
+            number = num.split(".")
+            if len(number) == 1:
+                return Integer(int(num))
+            else:
+                assert len(number) == 2, f"Failed to parse number {num}"
+                whole, partial = number
+                
+                denominator = 10 ** len(partial)
+                numerator = int(whole + partial)
+                if denominator == 1:
+                    return Integer(numerator)
+                else:
+                    return Rational(numerator, denominator)
+        except:
+            raise ValueError(f"Could not convert {num} to rational.")
+
+class Integer(Constant):
+    """An Integer represents a decimal integer"""
+
+    def __init__(self, value: int):
+        """Creates a new Integer object"""
+        self.value = value
+
+    def __repr__(self):
+        """Returns the value of the integer"""
+        return str(self.value)
+
+    def eval(self, **vars):
+        return self.value
+    
+    def copy(self):
+        return Integer(self.value)
+
+    def is_positive(self):
+        return self.value > 0
+    
+    def is_negative(self):
+        return self.value < 0
+
+    def simplify(self):
+        return self
+    
+    def operands(self):
+        return [self.value]
+    
+    def num(self):
+        return self.value
+    
+    def denom(self):
+        return 1
+    
+    def __int__(self):
+        return self.value
