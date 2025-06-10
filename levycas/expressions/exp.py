@@ -13,7 +13,7 @@ class Exp(Expression):
 
 class Ln(Expression):
     def __init__(self, *args):
-        assert len(args) == 1, "Exp takes only one argument"
+        assert len(args) == 1, "Ln takes only one argument"
         self.arg = args[0]
 
     def __repr__(self):

@@ -94,11 +94,6 @@ class Expression:
         simplified_operands = [operand.simplify() for operand in self.operands()]
         return type(self)(*simplified_operands)
 
-    def algebraic_expand(self):
-        #In the default case, return the same operation with expanded operands
-        expanded_operands = [operand.algebraic_expand() for operand in self.operands()]
-        return type(self)(*expanded_operands)
-
     """The following dunder methods allow us to treat python statements as AST's"""
     def __eq__(self, other):
         """Check if two expressions are syntactically equal. For this to make sense, 
@@ -272,13 +267,6 @@ class Sum(Expression):
         for term in self.terms:
             total += term.sym_eval(**symbols)
         return total.simplify()
-    
-    def algebraic_expand(self):
-        if len(self.terms) == 1:
-            return self.terms[0].algebraic_expand()
-        v = self.terms[0]
-        u_minus_v = Sum(*self.terms[1::])
-        return (v.algebraic_expand() + u_minus_v.algebraic_expand())
 
     def simplify(self):
         L = [term.simplify() for term in self.terms]
@@ -425,14 +413,6 @@ class Product(Expression):
             prod *= factor.sym_eval(**symbols)
         return prod.simplify()
 
-    def algebraic_expand(self):
-        if len(self.factors) == 1:
-            return self.factors[0].algebraic_expand()
-        
-        v = self.factors[0]
-        u_div_v = Product(*self.factors[1::])
-        return Product.expand_product(v.algebraic_expand(), u_div_v.algebraic_expand())
-
     def simplify(self):
         self.factors = [factor.simplify() for factor in self.factors]
 
@@ -553,21 +533,6 @@ class Product(Expression):
             assert h[1] == p_1
             return [q_1] + Product.merge_products(p, q[1::])
 
-    @staticmethod
-    def expand_product(r: Expression, s: Expression):
-        if isinstance(r, Sum):
-            if len(r.terms) == 1: 
-                return (r.terms[0] * s).algebraic_expand()
-            
-            f = r.terms[0]
-            r_minus_f = Sum(*r.terms[1::])
-            return Product.expand_product(f, s) + Product.expand_product(r_minus_f, s)
-        
-        if isinstance(s, Sum):
-            return Product.expand_product(s, r)
-        
-        return r * s
-
     def operands(self):
         return self.factors
     
@@ -644,27 +609,7 @@ class Power(Expression):
         return self.left
     
     def exponent(self):
-        return self.right
-    
-    def algebraic_expand(self):
-        #TODO: Implement for non-integer exponents. See Elementary Algorithms page 253
-        ###Original algorithm:
-        # if isinstance(self.right, Integer) and self.right.value >= 1: #Textbook requires exponent > 1, but this modification allows x(x + 1)^1 -> x^2 + x as required
-        #     return Power.expand_power(self.left.algebraic_expand(), self.right)
-        
-        # return self #Expand base whether or not integer exponent
-
-        ###Modification from original algorithm: Special cases for exponents 0 and 1
-        if isinstance(self.right, Integer):
-            if self.right.value == 0:
-                return Integer(1)
-            
-            if self.right.value == 1:
-                return self.left.algebraic_expand()
-            
-            return Power.expand_power(self.left.algebraic_expand(), self.right)
-        
-        return self 
+        return self.right 
 
     def simplify(self):
         #S-POW (1)
@@ -733,26 +678,6 @@ class Power(Expression):
         rhs = w.derivative(wrt) * v ** w * Ln(v)
         return (lhs + rhs).simplify()
 
-
-    @staticmethod
-    def expand_power(u, n):
-        assert isinstance(n, Integer) and int(n) >= 0, f"Expand_power only implemented for non_negative integers"
-
-        if isinstance(u, Sum):
-            n = int(n)
-            f = u.terms[0]
-            if n == 1:
-                return f.algebraic_expand()
-            if len(u.terms) == 1:
-                return (f ** Integer(n)).algebraic_expand()
-            r = Sum(*u.terms[1::])
-            s = Integer(0)
-            for k in range(n + 1): #Binomial theorem
-                c = Integer(comb(n, k)) #{n \choose k}
-                s += Product.expand_product((c * f ** Integer(n-k)), Power.expand_power(r, Integer(k)))
-            return s.algebraic_expand()
-        
-        return u ** n
         
 class Factorial(Expression):
     """A Factorial represents the factorial of a number"""
