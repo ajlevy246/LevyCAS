@@ -6,13 +6,14 @@ from .parser import (
 from .expressions import (
     Constant, Integer, Rational,
     CAS_ENV, Expression, Sum, Product, Div, Power, Factorial, Derivative, Special,
-    trig_substitute, Trig, Sin, Cos, Tan, Csc, Sec, Cot,
+    Trig, Sin, Cos, Tan, Csc, Sec, Cot,
     Variable, Function,
     Exp, Ln
 )
 
 from .operations import (
-    contains, copy
+    contains, copy,
+    trig_substitute, algebraic_expand
 )
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     'trig_substitute', 'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot',
     'Variable', 'Function',
     'Exp', 'Ln',
-    'contains', 'copy'
+    'contains', 'copy',
+    'trig_substitute', 'algebraic_expand'
 ]

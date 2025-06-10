@@ -2,6 +2,7 @@
 """
 
 from ..expressions import *
+from .expression_ops import copy
 
 def trig_substitute(expr: Expression) -> Expression:
     """Given an expression, replaces all instances of trig functions with their equivalent
@@ -15,7 +16,7 @@ def trig_substitute(expr: Expression) -> Expression:
     """
     #Terminals of the AST do not have operands to substitute
     if isinstance(expr, Constant) or isinstance(expr, Variable):
-        return expr.copy()
+        return copy(expr)
 
     operation = type(expr)
 
@@ -62,8 +63,8 @@ def algebraic_expand(expr: Expression) -> Expression:
         if len(operands) == 1:
             return operands[0].algebraic_expand()
         
-        v = operands[0].algebraic_expand()
-        u_div_v = Product(*operands[1::]).algebraic_expand()
+        v = algebraic_expand(operands[0])
+        u_div_v = algebraic_expand(Product(*operands[1::]))
         return expand_product(v, u_div_v).simplify()
     
     elif operation == Power:
@@ -135,7 +136,7 @@ def expand_power(u: Expression, n: Integer) -> Sum | Power:
             return algebraic_expand(f)
         if len(u_operands) == 1:
             return algebraic_expand(f ** Integer(n))
-        r = sum(*u_operands[1::])
+        r = Sum(*u_operands[1::])
         s = 0
         for k in range(n + 1):
             c = comb(n, k)

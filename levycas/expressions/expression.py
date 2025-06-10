@@ -259,7 +259,6 @@ class Sum(Expression):
             self.terms.append(other)
             return self
 
-        print(f"Trying to sum {self} and {other}")
         return super().__add__(other)
 
     def sym_eval(self, **symbols):
@@ -439,7 +438,6 @@ class Product(Expression):
 
     @staticmethod
     def simplify_product_rec(factors):
-        print(f"Simplify product: {factors}")
         assert len(factors) >= 2
         u_1 = factors[0]
         u_2 = factors[1]
