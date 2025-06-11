@@ -24,6 +24,10 @@ def derivative(expr: Expression, wrt: Variable) -> Expression:
         rhs = derivative(w, wrt) * v ** w * Ln(v)
         return (lhs + rhs).simplify()
     
+    elif operation == Exp:
+        arg = operands[0]
+        return (derivative(arg) * expr).simplify()
+
     elif operation == Sum:
         derived_operands = [derivative(operand, wrt) for operand in operands]
         return sum(derived_operands).simplify()
@@ -48,6 +52,10 @@ def derivative(expr: Expression, wrt: Variable) -> Expression:
         if not contains(expr, wrt):
             return Integer(0)
         
+        if isinstance(expr, Ln):
+            arg = operands[0]
+            return (derivative(arg, wrt) / arg).simplify()
+
         simplified = copy(expr).simplify()
         if expr == simplified:
             return Derivative(expr)

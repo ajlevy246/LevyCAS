@@ -44,14 +44,10 @@ class Trig(Expression):
         return self.arg.contains(other)
 
 class Sin(Trig):
-    #DERIV-5
-    def derivative(self, wrt):
-        return (Cos(self.arg) * self.arg.derivative(wrt)).simplify()
+    pass
 
 class Cos(Trig):
-    #DERIV-5
-    def derivative(self, wrt):
-        (-1 * Sin(self.arg) * self.arg.derivative(wrt)).simplify()
+    pass
 
 class Tan(Trig):
     pass
