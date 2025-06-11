@@ -1,7 +1,8 @@
 """Methods acting on an expression's AST. These operations are not mathematical in nature.
 """
 
-from ..expressions import Expression, Constant
+from ..expressions import Expression, Constant, Integer, Rational
+from numbers import Number
 
 def contains(expr: Expression, sub: Expression) -> bool:
     """Checks whether the given expression contains the given

@@ -3,6 +3,7 @@
 
 from ..expressions import *
 from .expression_ops import copy
+from .simplification_ops import simplify
 
 def trig_substitute(expr: Expression) -> Expression:
     """Given an expression, replaces all instances of trig functions with their equivalent
@@ -48,7 +49,7 @@ def algebraic_expand(expr: Expression) -> Expression:
     if not isinstance(expr, Expression):
         return expr
 
-    expr = expr.simplify() #Inefficient top-down simplification. Better way? Require a simplified input?
+    expr = simplify(expr) #Inefficient top-down simplification. Better way? Require a simplified input?
     operation = type(expr)
     operands = expr.operands()
 
@@ -57,7 +58,7 @@ def algebraic_expand(expr: Expression) -> Expression:
     
     elif operation == Sum:
         expanded_operands = [algebraic_expand(operand) for operand in operands]
-        return sum(expanded_operands).simplify()
+        return simplify(sum(expanded_operands))
     
     elif operation == Product:
         if len(operands) == 1:
@@ -65,7 +66,7 @@ def algebraic_expand(expr: Expression) -> Expression:
         
         v = algebraic_expand(operands[0])
         u_div_v = algebraic_expand(Product(*operands[1::]))
-        return expand_product(v, u_div_v).simplify()
+        return simplify(expand_product(v, u_div_v))
     
     elif operation == Power:
         exponent = algebraic_expand(expr.exponent())
