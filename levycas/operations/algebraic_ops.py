@@ -34,7 +34,7 @@ def trig_substitute(expr: Expression) -> Expression:
         return Cos(*new_operands) / Sin(*new_operands)
     else:
         return operation(*new_operands)
-    
+
 def algebraic_expand(expr: Expression) -> Expression:
     """Given an expression, returns an equivalent expression in expanded form.
     For now, will only return a completely result for integer exponents. 
@@ -47,7 +47,7 @@ def algebraic_expand(expr: Expression) -> Expression:
     """
     if not isinstance(expr, Expression):
         return expr
-    
+
     expr = expr.simplify() #Inefficient top-down simplification. Better way? Require a simplified input?
     operation = type(expr)
     operands = expr.operands()
