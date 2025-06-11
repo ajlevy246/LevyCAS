@@ -113,7 +113,10 @@ class Expression:
         #This method is called as the "inverse" of the lt method
         #i.e: if (a < b) returns NotImplemented, this ensures that
         # (not b < a) is returned
-        return not (self < other)
+        if isinstance(other, Expression):
+            return not (self < other)
+        else:
+            return NotImplemented
     
     def __add__(self, other):
         if isinstance(other, Number):
@@ -130,7 +133,7 @@ class Expression:
             other = Rational.convert_float(other)
         return Product(self, other) if isinstance(other, Expression) else NotImplemented
     
-    def __truediv__(self, other):     
+    def __truediv__(self, other):
         if isinstance(other, Number):
             other = Rational.convert_float(other)
         return Div(self, other) if isinstance(other, Expression) else NotImplemented
@@ -202,20 +205,6 @@ class Expression:
             
         else:
             raise ValueError("Expected a rational expression with 1 or 2 operands")
-        
-    def derivative(self, wrt):
-        #lazy import for contains and copy
-        from ..operations import contains, copy
-
-        #DERIV-6
-        if not contains(self, wrt):
-            return Integer(0)
-        
-        #DERIV-7
-        simplified = copy(self).simplify()
-        if self == simplified:
-            return Derivative(self)
-        return simplified.derivative(wrt)
 
 class Sum(Expression):
     """A Sum is the sum of two terms"""
@@ -366,11 +355,6 @@ class Sum(Expression):
         
     def operands(self):
         return self.terms
-    
-    def derivative(self, wrt):
-        #DERIV-3; non-recursive implementation
-        new_terms = [term.derivative(wrt) for term in self.terms]
-        return Sum(*new_terms).simplify()
 
 class Product(Expression):
     """A Product is the product of two factors"""
@@ -550,15 +534,6 @@ class Product(Expression):
             return self
         
         return super().__mul__(other)
-    
-    def derivative(self, wrt):
-        #DERIV-4
-        if len(self.factors) == 1:
-            return self.factors[0].derivative(wrt)
-        
-        v = self.factors[0]
-        w = Product(*self.factors[1::])
-        return (v.derivative(wrt) * w + v * w.derivative(wrt)).simplify()
 
 class Div(Expression):
     """A Div represents the quotient of two terms. 
@@ -664,19 +639,7 @@ class Power(Expression):
     
     def operands(self):
         return [self.left, self.right]
-    
-    def derivative(self, wrt):
-        #DERIV-2
-        v = self.left
-        w = self.right
-        lhs = w * v ** (w + Integer(-1)) * v.derivative(wrt)
-        
-        #Lazy import for natural log function
-        from .exp import Ln
-        rhs = w.derivative(wrt) * v ** w * Ln(v)
-        return (lhs + rhs).simplify()
 
-        
 class Factorial(Expression):
     """A Factorial represents the factorial of a number"""
     def __init__(self, value: Expression):
@@ -717,10 +680,13 @@ class Factorial(Expression):
     def simplify(self):
         return Factorial(self.value.simplify())
 
-class Derivative():
+class Derivative(Expression):
     """The anonymous derivative operator will be used when other derivative rules fail
     See DERIV-7, page 183 Elementary Algorithms
     """
+    def __init__(self, *args):
+        self.operands = args
+
     def __repr__(self):
         return f"Derivative({self.name})"
 
@@ -768,13 +734,6 @@ class Variable(Expression):
     
     def operands(self):
         return [self.name]
-    
-    def derivative(self, wrt):
-        #DERIV-1
-        assert isinstance(wrt, Variable), f"Can only take derivative with respect to a variable"
-        if self == wrt:
-            return Integer(1)
-        return Integer(0)
 
 class Function(Expression):
     def __init__(self, name):
@@ -920,10 +879,7 @@ class Constant(Expression):
             new_num = self.num() ** other.eval()
             new_denom = self.denom() ** other.eval()
         return Rational(new_num, new_denom).simplify()
-    
-    def derivative(self, wrt):
-        return Integer(0)
-    
+
 class Rational(Constant):
     """A rational expression is a constant; a fraction of two integers"""
     def __init__(self, *args):

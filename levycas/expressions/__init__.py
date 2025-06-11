@@ -10,5 +10,6 @@ __all__ = [
     'Constant', 'Integer', 'Rational',
     'CAS_ENV', 'Expression', 'Sum', 'Product', 'Div', 'Power', 'Factorial', 'Derivative', 'Special',
     'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot',
-    'Variable', 'Function'
+    'Variable', 'Function',
+    'Exp', "Ln"
 ]

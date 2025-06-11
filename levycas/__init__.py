@@ -13,7 +13,8 @@ from .expressions import (
 
 from .operations import (
     contains, copy,
-    trig_substitute, algebraic_expand
+    trig_substitute, algebraic_expand,
+    derivative
 )
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     'Variable', 'Function',
     'Exp', 'Ln',
     'contains', 'copy',
-    'trig_substitute', 'algebraic_expand'
+    'trig_substitute', 'algebraic_expand',
+    'derivative'
 ]

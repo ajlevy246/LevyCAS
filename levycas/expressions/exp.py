@@ -1,4 +1,5 @@
 from .expression import Expression
+from .trig import Trig
 
 class Exp(Expression):
     def __init__(self, *args):
@@ -10,6 +11,16 @@ class Exp(Expression):
 
     def operands(self):
         return [self.arg]
+    
+    def __lt__(self, other):
+        if not isinstance(other, Expression):
+            return NotImplemented
+        
+        elif isinstance(other, Exp):
+            return self.arg < other.arg
+
+        elif isinstance(other, Ln):
+            return True
 
 class Ln(Expression):
     def __init__(self, *args):
@@ -21,3 +32,12 @@ class Ln(Expression):
 
     def operands(self):
         return [self.arg]
+    
+    def __lt__(self, other):
+        if not isinstance(other, Expression):
+            return NotImplemented
+        
+        elif isinstance(other, Ln):
+            return self.arg < other.arg
+
+        return False
