@@ -118,6 +118,10 @@ class Expression:
         other = convert_primitive(other)
         return simplify(Sum(self, Product(Integer(-1), other))) if isinstance(other, Expression) else NotImplemented
 
+    def __neg__(self):
+        from ..operations import simplify
+        return simplify(Product(Integer(-1), self))
+
     def __mul__(self, other):
         from ..operations import simplify
         other = convert_primitive(other)

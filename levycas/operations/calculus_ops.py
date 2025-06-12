@@ -14,9 +14,9 @@ def derivative(expr: Expression, wrt: Variable) -> Expression:
     Returns:
         Expression: The computed derivative.
     """
-    return simplify(derivative_recursive(simplify(expr), wrt))
-    
-def derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
+    return simplify(_derivative_recursive(simplify(expr), wrt))
+
+def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
     """Recursively computed derivative.
 
     Args:
@@ -36,33 +36,33 @@ def derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
     elif operation == Power:
         v = expr.base()
         w = expr.exponent()
-        lhs = w * v ** (w - 1) * derivative(v, wrt)
-        rhs = derivative(w, wrt) * v ** w * Ln(v)
+        lhs = w * v ** (w - 1) * _derivative_recursive(v, wrt)
+        rhs = _derivative_recursive(w, wrt) * v ** w * Ln(v)
         return (lhs + rhs)
     
     elif operation == Exp:
         arg = operands[0]
-        return (derivative(arg) * expr)
+        return (_derivative_recursive(arg) * expr)
 
     elif operation == Sum:
-        derived_operands = [derivative(operand, wrt) for operand in operands]
+        derived_operands = [_derivative_recursive(operand, wrt) for operand in operands]
         return sum(derived_operands)
     
     elif operation == Product:
         if len(operands) == 1:
-            return derivative(operands[0], wrt)
+            return _derivative_recursive(operands[0], wrt)
         
         v = operands[0]
         w = Product(*operands[1::])
-        return (derivative(v, wrt) * w + v * derivative(w, wrt))
+        return (_derivative_recursive(v, wrt) * w + v * _derivative_recursive(w, wrt))
     
     elif operation == Sin:
         arg = operands[0]
-        return (Cos(arg) * derivative(arg, wrt))
+        return (Cos(arg) * _derivative_recursive(arg, wrt))
     
     elif operation == Cos:
         arg = operands[0]
-        return (-1 * Sin(arg) * derivative(arg, wrt))
+        return (-1 * Sin(arg) * _derivative_recursive(arg, wrt))
     
     else:
         if not contains(expr, wrt):
@@ -70,9 +70,9 @@ def derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
         
         if isinstance(expr, Ln):
             arg = operands[0]
-            return (derivative(arg, wrt) / arg)
+            return (_derivative_recursive(arg, wrt) / arg)
 
         simplified = copy(expr)
         if expr == simplified:
-            return Derivative(expr)
-        return simplified.derivative(expr)
+            return _derivative_recursive(expr)
+        return simplified._derivative_recursive(expr)

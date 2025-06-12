@@ -113,7 +113,7 @@ def expand(tokens: list[Token], **symbols) -> list[Token]:
             if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and (next.type in ("VARIABLE", "LPAREN", "FUNCTION") or next.type.startswith("TRIG_")):
                 expanded.append(Token("MULT", "*", curr.pos + curr.len))
     return expanded
-        
+
 def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
     """Recursive Pratt Parsing function
 

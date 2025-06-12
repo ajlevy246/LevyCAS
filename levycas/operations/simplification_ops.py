@@ -355,10 +355,10 @@ def merge_terms(first_terms: list[Expression], second_terms: list[Expression]) -
             return h + merge_terms(rest_p, rest_q)
         else:
             if h == [p, q]:
-                return [p] + merge_terms(rest_p, q)
+                return [p] + merge_terms(rest_p, second_terms)
             else:
                 assert h == [q, p]
-                return [q] + merge_terms(p, rest_q)
+                return [q] + merge_terms(first_terms, rest_q)
 
 def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expression:
     """Given a symbol table "symbols" and an expression "expr", evaluates the expression by replacing all symbols
@@ -420,3 +420,4 @@ def simplify_trig(expr: Expression) -> Expression:
     Returns:
         Expression: The simplified contracted expression.
     """
+    pass
