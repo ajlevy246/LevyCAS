@@ -21,8 +21,7 @@ def simplify(expr: Expression) -> Expression:
         return expr
     elif operation == Rational:
         return expr.lowest_terms()
-    
-    print(f"Simplifying {expr}")
+
     simplified_operands = [simplify(operand) for operand in expr.operands()]
     if UNDEFINED in simplified_operands:
         return UNDEFINED
@@ -76,8 +75,12 @@ def simplify_power(expr: Power) -> Expression:
             new_exponent = simplify_product(Product(s, w))
             new_power = Power(r, new_exponent)
             if isinstance(new_exponent, Integer):
-                return simplify(new_power)
+                return simplify_power(new_power)
             return new_power
+        elif isinstance(v, Product):
+            new_factors = [simplify_power(factor ** w) for factor in v.operands()]
+            new_product = Product(*new_factors)
+            return simplify_product(new_product)
 
     return expr
 
@@ -356,7 +359,7 @@ def merge_terms(first_terms: list[Expression], second_terms: list[Expression]) -
             else:
                 assert h == [q, p]
                 return [q] + merge_terms(p, rest_q)
-            
+
 def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expression:
     """Given a symbol table "symbols" and an expression "expr", evaluates the expression by replacing all symbols
     with their definitions in the table, and then simplifying. If the expression contains only constants or if
@@ -406,3 +409,14 @@ def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expre
 
     else:
         return simplify(operation(*evaluated_operands))
+
+def simplify_trig(expr: Expression) -> Expression:
+    """Given an algebraic expression, returns a simplified expression
+    in trigonometric contracted form.
+
+    Args:
+        expr (Expression): The expression to simplify
+
+    Returns:
+        Expression: The simplified contracted expression.
+    """

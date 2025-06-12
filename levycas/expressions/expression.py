@@ -82,7 +82,7 @@ class Expression:
     
     def term(self):
         return Product(self)
-    
+
     def num(self):
         return self
     
@@ -204,8 +204,8 @@ class Product(Expression):
         self.factors = list(factors)
 
     def __repr__(self):
-        if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
-            return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
+        # if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
+        #     return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
         
         factor_repr = [str(factor) for factor in self.factors]
         return "(" + " \u00B7 ".join(factor_repr) + ")" #\u00b7 -> \cdot
@@ -241,6 +241,14 @@ class Product(Expression):
     def term(self):
         return Product(*self.factors[1::]) if isinstance(self.factors[0], Constant) else self
     
+    def num(self):
+        first_factor = self.factors[0]
+        remaining = self.factors[1::]
+        if len(remaining) == 0:
+            return first_factor.num()
+        else:
+            return first_factor.num() * Product(*remaining).num()
+
     def __mul__(self, other):
         if isinstance(other, Product):
             self.factors += other.operands()
@@ -257,15 +265,15 @@ class Div(Expression):
     If both terms are integers, it is simplified to a rational number."""
     def __repr__(self):
         return f"({self.left} / {self.right})"
-        
+
+    def operands(self):
+        return [self.left, self.right]
+    
     def num(self):
         return self.left
     
     def denom(self):
         return self.right
-
-    def operands(self):
-        return [self.left, self.right]
 
 class Power(Expression):
     """A Power represents exponentiation"""
@@ -287,6 +295,18 @@ class Power(Expression):
     
     def operands(self):
         return [self.left, self.right]
+    
+    def num(self):
+        if isinstance(self.right, Constant) and self.right.eval() < 0:
+            return Integer(1)
+        else:
+            return self
+        
+    def denom(self):
+        if isinstance(self.right, Constant) and self.right.eval() < 0:
+            return self.left ** (-1 * self.right)
+        else:
+            return Integer(1)
 
 class Factorial(Expression):
     """A Factorial represents the factorial of a number"""
@@ -516,12 +536,6 @@ class Rational(Constant):
     def is_negative(self):
         return (self.left < 0) if (self.right < 0) else (self.left > 0)
     
-    def num(self):
-        return self.left
-    
-    def denom(self):
-        return self.right
-
     def lowest_terms(self):
         """Simplifies a fraction into lowest terms"""
         n = self.left
@@ -541,6 +555,12 @@ class Rational(Constant):
         
     def operands(self):
         return [self.left, self.right]
+    
+    def num(self):
+        return self.left
+    
+    def denom(self):
+        return self.right
 
 class Integer(Constant):
     """An Integer represents a decimal integer"""
@@ -565,14 +585,14 @@ class Integer(Constant):
     def operands(self):
         return [self.value]
     
+    def __int__(self):
+        return self.value
+    
     def num(self):
         return self.value
     
     def denom(self):
         return 1
-    
-    def __int__(self):
-        return self.value
     
 def convert_primitive(num: Number) -> Constant:
     """Converts a python number to a levycas Constant in lowest terms.

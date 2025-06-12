@@ -6,6 +6,7 @@ from ..expressions import *
 pv = False #parsing verbose 
 lv = False #lexing verbose
 
+
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
     ("NUMBER",    r'(\d+\.?\d*|\d*\.\d+)'),   #Matches a decimal
@@ -53,7 +54,6 @@ TOKEN_CLASS = {
 """Operator precendences, matching associated binding powers"""
 TOKEN_BP = {
     "NUMBER":   (0, 0),
-    #Trig functions are unary operators only, and "SinSin x" should be Sin(Sin(x))
     "TRIG_SIN": (0, 40),
     "TRIG_COS": (0, 40),
     "TRIG_TAN": (0, 40),
