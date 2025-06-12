@@ -109,47 +109,52 @@ class Expression:
             return NotImplemented
     
     def __add__(self, other):
+        from ..operations import simplify
         other = convert_primitive(other)
-        return Sum(self, other) if isinstance(other, Expression) else NotImplemented
-    
+        return simplify(Sum(self, other)) if isinstance(other, Expression) else NotImplemented
+
     def __sub__(self, other):
+        from ..operations import simplify
         other = convert_primitive(other)
-        return Sum(self, Product(Integer(-1), other)) if isinstance(other, Expression) else NotImplemented
-    
+        return simplify(Sum(self, Product(Integer(-1), other))) if isinstance(other, Expression) else NotImplemented
+
     def __mul__(self, other):
+        from ..operations import simplify
         other = convert_primitive(other)
-        return Product(self, other) if isinstance(other, Expression) else NotImplemented
-    
+        return simplify(Product(self, other)) if isinstance(other, Expression) else NotImplemented
+
     def __truediv__(self, other):
+        from ..operations import simplify
         other = convert_primitive(other)
-        return Div(self, other) if isinstance(other, Expression) else NotImplemented
-    
+        return simplify(Div(self, other)) if isinstance(other, Expression) else NotImplemented
+
     def __pow__(self, other):
+        from ..operations import simplify
         other = convert_primitive(other)
-        return Power(self, other) if isinstance(other, Expression) else NotImplemented
+        return simplify(Power(self, other)) if isinstance(other, Expression) else NotImplemented
     
     """Right hand dunder methods for treating ints as Integers"""
     def __radd__(self, other):
         other = convert_primitive(other)
-        return Sum(other, self) if isinstance(other, Expression) else NotImplemented
+        return (other + self) if isinstance(other, Expression) else NotImplemented
 
     def __rsub__(self, other):
         other = convert_primitive(other)
-        return Sum(other, Product(Integer(-1), self)) if isinstance(other, Expression) else NotImplemented
+        return (other - self) if isinstance(other, Expression) else NotImplemented
 
     def __rmul__(self, other):
         other = convert_primitive(other)
-        return Product(other, self) if isinstance(other, Expression) else NotImplemented
+        return (other * self) if isinstance(other, Expression) else NotImplemented
 
     def __rtruediv__(self, other):
         other = convert_primitive(other)
         if other == 0:
             raise ZeroDivisionError
-        return Div(other, self) if isinstance(other, Expression) else NotImplemented
+        return (other / self) if isinstance(other, Expression) else NotImplemented
 
     def __rpow__(self, other):
         other = convert_primitive(other)
-        return Power(other, self) if isinstance(other, Expression) else NotImplemented
+        return (other ** self) if isinstance(other, Expression) else NotImplemented
 
 class Sum(Expression):
     """A Sum is the sum of two terms"""
