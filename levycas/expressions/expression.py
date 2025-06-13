@@ -611,6 +611,8 @@ class Integer(Constant):
     def denom(self):
         return 1
 
+    def __index__(self):
+        return self.value
 #============== METHODS =================
 
 def convert_primitive(num: Number) -> Constant:
