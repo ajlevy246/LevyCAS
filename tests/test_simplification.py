@@ -1,5 +1,5 @@
 import pytest
-from levycas import Expression
+from levycas import *
 
 def test_simplification():
     pass

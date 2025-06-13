@@ -1,5 +1,5 @@
 import pytest
-from levycas.Expression import *
+from levycas import *
 
 def test_orderings():
     pass
