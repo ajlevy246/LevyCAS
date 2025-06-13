@@ -52,14 +52,14 @@ def trig_expand(expr: Expression) -> Expression:
     expanded_operands = [trig_expand(operand) for operand in expr.operands()]
     if operation == Sin:
         arg = expanded_operands[0]
-        return trig_expand_recursive(arg)[0]
+        return _trig_expand_recursive(arg)[0]
     elif operation == Cos:
         arg = expanded_operands[0]
-        return trig_expand_recursive(arg)[1]
+        return _trig_expand_recursive(arg)[1]
     else:
         return operation(*expanded_operands)
 
-def trig_expand_recursive(expr: Expression) -> list[Expression]:
+def _trig_expand_recursive(expr: Expression) -> list[Expression]:
     """Given the argument x of a sin or cosine, returns a list [s, c]:
     s -> trigonometric-expanded form of sin(x)
     c -> trigonometric-expanded form of cos(x)
@@ -75,8 +75,8 @@ def trig_expand_recursive(expr: Expression) -> list[Expression]:
     if operation == Sum:
         first_term = operands[0]
         remaining = expr - first_term
-        sin_first_term, cos_first_term = trig_expand_recursive(first_term)
-        sin_remaining, cos_remaining = trig_expand_recursive(remaining)
+        sin_first_term, cos_first_term = _trig_expand_recursive(first_term)
+        sin_remaining, cos_remaining = _trig_expand_recursive(remaining)
         sin_expanded = sin_first_term * cos_remaining + cos_first_term * sin_remaining
         cos_expanded = cos_first_term * cos_remaining - sin_first_term * sin_remaining
         return [sin_expanded, cos_expanded]
@@ -84,10 +84,10 @@ def trig_expand_recursive(expr: Expression) -> list[Expression]:
         first_factor = operands[0]
         if isinstance(first_factor, Integer):
             remaining = expr / first_factor
-            return [multiple_angle_sin(first_factor, remaining), multiple_angle_cos(first_factor, remaining)]
+            return [_multiple_angle_sin(first_factor, remaining), _multiple_angle_cos(first_factor, remaining)]
         return [Sin(expr), Cos(expr)]
     
-def multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
+def _multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
     """Given an expression Sin(n * theta), with argument that has an integer
     multiple (n) of angle (theta), returns the expanded form.
 
@@ -98,9 +98,17 @@ def multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
     Returns:
         Expression: Expanded form
     """
-    pass
+    expanded = 0
+    if isinstance(theta, Sum):
+        sin_theta, cos_theta = _trig_expand_recursive(theta)
+    else:
+        sin_theta, cos_theta = Sin(theta), Cos(theta)
 
-def multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
+    for j in range(0, n + 1, 2):
+        expanded += (-1)**(j // 2) * comb(n, j) * cos_theta**(n - j) * sin_theta ** j
+    return expanded
+
+def _multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
     """Given an expression Cos(n * theta), with argument that has an integer
     multiple (n) of angle (theta), returns the expanded form.
 
@@ -111,4 +119,44 @@ def multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
     Returns:
         Expression: Expanded form
     """
-    pass
+    expanded = 0
+    if isinstance(theta, Sum):
+        sin_theta, cos_theta = _trig_expand_recursive(theta)
+    else:
+        sin_theta, cos_theta = Sin(theta), Cos(theta)
+    
+    for j in range(1, n + 1, 2):
+        expanded += (-1)**((j - 1) // 2) * comb(n, j) * Cos(theta) ** (n - j) * Sin(theta) ** j
+    return expanded
+
+def trig_contract(expr: Expression) -> Expression:
+    """Given an expression, returns an equivalent expression in trigonometric-contracted form.
+
+    Args:
+        expr (Expression): The expression to contract
+
+    Returns:
+        Expression: The contracted expression
+    """
+    operation = type(expr)
+    if operation in [Integer, Rational, Constant]:
+        return expr
+    
+    contracted_operands = [trig_contract(operand) for operand in expr.operands()]
+    contracted_operation = operation(*contracted_operands)
+    if operation in [Product, Power]:
+        return _trig_contract_recursive(contracted_operation)
+    else:
+        return contracted_operation
+    
+def _trig_contract_recursive(expr: Expression) -> Expression:
+    """Given an algebraic expression, returns the algebraic expression in
+    trigonometric contracted form.
+
+    Args:
+        expr (Expression): The expression to contract
+
+    Returns:
+        Expression: The contracted expression
+    """
+    
