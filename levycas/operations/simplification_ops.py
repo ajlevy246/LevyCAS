@@ -256,10 +256,10 @@ def merge_factors(first_factors: list[Expression], second_factors: list[Expressi
             return h + merge_factors(rest_p, rest_q)
         else:
             if h == [p, q]:
-                return [p] + merge_factors(rest_p, [q])
+                return [p] + merge_factors(rest_p, second_factors)
             else:
                 assert h == [q, p]
-                return [q] + merge_factors([p], rest_q)
+                return [q] + merge_factors(first_factors, rest_q)
 
 def flatten_terms(terms: list[Expression]) -> list[Expression]:
     """Given a list of terms, combines those with like factors (e.g. 2x + 3x = 5x)

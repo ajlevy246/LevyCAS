@@ -195,12 +195,9 @@ class Sum(Expression):
         #Overrides parent method to denest the addition of two sums
         #example: x + y + z should be Sum(x, y, z), not Sum(Sum(x, y), z)
         if isinstance(other, Sum):
+            from ..operations import simplify
             self.terms += other.operands()
-            return self
-        
-        if isinstance(other, Expression):
-            self.terms.append(other)
-            return self
+            return simplify(self)
 
         return super().__add__(other)
         
@@ -252,21 +249,25 @@ class Product(Expression):
     
     def num(self):
         first_factor = self.factors[0]
-        remaining = self.factors[1::]
-        if len(remaining) == 0:
-            return first_factor.num()
-        else:
-            return first_factor.num() * Product(*remaining).num()
+        return first_factor.num() * (self / first_factor).num()
+    
+    def denom(self):
+        first_factor = self.factors[0]
+        return first_factor.denom() * (self / first_factor).denom()
+
+    # def num(self):
+    #     first_factor = self.factors[0]
+    #     remaining = self.factors[1::]
+    #     if len(remaining) == 0:
+    #         return first_factor.num()
+    #     else:
+    #         return first_factor.num() * Product(*remaining).num()
 
     def __mul__(self, other):
         if isinstance(other, Product):
+            from ..operations import simplify
             self.factors += other.operands()
-            return self
-        
-        if isinstance(other, Expression):
-            self.factors.append(other)
-            return self
-        
+            return simplify(self)
         return super().__mul__(other)
 
 class Div(Expression):
