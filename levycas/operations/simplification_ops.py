@@ -64,7 +64,7 @@ def simplify_power(expr: Power) -> Expression:
     
     if isinstance(w, Integer):
         if isinstance(v, Constant):
-            return expr.sym_eval()
+            return expr
         elif w == 0:
             return Integer(1)
         elif w == 1:

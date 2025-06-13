@@ -2,6 +2,9 @@
 from math import gcd, lcm, comb, factorial
 from numbers import Number
 
+#TODO: Infinite recursion issue:
+#1: Integer(1) / 1
+
 #TODO: Change the simplify operation to return a new expression, instead of altering in place??
 #perhaps make it a static function under Expression
 
@@ -130,7 +133,9 @@ class Expression:
     def __truediv__(self, other):
         from ..operations import simplify
         other = convert_primitive(other)
-        return simplify(Div(self, other)) if isinstance(other, Expression) else NotImplemented
+        if other == 0:
+            raise ZeroDivisionError
+        return (self * other ** -1) if isinstance(other, Expression) else NotImplemented
 
     def __pow__(self, other):
         from ..operations import simplify
@@ -151,10 +156,10 @@ class Expression:
         return (other * self) if isinstance(other, Expression) else NotImplemented
 
     def __rtruediv__(self, other):
-        other = convert_primitive(other)
-        if other == 0:
+        if self == 0:
             raise ZeroDivisionError
-        return (other / self) if isinstance(other, Expression) else NotImplemented
+        other = convert_primitive(other)
+        return (other * self ** -1) if isinstance(other, Expression) else NotImplemented
 
     def __rpow__(self, other):
         other = convert_primitive(other)
@@ -613,6 +618,9 @@ def convert_primitive(num: Number) -> Constant:
     Returns:
         Constant: The boxed number
     """
+    if num is UNDEFINED:
+        return UNDEFINED
+
     if isinstance(num, Expression):
         return num
 
