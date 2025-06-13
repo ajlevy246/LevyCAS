@@ -55,6 +55,8 @@ from numbers import Number
 """
 UNDEFINED = "UNDEFINED" 
 
+#============ OPERATIONS ===============
+
 class CAS_ENV:
     """An environment class that specifies a symbol and function table"""
     def __init__(self):
@@ -100,7 +102,7 @@ class Expression:
         return str(self) == str(other)
     
     def __hash__(self):
-        hash(str(self))
+        return hash(str(self))
 
     def __gt__(self, other):
         #This method is called as the "inverse" of the lt method
@@ -608,7 +610,9 @@ class Integer(Constant):
     
     def denom(self):
         return 1
-    
+
+#============== METHODS =================
+
 def convert_primitive(num: Number) -> Constant:
     """Converts a python number to a levycas Constant in lowest terms.
 

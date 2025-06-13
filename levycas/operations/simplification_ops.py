@@ -372,7 +372,7 @@ def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expre
     Returns:
         Expression: The original expression evaluated with respect to the symbol table.
     """
-    if isinstance(expr, Constant):
+    if not isinstance(expr, Expression) or isinstance(expr, Constant):
         return expr
     
     if isinstance(expr, Variable):
