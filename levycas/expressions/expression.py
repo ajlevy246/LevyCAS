@@ -481,8 +481,8 @@ class Constant(Expression):
             return super().__add__(other)
         
         denom_lcm = lcm(self.denom(), other.denom())
-        left_num = other.denom() * self.num()
-        right_num = self.denom() * other.num()
+        left_num = self.num() * denom_lcm // self.denom()
+        right_num = other.num() * denom_lcm // other.denom()
         new_num = left_num + right_num
         return Rational(new_num, denom_lcm).lowest_terms()
 
