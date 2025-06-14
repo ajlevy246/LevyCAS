@@ -30,8 +30,8 @@ def algebraic_expand(expr: Expression) -> Expression:
     elif operation == Product:
         first_factor = operands[0]
         remaining = expr / first_factor
-        new_num = _expand_product(algebraic_expand(first_factor).num(), algebraic_expand(expr / first_factor).num())
-        new_denom = _expand_product(algebraic_expand(first_factor).denom(), algebraic_expand(expr / first_factor).denom())
+        new_num = _expand_product(algebraic_expand(first_factor).num(), algebraic_expand(remaining).num())
+        new_denom = _expand_product(algebraic_expand(first_factor).denom(), algebraic_expand(remaining).denom())
         return new_num / new_denom
     
     elif operation == Power:
@@ -39,6 +39,40 @@ def algebraic_expand(expr: Expression) -> Expression:
     
     expanded_operands = [algebraic_expand(operand) for operand in operands]
     return operation(*expanded_operands)
+
+def algebraic_expand_main(expr: Expression) -> Expression:
+    """Given an expression, returns an expanded expression that is expanded only with respect
+    to the root operation of the AST.
+
+    Args:
+        expr (Expression): The expression to expand
+
+    Returns:
+        Expression: The expanded expression
+    """
+    if not isinstance(expr, Expression):
+        return expr
+
+    elif isinstance(expr, Constant) or isinstance(expr, Variable):
+        return expr
+    
+    operation = type(expr)
+    operands = expr.operands()
+    if operation == Sum:
+        return expr
+    
+    elif operation == Product:
+        first_factor = operands[0]
+        remaining = expr / first_factor
+        new_num = _expand_product(first_factor.num(), remaining.num())
+        new_denom = _expand_product(first_factor.denom(), remaining.denom()) 
+        return new_num / new_denom
+    
+    elif operation == Power:
+        return _expand_power(operands[0], operands[1])
+    
+    return expr
+
 
 def _expand_product(r: Expression, s: Expression) -> Sum | Product:
     """Given a product (r * s), expanded the product recursively.

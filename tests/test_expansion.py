@@ -1,8 +1,8 @@
 import pytest
-from levycas import Variable, algebraic_expand
+from levycas import Variable, algebraic_expand, algebraic_expand_main, rationalize
 
 class TestExpansion:
-    """Tests for the algebraic_expand() operator."""
+    """Tests for the algebraic_expand() and algebraic_expand_main() operators."""
 
     def test_expansion_binomial(self):
         """Binomial expansion tests"""
@@ -56,6 +56,21 @@ class TestExpansion:
             algebraic_expand((1 - x**2) / ((1 - x)*(1 + x)))
             == 1
         )
+
+    def test_expansion_main(self):
+        """Tests for algebraic expansion with respect to the main operation of an AST"""
+        x = Variable('x')
+
+        assert (
+            algebraic_expand_main(x * (2 + (1 + x)**2)) 
+            == (2*x) + x*(1 + x)**2
+        )
+
+        assert (
+            algebraic_expand_main((x + (1 + x)**2)**2)
+            == (x**2) + 2*x*(1 + x)**2 + (1 + x)**4
+        )
+
 
 class TestRationalization:
     """Tests for the rationalize() method"""
