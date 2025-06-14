@@ -599,6 +599,9 @@ class Integer(Constant):
     def is_negative(self):
         return self.value < 0
 
+    def is_even(self):
+        return not self.value % 2
+
     def operands(self):
         return [self.value]
     
@@ -613,6 +616,7 @@ class Integer(Constant):
 
     def __index__(self):
         return self.value
+
 #============== METHODS =================
 
 def convert_primitive(num: Number) -> Constant:
