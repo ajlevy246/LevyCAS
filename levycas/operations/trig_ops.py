@@ -3,8 +3,9 @@ trigonometric functions
 """
 
 from ..expressions import *
-from .expression_ops import copy
+from .expression_ops import map_op
 from .algebraic_ops import algebraic_expand_main, rationalize
+from .simplification_ops import simplify
 
 from math import comb
 
@@ -37,7 +38,7 @@ def trig_substitute(expr: Expression) -> Expression:
         Expression: An expression containing no trig functions other than sin/cos
     """
     if isinstance(expr, Constant) or isinstance(expr, Variable):
-        return copy(expr)
+        return expr
 
     operation = type(expr)
 
@@ -68,7 +69,6 @@ def trig_expand(expr: Expression) -> Expression:
     if operation in [Integer, Rational, Variable]:
         return expr
     
-    print(f"Trig expanding {expr=}")
     expanded_operands = [trig_expand(operand) for operand in expr.operands()]
     if operation == Sin:
         arg = expanded_operands[0]
@@ -166,11 +166,28 @@ def trig_contract(expr: Expression) -> Expression:
         return expr
 
     contracted_operands = [trig_contract(operand) for operand in expr.operands()]
-    contracted_operation = operation(*contracted_operands)
-    if operation in [Product, Power]:
-        return _trig_contract_recursive(contracted_operation)
+    # contracted_operation = operation(*contracted_operands)
+
+    # if operation in [Product, Power]:
+    #     return _trig_contract_recursive(contracted_operation)
+    # else:
+    #     return contracted_operation
+
+    if operation == Product:
+        prod = 1
+        for operand in contracted_operands:
+            prod *= operand
+        return _trig_contract_recursive(prod)
+    
+    elif operation == Power:
+        power = contracted_operands[0] ** contracted_operands[1]
+        return _trig_contract_recursive(power)
+    
+    elif operation == Sum:
+        return sum(contracted_operands)
+    
     else:
-        return contracted_operation
+        return operation(*contracted_operands)
     
 def _trig_contract_recursive(expr: Expression) -> Expression:
     """Given an algebraic expression, returns the algebraic expression in

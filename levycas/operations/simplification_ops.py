@@ -409,15 +409,3 @@ def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expre
 
     else:
         return simplify(operation(*evaluated_operands))
-
-def simplify_trig(expr: Expression) -> Expression:
-    """Given an algebraic expression, returns a simplified expression
-    in trigonometric contracted form.
-
-    Args:
-        expr (Expression): The expression to simplify
-
-    Returns:
-        Expression: The simplified contracted expression.
-    """
-    pass

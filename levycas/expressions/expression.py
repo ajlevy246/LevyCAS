@@ -114,7 +114,6 @@ class Expression:
             return NotImplemented
     
     def __add__(self, other):
-        print(f"Adding two expressions {self} plus {other}")
         from ..operations import simplify_sum
         other = convert_primitive(other)
         return simplify_sum(Sum(self, other)) if isinstance(other, Expression) else NotImplemented
@@ -179,12 +178,10 @@ class Sum(Expression):
         """Total ordering for Sums: O-3"""
         if isinstance(other, Sum):
             #O-3 (1 & 2) Compare terms from most significant (last term) to least.
-            print(f"Comparing {self} and {other}")
             num_left = len(self.terms)
             num_right = len(other.terms)
             min_length = min(num_left, num_right)
             for i in range(-1, -min_length - 1, -1):
-                print(f"Comparing {self.terms[i]} and {other.terms[i]}")
                 if self.terms[i] == other.terms[i]:
                     continue
                 return self.terms[i] < other.terms[i]
@@ -227,12 +224,10 @@ class Product(Expression):
         """Total ordering for Products: O-3"""
         if isinstance(other, Product):
             #O-3 (1 & 2) Compare factors from most significant (last factor) to least.
-            print(f"Comparing two products {self} and {other}")
             num_left = len(self.factors)
             num_right = len(other.factors)
             min_length = min(num_left, num_right)
             for i in range(-1, -min_length -1, -1):
-                print(f"Comparing two factors {self.factors[i]} and {other.factors[i]}")
                 if self.factors[i] == other.factors[i]:
                     continue
                 return self.factors[i] < other.factors[i]
