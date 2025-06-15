@@ -71,7 +71,6 @@ class TestExpansion:
             == (x**2) + 2*x*(1 + x)**2 + (1 + x)**4
         )
 
-
 class TestRationalization:
     """Tests for the rationalize() method"""
     pass
