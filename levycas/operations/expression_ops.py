@@ -1,8 +1,10 @@
 """Methods acting on an expression's AST. These operations are not mathematical in nature.
 """
 
-from ..expressions import Expression, Constant, Integer, Rational
+from ..expressions import *
 from numbers import Number
+
+from typing import Callable 
 
 def contains(expr: Expression, sub: Expression) -> bool:
     """Checks whether the given expression contains the given
@@ -56,3 +58,35 @@ def copy(expr: Expression) -> Expression:
         else:
             copied_operands.append(operand)
     return type(expr)(*copied_operands)
+
+def map_op(expr: Expression, op: Callable) -> Expression:
+    """Maps the operator "op" acting on AST's to the arguments of an expression.
+
+    Args:
+        expr (Expression): The expression to map to
+        op (function): The operation to map
+
+    Returns:
+        Expression: The mapped expression
+    """
+    if type(expr) in [Integer, Rational, Variable]:
+        return op(expr)
+    
+    mapped_operators = [map_op(operator, op) for operator in expr.operands()]
+    operation = type(expr)
+    
+    #Special case to force simplification
+    if operation == Sum:
+        return op(sum(mapped_operators))
+    
+    elif operation == Product:
+        prod = 1
+        for mapped_operator in mapped_operators:
+            prod *= mapped_operator
+        return op(prod)
+    
+    elif operation == Power:
+        return op(mapped_operators[0] ** mapped_operators[1])
+    
+    else:
+        return op(operation(*mapped_operators))
