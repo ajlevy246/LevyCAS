@@ -45,3 +45,15 @@ class TestOrdering:
 
         assert Product(c, d) < Product(b, c, d)
         assert not Product(b, c, d) < Product(c, d)
+
+    def test_powers(self):
+        a, x = Variable('a'), Variable('x')
+
+        assert Product(a, Power(x, Integer(2))) < Power(x, Integer(3))
+        assert not Power(x, Integer(3)) < Product(a, Power(x, Integer(2)))
+
+        assert Power(x, Integer(3)) < Power(x, Integer(4))
+        assert not Power(x, Integer(4)) < Power(x, Integer(3))
+
+        assert Power(a, Integer(1)) < Power(x, Integer(1))
+        assert not Power(x, Integer(1)) < Power(a, Integer(1))
