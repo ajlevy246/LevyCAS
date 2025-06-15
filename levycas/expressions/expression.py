@@ -114,35 +114,34 @@ class Expression:
             return NotImplemented
     
     def __add__(self, other):
-        from ..operations import simplify
+        print(f"Adding two expressions {self} plus {other}")
+        from ..operations import simplify_sum
         other = convert_primitive(other)
-        return simplify(Sum(self, other)) if isinstance(other, Expression) else NotImplemented
+        return simplify_sum(Sum(self, other)) if isinstance(other, Expression) else NotImplemented
 
     def __sub__(self, other):
-        from ..operations import simplify
+        from ..operations import simplify_sum
         other = convert_primitive(other)
-        return simplify(Sum(self, Product(Integer(-1), other))) if isinstance(other, Expression) else NotImplemented
+        return self + -1 * other if isinstance(other, Expression) else NotImplemented
 
     def __neg__(self):
-        from ..operations import simplify
-        return simplify(Product(Integer(-1), self))
+        return -1 * self
 
     def __mul__(self, other):
-        from ..operations import simplify
+        from ..operations import simplify_product
         other = convert_primitive(other)
-        return simplify(Product(self, other)) if isinstance(other, Expression) else NotImplemented
+        return simplify_product(Product(self, other)) if isinstance(other, Expression) else NotImplemented
 
     def __truediv__(self, other):
-        from ..operations import simplify
         other = convert_primitive(other)
         if other == 0:
             raise ZeroDivisionError
         return (self * other ** -1) if isinstance(other, Expression) else NotImplemented
 
     def __pow__(self, other):
-        from ..operations import simplify
+        from ..operations import simplify_power
         other = convert_primitive(other)
-        return simplify(Power(self, other)) if isinstance(other, Expression) else NotImplemented
+        return simplify_power(Power(self, other)) if isinstance(other, Expression) else NotImplemented
     
     """Right hand dunder methods for treating ints as Integers"""
     def __radd__(self, other):
@@ -180,10 +179,12 @@ class Sum(Expression):
         """Total ordering for Sums: O-3"""
         if isinstance(other, Sum):
             #O-3 (1 & 2) Compare terms from most significant (last term) to least.
+            print(f"Comparing {self} and {other}")
             num_left = len(self.terms)
             num_right = len(other.terms)
             min_length = min(num_left, num_right)
-            for i in range(min_length - 1, -1, -1):
+            for i in range(-1, -min_length - 1, -1):
+                print(f"Comparing {self.terms[i]} and {other.terms[i]}")
                 if self.terms[i] == other.terms[i]:
                     continue
                 return self.terms[i] < other.terms[i]
@@ -193,8 +194,7 @@ class Sum(Expression):
         
         if isinstance(other, Expression) and not isinstance(other, Constant) and not isinstance(other, Power):
             #O-10 (Unary Sum)
-            test_other = Sum(other)
-            return self < test_other
+            return self < Sum(other)
         
         return NotImplemented
     
@@ -202,9 +202,9 @@ class Sum(Expression):
         #Overrides parent method to denest the addition of two sums
         #example: x + y + z should be Sum(x, y, z), not Sum(Sum(x, y), z)
         if isinstance(other, Sum):
-            from ..operations import simplify
-            self.terms += other.operands()
-            return simplify(self)
+            from ..operations import simplify_sum
+            new_terms = self.terms + other.operands()
+            return simplify_sum(Sum(*new_terms))
 
         return super().__add__(other)
         
@@ -227,10 +227,12 @@ class Product(Expression):
         """Total ordering for Products: O-3"""
         if isinstance(other, Product):
             #O-3 (1 & 2) Compare factors from most significant (last factor) to least.
+            print(f"Comparing two products {self} and {other}")
             num_left = len(self.factors)
             num_right = len(other.factors)
             min_length = min(num_left, num_right)
-            for i in range(min_length - 1, -1, -1):
+            for i in range(-1, -min_length -1, -1):
+                print(f"Comparing two factors {self.factors[i]} and {other.factors[i]}")
                 if self.factors[i] == other.factors[i]:
                     continue
                 return self.factors[i] < other.factors[i]
@@ -240,8 +242,7 @@ class Product(Expression):
         
         if isinstance(other, Expression) and not isinstance(other, Constant):
             #Rule O-8; test against unary product
-            test_other = Product(other)
-            return self < test_other
+            return self < Product(other)
 
         return NotImplemented
 
@@ -262,19 +263,11 @@ class Product(Expression):
         first_factor = self.factors[0]
         return first_factor.denom() * (self / first_factor).denom()
 
-    # def num(self):
-    #     first_factor = self.factors[0]
-    #     remaining = self.factors[1::]
-    #     if len(remaining) == 0:
-    #         return first_factor.num()
-    #     else:
-    #         return first_factor.num() * Product(*remaining).num()
-
     def __mul__(self, other):
         if isinstance(other, Product):
-            from ..operations import simplify
-            self.factors += other.operands()
-            return simplify(self)
+            from ..operations import simplify_product
+            new_factors = self.factors + other.operands()
+            return simplify_product(Product(*new_factors))
         return super().__mul__(other)
 
 class Div(Expression):
@@ -297,8 +290,8 @@ class Power(Expression):
     def __repr__(self):
         return f"({self.left} ^ {self.right})"
     
-    def __lt__(self, other):
-        if isinstance(other, Expression):
+    def __lt__(self, other):       
+        if isinstance(other, Expression) and not isinstance(other, Product):
             if self.base() == other.base():
                 return self.exponent() < other.exponent()
             return self.base() < other.base()
@@ -389,7 +382,6 @@ class Variable(Expression):
 
 class Function(Expression):
     def __init__(self, name):
-        print(f"Creating function?? {name}")
         self.name = name
         self.args = None
         self.parameters = None

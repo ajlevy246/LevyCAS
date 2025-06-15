@@ -3,6 +3,7 @@
 from ..expressions import *
 from .expression_ops import contains, copy
 from .simplification_ops import simplify
+from .trig_ops import trig_substitute
 
 def derivative(expr: Expression, wrt: Variable) -> Expression:
     """Take the derivative of an expression with respect to a variable.
@@ -14,7 +15,7 @@ def derivative(expr: Expression, wrt: Variable) -> Expression:
     Returns:
         Expression: The computed derivative.
     """
-    return simplify(_derivative_recursive(simplify(expr), wrt))
+    return _derivative_recursive(trig_substitute(expr), wrt)
 
 def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
     """Recursively computed derivative.
@@ -42,7 +43,7 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
     
     elif operation == Exp:
         arg = operands[0]
-        return (_derivative_recursive(arg) * expr)
+        return (_derivative_recursive(arg) * expr, wrt)
 
     elif operation == Sum:
         derived_operands = [_derivative_recursive(operand, wrt) for operand in operands]
@@ -53,7 +54,7 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
             return _derivative_recursive(operands[0], wrt)
         
         v = operands[0]
-        w = Product(*operands[1::])
+        w = expr / v
         return (_derivative_recursive(v, wrt) * w + v * _derivative_recursive(w, wrt))
     
     elif operation == Sin:
@@ -72,7 +73,4 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
             arg = operands[0]
             return (_derivative_recursive(arg, wrt) / arg)
 
-        simplified = copy(expr)
-        if expr == simplified:
-            return _derivative_recursive(expr)
-        return simplified._derivative_recursive(expr)
+        return Derivative(expr)

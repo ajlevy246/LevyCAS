@@ -73,7 +73,6 @@ def algebraic_expand_main(expr: Expression) -> Expression:
     
     return expr
 
-
 def _expand_product(r: Expression, s: Expression) -> Sum | Product:
     """Given a product (r * s), expanded the product recursively.
     If neither r nor s is a sum, then the product r * s is returned unchanged.
@@ -87,14 +86,13 @@ def _expand_product(r: Expression, s: Expression) -> Sum | Product:
     """
     r_op = type(r)
     s_op = type(s)
-
     if r_op == Sum:
         f = r.operands()[0]
         return _expand_product(f, s) + _expand_product(r - f, s)
         
     elif s_op == Sum:
         return _expand_product(s, r)
-    
+
     return r * s
 
 def _expand_power(u: Expression, int_exp: Integer) -> Sum | Power:

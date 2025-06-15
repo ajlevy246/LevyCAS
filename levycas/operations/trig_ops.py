@@ -68,6 +68,7 @@ def trig_expand(expr: Expression) -> Expression:
     if operation in [Integer, Rational, Variable]:
         return expr
     
+    print(f"Trig expanding {expr=}")
     expanded_operands = [trig_expand(operand) for operand in expr.operands()]
     if operation == Sin:
         arg = expanded_operands[0]
@@ -104,7 +105,8 @@ def _trig_expand_recursive(expr: Expression) -> list[Expression]:
         if isinstance(first_factor, Integer):
             remaining = expr / first_factor
             return [_multiple_angle_sin(first_factor, remaining), _multiple_angle_cos(first_factor, remaining)]
-        return [Sin(expr), Cos(expr)]
+        
+    return [Sin(expr), Cos(expr)]
     
 def _multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
     """Given an expression Sin(n * theta), with argument that has an integer
