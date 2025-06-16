@@ -1,12 +1,39 @@
 import pytest
 from levycas import *
 
-#TODO: Add the distribution of constants over sums?
+#TODO: Add the distribution of constants over sums in the simplification procedure?
 
 class TestSimplification:
     """Tests for automatic simplification of expressions"""
+    def test_sum(self):
+        x, y, z = Variable('x'), Variable('y'), Variable('z')
 
-    def test_simplification(self):
+        assert (
+            1 + x + y + z
+            == x + 1 + z + y
+            == z + y + 1 + x
+            == x + 2 + y - 1 + z
+        )
+
+        assert (
+            2*(x + 1) + 3*(x + 1)
+            == 5*(x + 1)
+            == 5*x + 5 #-> Requires distribution of constants over sums
+        )
+
+        assert (
+            (1 + x) + (y + z)
+            == z + (y + x) + 1
+            == (1 + x + y + z)
+        )
+
+        assert (
+            5*x**2 + 4*x + 1 - 4*x - 5*x**2 - 1
+            == 5*x**2 + 4*x + 1 - (4*x + 5*x**2 + 1) #-> Requires distribution of constants over sums
+            == 0
+        )
+
+    def test_basics(self):
         x, y, z = Variable('x'), Variable('y'), Variable('z')
         a, b, c = Variable('a'), Variable('b'), Variable('c')
         
