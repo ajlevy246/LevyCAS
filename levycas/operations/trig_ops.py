@@ -5,7 +5,6 @@ trigonometric functions
 from ..expressions import *
 from .expression_ops import construct
 from .algebraic_ops import algebraic_expand_main, rationalize
-from .simplification_ops import simplify
 
 from math import comb
 

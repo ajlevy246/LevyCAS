@@ -2,8 +2,8 @@
 """
 
 from ..expressions import *
-from .expression_ops import copy
-from .simplification_ops import simplify
+from .expression_ops import construct
+# from .simplification_ops import simplify
 
 def algebraic_expand(expr: Expression) -> Expression:
     """Given an expression, returns an equivalent expression in expanded form.
@@ -38,7 +38,7 @@ def algebraic_expand(expr: Expression) -> Expression:
         return _expand_power(algebraic_expand(operands[0]), algebraic_expand(operands[1]))
     
     expanded_operands = [algebraic_expand(operand) for operand in operands]
-    return operation(*expanded_operands)
+    return construct(expanded_operands, operation)
 
 def algebraic_expand_main(expr: Expression) -> Expression:
     """Given an expression, returns an expanded expression that is expanded only with respect
@@ -127,18 +127,18 @@ def _expand_power(u: Expression, int_exp: Integer) -> Sum | Power:
     
     return u ** int_exp
 
+# def rationalize(expr: Expression) -> Expression:
+#     """Rationalizes an expression over a common denominator.
+
+#     Args:
+#         expr (Expression): The expression to rationalize
+
+#     Returns:
+#         Expression: The rationalized expression
+#     """
+#     return simplify(rationalize(simplify(expr)))
+
 def rationalize(expr: Expression) -> Expression:
-    """Rationalizes an expression over a common denominator.
-
-    Args:
-        expr (Expression): The expression to rationalize
-
-    Returns:
-        Expression: The rationalized expression
-    """
-    return simplify(_rationalize_expression(simplify(expr)))
-
-def _rationalize_expression(expr: Expression) -> Expression:
     """Rationalizes an expression over a common denominator recursively.
 
     Args:
@@ -151,20 +151,20 @@ def _rationalize_expression(expr: Expression) -> Expression:
     operands = expr.operands()
 
     if operation == Power:
-        return _rationalize_expression(operands[0]) ** operands[1]
+        return rationalize(operands[0]) ** operands[1]
     elif operation == Product:
-        first_factor = _rationalize_expression(operands[0])
+        first_factor = rationalize(operands[0])
         if len(operands) == 1:
             return first_factor
         else:
-            remaining_factor = _rationalize_expression(Product(*operands[1::]))
+            remaining_factor = rationalize(Product(*operands[1::]))
             return first_factor * remaining_factor
     elif operation == Sum:
-        first_term = _rationalize_expression(operands[0])
+        first_term = rationalize(operands[0])
         if len(operands) == 1:
             return first_term
         else:
-            remaining_term = _rationalize_expression(Sum(*operands[1::]))
+            remaining_term = rationalize(Sum(*operands[1::]))
             return _rationalize_sum(first_term, remaining_term)
     else:
         return expr

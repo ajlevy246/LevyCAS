@@ -3,6 +3,7 @@ These operations perform simplification procedures, as defined in Chapter 3 of M
 """
 
 from ..expressions import *
+from ..operations import construct
 
 def simplify(expr: Expression) -> Expression:
     """Given an algebraic expression expr, performs simplification procedures as
@@ -26,7 +27,7 @@ def simplify(expr: Expression) -> Expression:
     if UNDEFINED in simplified_operands:
         return UNDEFINED
     
-    expr = operation(*simplified_operands)
+    expr = construct(simplified_operands, operation)
     if operation == Power:
         return simplify_power(expr)
     elif operation == Product:
@@ -408,4 +409,4 @@ def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expre
         return Factorial(operand)
 
     else:
-        return simplify(operation(*evaluated_operands))
+        return simplify(construct(evaluated_operands, operation))

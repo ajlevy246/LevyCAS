@@ -2,7 +2,6 @@
 
 from ..expressions import *
 from .expression_ops import contains, copy
-from .simplification_ops import simplify
 from .trig_ops import trig_substitute
 
 def derivative(expr: Expression, wrt: Variable) -> Expression:
