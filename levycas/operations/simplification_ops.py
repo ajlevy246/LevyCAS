@@ -98,19 +98,27 @@ def simplify_product(expr: Product) -> Expression:
     factors = expr.operands()
     if 0 in factors:
         return Integer(0)
-    
+
     elif len(factors) == 1:
         return factors[0]
-    
+
+    elif len(factors) == 2:
+        if isinstance(factors[0], Constant):
+            if isinstance(factors[1], Sum):
+                return sum([factors[0] * term for term in factors[1].operands()])
+
+        elif isinstance(factors[1], Constant):
+            return simplify_product(Product(factors[1], factors[0]))
+
+    flattened = flatten_factors(factors)
+    num_flattened = len(flattened)
+    if num_flattened == 0:
+        return Integer(1)
+    elif num_flattened == 1:
+        return flattened[0]
     else:
-        flattened = flatten_factors(factors)
-        num_flattened = len(flattened)
-        if num_flattened == 0:
-            return Integer(1)
-        elif num_flattened == 1:
-            return flattened[0]
-        else:
-            return Product(*flattened)
+        return Product(*flattened)
+
 
 def simplify_sum(expr: Sum) -> Expression:
     """Given a sum, returns an equivalent simplified expression or the

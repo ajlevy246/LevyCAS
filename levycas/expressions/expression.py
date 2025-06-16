@@ -642,6 +642,6 @@ def convert_primitive(num: Number) -> Constant:
             if denominator == 1:
                 return Integer(numerator)
             else:
-                return Rational(numerator, denominator)
+                return Rational(numerator, denominator).lowest_terms()
     except:
         raise ValueError(f"Could not convert {num} to Rational.")
