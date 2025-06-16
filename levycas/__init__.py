@@ -12,7 +12,7 @@ from .expressions import (
 )
 
 from .operations import (
-    contains, copy,
+    contains, copy, construct, map_op,
     algebraic_expand, algebraic_expand_main, rationalize,
     derivative, 
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
@@ -27,7 +27,7 @@ __all__ = [
     'trig_substitute', 'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot',
     'Variable', 'Function',
     'Exp', 'Ln',
-    'contains', 'copy',
+    'contains', 'copy', 'construct', 'map_op',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'algebraic_expand', 'algebraic_expand_main', 'rationalize',
     'derivative',

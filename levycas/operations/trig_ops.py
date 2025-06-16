@@ -3,7 +3,7 @@ trigonometric functions
 """
 
 from ..expressions import *
-from .expression_ops import map_op
+from .expression_ops import construct
 from .algebraic_ops import algebraic_expand_main, rationalize
 from .simplification_ops import simplify
 
@@ -43,7 +43,8 @@ def trig_substitute(expr: Expression) -> Expression:
     operation = type(expr)
 
     new_operands = [trig_substitute(operand) for operand in expr.operands()]
-    new_expr = operation(*new_operands)
+    new_expr = construct(new_operands, operation)
+    # new_expr = operation(*new_operands)
 
     if operation == Tan:
         return Sin(*new_operands) / Cos(*new_operands)
@@ -54,7 +55,8 @@ def trig_substitute(expr: Expression) -> Expression:
     elif operation == Cot:
         return Cos(*new_operands) / Sin(*new_operands)
     else:
-        return operation(*new_operands)
+        return construct(new_operands, operation)
+        # return operation(*new_operands)
 
 def trig_expand(expr: Expression) -> Expression:
     """Given an expression, returns an equivalent expression in trigonometric-expanded form.
@@ -77,7 +79,8 @@ def trig_expand(expr: Expression) -> Expression:
         arg = expanded_operands[0]
         return _trig_expand_recursive(arg)[1]
     else:
-        return operation(*expanded_operands)
+        return construct(expanded_operands, operation)
+        # return operation(*expanded_operands)
 
 def _trig_expand_recursive(expr: Expression) -> list[Expression]:
     """Given the argument x of a sin or cosine, returns a list [s, c]:
@@ -187,7 +190,8 @@ def trig_contract(expr: Expression) -> Expression:
         return sum(contracted_operands)
     
     else:
-        return operation(*contracted_operands)
+        return construct(contracted_operands, operation)
+        # return operation(*contracted_operands)
     
 def _trig_contract_recursive(expr: Expression) -> Expression:
     """Given an algebraic expression, returns the algebraic expression in

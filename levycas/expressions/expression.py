@@ -2,6 +2,9 @@
 from math import gcd, lcm, comb, factorial
 from numbers import Number
 
+#TODO: Create Construct(operation, operands) operator to remove
+#"operation()" calls in trig_ops!.
+
 #TODO: Infinite recursion issue:
 #1: Integer(1) / 1
 

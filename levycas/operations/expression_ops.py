@@ -90,3 +90,40 @@ def map_op(expr: Expression, op: Callable) -> Expression:
     
     else:
         return op(operation(*mapped_operators))
+    
+def construct(operands: list[Expression], op: type[Expression]) -> Expression:
+    """Given a list of operands and an operation, 
+    returns the constructed operation.
+
+    The point of this method is to force simplification procedures for anonymous
+    constructions. See levycas.operations.trig_ops for an example.
+
+    Example:
+        >>> sum = 1 + 1
+        >>> operation = type(sum)
+        >>> operands = sum.operands()
+        >>> construct_op(operands, operation)
+        (1 + 1)
+
+    Args:
+        operands (list[Expression]): List of operands
+        op (type[Expression]): Type of operation to construct
+
+    Returns:
+        Expression: The resulting expression
+    """
+    if op == Sum:
+        return sum(operands)
+    
+    elif op == Product:
+        prod = Integer(1)
+        for operand in operands:
+            prod *= operand
+        return prod
+    
+    elif op == Power:
+        assert len(operands) == 2, f"Cannot construct a power from more/less than two arguments"
+        return operands[0] ** operands[1]
+    
+    else:
+        return op(*operands)

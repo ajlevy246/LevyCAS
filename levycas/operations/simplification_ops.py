@@ -304,9 +304,9 @@ def flatten_terms(terms: list[Expression]) -> list[Expression]:
         if u_2 == 0:
             return [u_1]
         
-        if u_1.term() == u_2.term():
-            new_coefficient = simplify_sum(u_1.coefficient() + u_2.coefficient())
-            new_product = simplify_product(new_coefficient * u_1.term())
+        if u_1.term() == u_2.term():  
+            new_coefficient = u_1.coefficient() + u_2.coefficient()
+            new_product = new_coefficient * u_1.term()
             if new_product == 0:
                 return []
             else:
@@ -317,7 +317,7 @@ def flatten_terms(terms: list[Expression]) -> list[Expression]:
         else:
             return [u_1, u_2]
         
-    elif len(terms) > 2:
+    elif num_terms > 2:
         remaining = flatten_terms(terms[1::])
         if u_1_sum:
             return merge_terms(u_1.operands(), remaining)
@@ -357,7 +357,7 @@ def merge_terms(first_terms: list[Expression], second_terms: list[Expression]) -
             if h == [p, q]:
                 return [p] + merge_terms(rest_p, second_terms)
             else:
-                assert h == [q, p]
+                assert h == [q, p], f"{h=}\n {p=}\n {q=}"
                 return [q] + merge_terms(first_terms, rest_q)
 
 def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expression:
