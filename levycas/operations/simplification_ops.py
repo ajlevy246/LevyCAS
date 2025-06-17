@@ -169,6 +169,30 @@ def simplify_factorial(expr: Factorial) -> Expression:
         return Integer(factorial(int(operand)))
     return expr
 
+def simplify_cos(expr: Cos) -> Expression:
+    """Given an expression Cos(v), does basic 
+    simplification based on the argument.
+    
+    Args:
+        expr (Cos): The expression to simplify
+
+    Returns:
+        Expression: The simplified expression
+    """
+    pass
+
+def simplify_sin(expr: Sin) -> Expression:
+    """Given an expression Sin(v), does  basic
+    simplification based on the argument.
+
+    Args:
+        expr (Sin): The expression to simplify
+
+    Returns:
+        Expression: The simplified expression
+    """
+    pass
+
 def flatten_factors(factors: list[Expression]) -> list[Expression]:
     """Given a list of factors, combines those with like bases (e.g. [x, x] -> [x^2])
     and flattens nested products (e.g. [x, Product(x, y)] -> [x, x, y] -> [x^2, y]) recursively.
