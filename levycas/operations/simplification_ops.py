@@ -119,7 +119,6 @@ def simplify_product(expr: Product) -> Expression:
     else:
         return Product(*flattened)
 
-
 def simplify_sum(expr: Sum) -> Expression:
     """Given a sum, returns an equivalent simplified expression or the
     symbol UNDEFINED

@@ -90,7 +90,7 @@ def map_op(expr: Expression, op: Callable) -> Expression:
     
     else:
         return op(operation(*mapped_operators))
-    
+
 def construct(operands: list[Expression], op: type[Expression]) -> Expression:
     """Given a list of operands and an operation, 
     returns the constructed operation.

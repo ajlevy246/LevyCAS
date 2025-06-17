@@ -3,7 +3,6 @@
 
 from ..expressions import *
 from .expression_ops import construct
-# from .simplification_ops import simplify
 
 def algebraic_expand(expr: Expression) -> Expression:
     """Given an expression, returns an equivalent expression in expanded form.
@@ -126,17 +125,6 @@ def _expand_power(u: Expression, int_exp: Integer) -> Sum | Power:
             return s
     
     return u ** int_exp
-
-# def rationalize(expr: Expression) -> Expression:
-#     """Rationalizes an expression over a common denominator.
-
-#     Args:
-#         expr (Expression): The expression to rationalize
-
-#     Returns:
-#         Expression: The rationalized expression
-#     """
-#     return simplify(rationalize(simplify(expr)))
 
 def rationalize(expr: Expression) -> Expression:
     """Rationalizes an expression over a common denominator recursively.

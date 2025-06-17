@@ -19,7 +19,7 @@ def trig_simplify(expr: Expression) -> Expression:
         Expression: The simplified expression
     """
     expr = rationalize(trig_substitute(expr))
-    numerator = trig_expand(trig_contract(expr.num()))
+    numerator = trig_contract(trig_expand(expr.num()))
     denominator = trig_contract(trig_expand(expr.denom()))
     if denominator == 0:
         return UNDEFINED
@@ -79,7 +79,6 @@ def trig_expand(expr: Expression) -> Expression:
         return _trig_expand_recursive(arg)[1]
     else:
         return construct(expanded_operands, operation)
-        # return operation(*expanded_operands)
 
 def _trig_expand_recursive(expr: Expression) -> list[Expression]:
     """Given the argument x of a sin or cosine, returns a list [s, c]:
@@ -107,7 +106,6 @@ def _trig_expand_recursive(expr: Expression) -> list[Expression]:
         if isinstance(first_factor, Integer):
             remaining = expr / first_factor
             return [_multiple_angle_sin(first_factor, remaining), _multiple_angle_cos(first_factor, remaining)]
-        
     return [Sin(expr), Cos(expr)]
     
 def _multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
@@ -168,29 +166,12 @@ def trig_contract(expr: Expression) -> Expression:
         return expr
 
     contracted_operands = [trig_contract(operand) for operand in expr.operands()]
-    # contracted_operation = operation(*contracted_operands)
+    contracted_operation = construct(contracted_operands, operation)
 
-    # if operation in [Product, Power]:
-    #     return _trig_contract_recursive(contracted_operation)
-    # else:
-    #     return contracted_operation
-
-    if operation == Product:
-        prod = 1
-        for operand in contracted_operands:
-            prod *= operand
-        return _trig_contract_recursive(prod)
-    
-    elif operation == Power:
-        power = contracted_operands[0] ** contracted_operands[1]
-        return _trig_contract_recursive(power)
-    
-    elif operation == Sum:
-        return sum(contracted_operands)
-    
+    if operation in [Product, Power]:
+        return _trig_contract_recursive(contracted_operation)
     else:
-        return construct(contracted_operands, operation)
-        # return operation(*contracted_operands)
+        return contracted_operation
     
 def _trig_contract_recursive(expr: Expression) -> Expression:
     """Given an algebraic expression, returns the algebraic expression in
@@ -244,7 +225,12 @@ def _contract_trig_power(expr: Power) -> Expression:
         Expression: the trigonometric-contracted expression
     """
     exponent = expr.exponent()
+    if not isinstance(exponent, Integer) or not exponent.is_positive():
+        return expr
+
     base = expr.base()
+    if not isinstance(base, Trig):
+        return expr
 
     n = exponent.eval()
     theta = base.operands()[0]
@@ -252,33 +238,31 @@ def _contract_trig_power(expr: Power) -> Expression:
     total = expr
     if n % 2 == 0:
         if type(base) == Cos:
-            total = (1 / 2**exponent) * comb(n, n // 2)
+            total = Integer(comb(n, n // 2)) * 2 ** -exponent
             subtotal = 0
-            for k in range(n // 2 - 1):
-                subtotal += comb(n, k) * Cos((n - 2 * k) * theta)
-            total += (2 / 2**exponent) * subtotal
-            return total
+            for j in range(n // 2):
+                subtotal += Integer(comb(n, j))*Cos((n - 2 * j) * theta)
+            return total + 2 ** (1 - exponent) * subtotal
 
         elif type(base) == Sin:
-            total = (1 / 2**exponent) * comb(n, n // 2)
+            total = Integer(comb(n, n // 2)) * 2 ** -exponent
             subtotal = 0
-            for k in range(n // 2 - 1):
-                subtotal += (-1)**(n // 2 - k) * comb(n, k) * Cos((n - 2 * k) * theta)
-            total += (2 / 2**exponent) * subtotal
-            return total
+            for j in range(n // 2):
+                subtotal += (-1)**j * Integer(comb(n, j)) * Cos((n - 2 * j) * theta)
+            return  total + (-1)**(n // 2) * 2 ** (1 - exponent) * subtotal
 
     else:
         if type(base) == Cos:
-            subtotal = 0
-            for k in range((n - 1) // 2):
-                subtotal += comb(n, k) * Cos((n - 2 * k) * theta)
-            return (2 / 2 ** exponent) * subtotal
+            total = 0
+            for j in range(n // 2 + 1):
+                total += Integer(comb(n, j)) * Cos((n - 2 * j) * theta)
+            return 2**(1 - exponent) * total
 
         elif type(base) == Sin:
-            subtotal = 0
-            for k in range((n - 1) // 2):
-                subtotal += (-1) ** ((n - 1) // 2 - k) * comb(n, k) * Sin((n - 2 * k) * theta)
-            return (2 / 2 ** exponent) * subtotal
+            total = 0
+            for j in range(n // 2 + 1):
+                total == Integer(comb(n, j)) * (-1)**j * Sin((n - 2 * j) * theta)
+            return (-1)**((n-1) // 2) * 2 ** (1 - exponent) * total
 
     return expr
 
@@ -302,18 +286,20 @@ def _contract_trig_product(expr: Product) -> Expression:
         remaining = _contract_trig_product(expr / first_factor)
         return _trig_contract_recursive(first_factor * remaining)
     
-    theta = factors[0]
-    phi = factors[1]
-    
-    first_op = type(theta)
-    second_op = type(phi)
+    lhs = factors[0]
+    rhs = factors[1]
+
+    first_op = type(lhs)
+    second_op = type(rhs)
 
     if first_op == Power:
-        return _trig_contract_recursive(_contract_trig_power(theta) * phi)
+        return _trig_contract_recursive(_contract_trig_power(lhs) * rhs)
     elif second_op == Power:
-        return _trig_contract_recursive(theta * _contract_trig_power(phi))
-    
-    elif first_op == Sin and second_op == Sin:
+        return _trig_contract_recursive(lhs * _contract_trig_power(rhs))
+
+    theta = lhs.arg
+    phi = rhs.arg
+    if first_op == Sin and second_op == Sin:
         return (Cos(theta - phi) / 2 - Cos(theta + phi) / 2)
     elif first_op == Cos and second_op == Cos:
         return (Cos(theta + phi) / 2 + Cos(theta - phi) / 2)
