@@ -4,7 +4,7 @@ trigonometric functions
 
 from ..expressions import *
 from .expression_ops import construct
-from .algebraic_ops import algebraic_expand_main, rationalize
+from .algebraic_ops import algebraic_expand_main, rationalize, algebraic_expand
 
 from math import comb
 
@@ -73,12 +73,12 @@ def trig_expand(expr: Expression) -> Expression:
     expanded_operands = [trig_expand(operand) for operand in expr.operands()]
     if operation == Sin:
         arg = expanded_operands[0]
-        return _trig_expand_recursive(arg)[0]
+        return algebraic_expand(_trig_expand_recursive(arg)[0])
     elif operation == Cos:
         arg = expanded_operands[0]
-        return _trig_expand_recursive(arg)[1]
+        return algebraic_expand(_trig_expand_recursive(arg)[1])
     else:
-        return construct(expanded_operands, operation)
+        return algebraic_expand(construct(expanded_operands, operation))
 
 def _trig_expand_recursive(expr: Expression) -> list[Expression]:
     """Given the argument x of a sin or cosine, returns a list [s, c]:
@@ -323,7 +323,7 @@ def _trig_separate(expr: Expression) -> list[Expression]:
     """
     if isinstance(expr.base(), Trig) and isinstance(expr.exponent(), Integer):
         return [expr, Integer(1)]
-    
+
     elif type(expr) == Product:
         trig_factors = 1
         non_trig_factors = 1
@@ -332,6 +332,6 @@ def _trig_separate(expr: Expression) -> list[Expression]:
             trig_factors *= trig_factor
             non_trig_factors *= non_trig_factor
         return [trig_factors, non_trig_factors]
-    
+
     else:
         return [Integer(1), expr]

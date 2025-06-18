@@ -217,8 +217,8 @@ class Product(Expression):
         self.factors = list(factors)
 
     def __repr__(self):
-        # if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
-        #     return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
+        if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
+            return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
         
         factor_repr = [str(factor) for factor in self.factors]
         return "(" + " \u00B7 ".join(factor_repr) + ")" #\u00b7 -> \cdot
