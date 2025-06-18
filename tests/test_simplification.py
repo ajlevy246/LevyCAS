@@ -33,6 +33,33 @@ class TestSimplification:
             == 0
         )
 
+    def test_product(self):
+        x, y, z = Variable('x'), Variable('y'), Variable('z')
+
+        assert (
+            x * y * z * x * y * z
+            == (x*y*z)**2
+            == x**2 * y**2 * z**2
+        )
+
+        assert (
+            2*x*y*z * 3*x*y*z
+            == 6*(x*y*z)**2
+            == 6*x**2 * y**2 * z**2
+        )
+
+        assert (
+            2*x - (2*x + 1) 
+            == -1
+        )
+
+        assert (
+            (x + y + z) - (x + y + z)
+            == (z + y + x) - (y + x + z)
+            == (x + y + z) - (x + y + z)
+            == 0
+        )
+
     def test_basics(self):
         x, y, z = Variable('x'), Variable('y'), Variable('z')
         a, b, c = Variable('a'), Variable('b'), Variable('c')
