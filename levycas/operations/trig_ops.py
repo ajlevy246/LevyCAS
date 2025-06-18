@@ -89,7 +89,7 @@ def _trig_expand_recursive(expr: Expression) -> list[Expression]:
         expr (Expression): x
 
     Returns:
-        list[Expression]: s, c
+        list[Expression]: [s, c]
     """
     operation = type(expr)
     operands = expr.operands()
@@ -104,8 +104,15 @@ def _trig_expand_recursive(expr: Expression) -> list[Expression]:
     elif operation == Product:
         first_factor = operands[0]
         if isinstance(first_factor, Integer):
-            remaining = expr / first_factor
-            return [_multiple_angle_sin(first_factor, remaining), _multiple_angle_cos(first_factor, remaining)]
+            if first_factor == 0:
+                return [Integer(0), Integer(1)]
+            elif first_factor.is_negative():
+                remaining = expr / first_factor
+                sin_remaining, cos_remaining = _trig_expand_recursive(remaining)
+                return [-sin_remaining, cos_remaining]
+            else:
+                remaining = expr / first_factor
+                return [_multiple_angle_sin(first_factor, remaining), _multiple_angle_cos(first_factor, remaining)]
     return [Sin(expr), Cos(expr)]
     
 def _multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
@@ -121,13 +128,14 @@ def _multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
         Expression: Expanded form
     """
     expanded = 0
+
     if isinstance(theta, Sum):
         sin_theta, cos_theta = _trig_expand_recursive(theta)
     else:
         sin_theta, cos_theta = Sin(theta), Cos(theta)
 
-    for j in range(0, n + 1, 2):
-        expanded += (-1)**(j // 2) * comb(n, j) * cos_theta**(n - j) * sin_theta ** j
+    for j in range(1, n + 1, 2):
+        expanded += (-1)**((j - 1) // 2) * comb(n, j) * sin_theta ** j * cos_theta ** (n -j)
     return expanded
 
 def _multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
@@ -143,13 +151,14 @@ def _multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
         Expression: Expanded form
     """
     expanded = 0
+
     if isinstance(theta, Sum):
         sin_theta, cos_theta = _trig_expand_recursive(theta)
     else:
         sin_theta, cos_theta = Sin(theta), Cos(theta)
     
-    for j in range(1, n + 1, 2):
-        expanded += (-1)**((j - 1) // 2) * comb(n, j) * Cos(theta) ** (n - j) * Sin(theta) ** j
+    for j in range(0, n + 1, 2):
+        expanded += (-1) ** (j // 2) * comb(n, j) * cos_theta ** (n - j) * sin_theta ** j
     return expanded
 
 def trig_contract(expr: Expression) -> Expression:
@@ -164,7 +173,6 @@ def trig_contract(expr: Expression) -> Expression:
     operation = type(expr)
     if operation in [Integer, Rational, Variable]:
         return expr
-
     contracted_operands = [trig_contract(operand) for operand in expr.operands()]
     contracted_operation = construct(contracted_operands, operation)
 
