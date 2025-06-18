@@ -1,4 +1,4 @@
-from .expression import Expression
+from .expression import Expression, Power
 
 class Trig(Expression):
     """Trig functions represent the trigonometric functions"""
@@ -20,6 +20,10 @@ class Trig(Expression):
             other_precedence = Trig.orderings.index(type(other).__name__)
             return self_precedence < other_precedence
         
+        #If the other is a power, compare via power rules
+        if isinstance(other, Power):
+            return NotImplemented
+
         #Otherwise, return false
         if isinstance(other, Expression):
             return False
