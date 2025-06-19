@@ -156,12 +156,22 @@ def test_trig_contract():
 
     assert (
         trig_contract(Sin(x)**3)
-        == 
+        == (1 / 4) * (3*Sin(x) - Sin(3*x))
+    )
+
+    assert (
+        trig_contract(Sin(x)**4)
+        == (1 / 8) * (3 - 4*Cos(2*x) + Cos(4*x))
     )
 
 def test_trig_simplify():
     """Tests from the Elementary Algorithms for the trig_simplify() operator"""
     x = Variable('x')
+
+    assert (
+        trig_simplify(Cos(2*x) * (Sin(x) + Sin(3*x)))
+        == trig_simplify(Sin(2*x) * (Cos(x) + Cos(3*x)))
+    )
 
     assert (
         trig_simplify(Cos(4*x) * (Sin(x) + Sin(3*x) + Sin(5*x) + Sin(7*x)))
