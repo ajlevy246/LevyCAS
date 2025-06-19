@@ -127,11 +127,43 @@ def test_trig_identities():
 
     #Cofunction identities, half-angle, triple-angle, supplement angle -> Not yet implemented (requires Pi implementation)
 
-# def test_trig_simplify():
-#     """Tests from the Elementary Algorithms for the trig_simplify() operator"""
-#     x = Variable('x')
+def test_trig_contract():
+    """Tests for the trig_contract() operator"""
+    x, y = Variable('x'), Variable('y')
 
-#     assert (
-#         trig_simplify(Cos(4*x) * (Sin(x) + Sin(3*x) + Sin(5*x) + Sin(7*x)))
-#         == trig_simplify(Sin(4*x) * (Cos(x) + Cos(3*x) + Cos(5*x) + Cos(7*x)))
-#     )
+    assert (
+        trig_contract((Sin(x) + Cos(y)) * Cos(y))
+        == trig_contract(Sin(x) * Cos(y) + Cos(y)**2)
+        == (1 / 2) * (Sin(x + y) + Sin(x - y) + Cos(2*y) + 1)
+    )
+    
+    assert (
+        trig_contract(Sin(x)**2 * Cos(x)**2)
+        == trig_contract( (1 / 2) * (1 - Cos(2*x)) * (1 / 2) * (1 + Cos(2*x)))
+        == trig_contract( (1 / 4) * (1 - (1 / 2) * (1 + Cos(4*x))))
+        == (1 / 8) * (1 - Cos(4*x))
+    )
+
+    assert (
+        trig_contract(Cos(x)**4)
+        ==  (1 / 8) * Cos(4*x) + (1 / 2) * Cos(2*x) + (3 / 8)
+    )
+
+    assert (
+        trig_contract(Cos(x)**3)
+        == (1 / 4) * (3*Cos(x) + Cos(3*x))
+    )
+
+    assert (
+        trig_contract(Sin(x)**3)
+        == 
+    )
+
+def test_trig_simplify():
+    """Tests from the Elementary Algorithms for the trig_simplify() operator"""
+    x = Variable('x')
+
+    assert (
+        trig_simplify(Cos(4*x) * (Sin(x) + Sin(3*x) + Sin(5*x) + Sin(7*x)))
+        == trig_simplify(Sin(4*x) * (Cos(x) + Cos(3*x) + Cos(5*x) + Cos(7*x)))
+    )
