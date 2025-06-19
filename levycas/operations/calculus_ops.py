@@ -1,7 +1,8 @@
 """Methods acting on an expression's AST. These are calculus operations."""
 
 from ..expressions import *
-from .expression_ops import contains, copy\
+from .expression_ops import contains, copy
+from .trig_ops import trig_substitute
 
 def derivative(expr: Expression, wrt: Variable) -> Expression:
     """Take the derivative of an expression with respect to a variable.
@@ -85,13 +86,13 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
         Expression | None: The integrated expression, or None if the integration failed.
     """
     assert isinstance(wrt, Variable), f"Cannot integrate with respect to {wrt}"
-    integrated = integral_match(expr, wrt)
+    integrated = _integrate_match(expr, wrt)
 
     if integrated is None:
-        integrated = linear_properties(expr, wrt)
+        integrated = _integrate_linear(expr, wrt)
 
     if integrated is None:
-        integrated = substitution_method(expr, wrt)
+        integrated = _integrate_substitute(expr, wrt)
 
     if integrated is None:
         expanded = algebraic_expand(expr)
@@ -100,7 +101,7 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
 
     return integrated
 
-def integral_match(expr: Expression, wrt: Variable) -> Expression | None:
+def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
     """Integrates epxressions free of the inegration variable by matching the given expression to
     the integral table.
 
@@ -115,14 +116,15 @@ def integral_match(expr: Expression, wrt: Variable) -> Expression | None:
 
     """Table of known integrals. Uses anonymous variable 'x'"""
     INTEGRAL_TABLE = {
-    Variable('x')  : (1 / 2) * Variable('x') ** 2,  #x -> (1/2)x^2
-    1 / Variable('x')      : Ln(Variable('x')),         #1 / x -> Ln(x)
-    Cos(Variable('x'))     : Sin(Variable('x')),        #Cos(x) -> Sin(x)
-    Sin(Variable('x'))     : -Cos(Variable('x')),       #Sin(x) -> -Cos(x)
-    Exp(Variable('x'))     : Exp(Variable('x')),        #Exp(x) -> Exp(x)
-    Sec(Variable('x'))**2  : Tan(Variable('x')),        #Sec(x)^2 -> Tan(x)
-    -Csc(Variable('x'))**2 : Cot(Variable('x')),        #-Csc(x)^2 -> Cot(x)
-    -Csc(Variable('x')) * Cot(Variable('x')) : Csc(Variable('x')),
+        Variable('x')  : (1 / 2) * Variable('x') ** 2,                 #x -> (1/2)x^2
+        1 / Variable('x') : Ln(Variable('x')),                         #1 / x -> Ln(x)
+        Cos(Variable('x')) : Sin(Variable('x')),                       #Cos(x) -> Sin(x)
+        Sin(Variable('x')) : -Cos(Variable('x')),                      #Sin(x) -> -Cos(x)
+        Exp(Variable('x')) : Exp(Variable('x')),                       #Exp(x) -> Exp(x)
+        Sec(Variable('x'))**2 : Tan(Variable('x')),                    #Sec(x)^2 -> Tan(x)
+        -Csc(Variable('x'))**2 : Cot(Variable('x')),                   #-Csc(x)^2 -> Cot(x)
+        -Csc(Variable('x')) * Cot(Variable('x')) : Csc(Variable('x')), #-Csc(x)*Cot(x) -> Csc(x)
+        Sec(Variable('x')) * Tan(Variable('x')) : Sec(Variable('x')),  #Sec(x)Tan(x) -> Sec(x)
     }
 
     if expr == 0:
@@ -136,7 +138,7 @@ def integral_match(expr: Expression, wrt: Variable) -> Expression | None:
         base = expr.base()
         exponent = expr.exponent()
         if not contains(exponent, wrt):
-            return exponent * wrt ** (exponent - 1)
+            return (1 / (exponent + 1)) * wrt ** (exponent + 1)
         
         elif exponent == wrt and not contains(base, wrt):
             return base ** wrt / Ln(base)
@@ -144,3 +146,54 @@ def integral_match(expr: Expression, wrt: Variable) -> Expression | None:
     substitution = {str(wrt) : Variable('x')}
     test_expr = sym_eval(expr, **substitution)
     return INTEGRAL_TABLE.get(test_expr, None)
+
+def _integrate_linear(expr: Expression, wrt: Variable) -> Expression | None:
+    """Given an expression, integrates linearly with respect to the given variable.
+    That is, uses the sum and scalar multiplication rules to split the integral, and 
+    returns the result.
+
+    Args:
+        expr (Expression): The expression to integrate
+        wrt (Variable): The variable to integrate with respect to
+
+    Returns:
+        Expression | None: The integrated expression, or None if the integration fails.
+    """
+
+    if isinstance(expr, Product):
+        independent, dependent = _separate_factors(expr, wrt)
+        integral = integrate(dependent, wrt)
+        return independent * integral if integral is not None else None
+    
+    elif isinstance(expr, Sum):
+        integral = 0
+        for term in expr.operands():
+            term_integral = integrate(term, wrt)
+            if term_integral is None:
+                return None
+            integral += term_integral
+        return integral
+    
+    return None
+
+def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
+    """Given a product of factors, separates the factors into those independent of the given variable
+    and those dependent on it.
+
+    Args:
+        expr (Product): Product to separate
+        wrt (Variable): Variable to separate with respect to
+
+    Returns:
+        list[Product]: The list [independent, dependent]
+    """
+    independent = Integer(1)
+    dependent = Integer(1)
+
+    for factor in expr.operands():
+        if contains(factor, wrt):
+            dependent *= factor
+        else:
+            independent *= factor
+
+    return [independent, dependent]
