@@ -268,10 +268,8 @@ def _contract_trig_power(expr: Power) -> Expression:
 
         elif type(base) == Sin:
             total = 0
-            print(f"Expanding {expr}")
             for j in range(n // 2 + 1):
                 total += Integer(comb(n, j)) * (-1)**j * Sin((n - 2 * j) * theta)
-                print(f"{j=}: {total=}")
             return (-1)**((n-1) // 2) * 2 ** (1 - exponent) * total
 
     return expr
