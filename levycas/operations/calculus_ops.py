@@ -1,8 +1,7 @@
 """Methods acting on an expression's AST. These are calculus operations."""
 
 from ..expressions import *
-from .expression_ops import contains, copy
-from .trig_ops import trig_substitute
+from .expression_ops import contains, copy\
 
 def derivative(expr: Expression, wrt: Variable) -> Expression:
     """Take the derivative of an expression with respect to a variable.
@@ -73,3 +72,75 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
             return (_derivative_recursive(arg, wrt) / arg)
 
         return Derivative(expr)
+
+def integrate(expr: Expression, wrt: Variable) -> Expression | None:
+    """Attempts to symbolically integrate the given expression with respect 
+    to the given variable. If the operation fails, returns None. 
+
+    Args:
+        expr (Expression): The expression to integrate.
+        wrt (Variable): The variable to integrate with respect to.
+
+    Returns:
+        Expression | None: The integrated expression, or None if the integration failed.
+    """
+    assert isinstance(wrt, Variable), f"Cannot integrate with respect to {wrt}"
+    integrated = integral_match(expr, wrt)
+
+    if integrated is None:
+        integrated = linear_properties(expr, wrt)
+
+    if integrated is None:
+        integrated = substitution_method(expr, wrt)
+
+    if integrated is None:
+        expanded = algebraic_expand(expr)
+        if integrated != expanded:
+            integrated = integrate(expanded, wrt)
+
+    return integrated
+
+def integral_match(expr: Expression, wrt: Variable) -> Expression | None:
+    """Integrates epxressions free of the inegration variable by matching the given expression to
+    the integral table.
+
+    Args:
+        expr (Expression): The expression to integrate
+        wrt (Variable): The variable to integrate with respect to
+
+    Returns:
+        Expression | None: The integrated expression, or None if the integration fails.
+    """
+    from .simplification_ops import sym_eval
+
+    """Table of known integrals. Uses anonymous variable 'x'"""
+    INTEGRAL_TABLE = {
+    Variable('x')  : (1 / 2) * Variable('x') ** 2,  #x -> (1/2)x^2
+    1 / Variable('x')      : Ln(Variable('x')),         #1 / x -> Ln(x)
+    Cos(Variable('x'))     : Sin(Variable('x')),        #Cos(x) -> Sin(x)
+    Sin(Variable('x'))     : -Cos(Variable('x')),       #Sin(x) -> -Cos(x)
+    Exp(Variable('x'))     : Exp(Variable('x')),        #Exp(x) -> Exp(x)
+    Sec(Variable('x'))**2  : Tan(Variable('x')),        #Sec(x)^2 -> Tan(x)
+    -Csc(Variable('x'))**2 : Cot(Variable('x')),        #-Csc(x)^2 -> Cot(x)
+    -Csc(Variable('x')) * Cot(Variable('x')) : Csc(Variable('x')),
+    }
+
+    if expr == 0:
+        return Integer(0)
+    
+    elif not contains(expr, wrt):
+        return expr * wrt
+    
+
+    elif isinstance(expr, Power):
+        base = expr.base()
+        exponent = expr.exponent()
+        if not contains(exponent, wrt):
+            return exponent * wrt ** (exponent - 1)
+        
+        elif exponent == wrt and not contains(base, wrt):
+            return base ** wrt / Ln(base)
+
+    substitution = {str(wrt) : Variable('x')}
+    test_expr = sym_eval(expr, **substitution)
+    return INTEGRAL_TABLE.get(test_expr, None)

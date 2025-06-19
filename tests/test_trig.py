@@ -134,6 +134,12 @@ def test_trig_identities():
         == trig_simplify(2 * Tan(theta) / (1 - Tan(theta) ** 2))
     )
 
+    #Multiple-angle identities:
+    assert (
+        trig_simplify(Sin(4*theta))
+        == trig_simplify(4 * Cos(theta)**3 * Sin(theta) - 4 * Cos(theta) * Sin(theta)**3)
+    )
+
 
     #Cofunction identities, half-angle, triple-angle, supplement angle -> Not yet implemented (requires Pi implementation)
 
