@@ -3,6 +3,16 @@ import pytest
 from levycas.expressions import *
 from levycas import trig_simplify, trig_contract, trig_expand
 
+def test_trig_asimplify():
+    """Tests for substitution and automatic simplification of trig operations"""
+    x, y = Variable('x'), Variable('y')
+
+    assert 1 - Cos(0) == 0
+    assert Cos(-x) == Cos(x)
+
+    assert 1 - Sin(0) == 1
+    assert Sin(-x) == -Sin(x)
+
 def test_trig_expand():
     """Tests for the trig_expand() operator"""
     x, y = Variable('x'), Variable('y')

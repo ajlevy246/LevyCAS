@@ -1,4 +1,4 @@
-from .expression import Expression, Power, Integer
+from .expression import Expression, Power, Constant, Integer, convert_primitive
 
 class Trig(Expression):
     """Trig functions represent the trigonometric functions"""
@@ -6,7 +6,7 @@ class Trig(Expression):
 
     def __init__(self, *args):
         assert len(args) == 1, "Trig functions expect one argument"
-        self.arg = args[0]
+        self.arg = convert_primitive(args[0])
         
     def __lt__(self, other):
 
@@ -49,30 +49,44 @@ class Trig(Expression):
 
 class Sin(Trig):
     def __new__(cls, *args):
-        """Automatic simplification for trigonometric functions
-        requires the __new__ constructor to be overridden
+        """To facilitate automatic simplifcation of trigonometric expressions,
+        the __new__ method is overwritten.
         """
-        assert len(args) == 1, f"Sin expects one argument"
-        arg = args[0]
+        assert len(args) == 1, f"Sin expects a single argument"
+        arg = convert_primitive(args[0])
+
         coefficient = arg.coefficient()
-        if coefficient.is_negative():
-            return -Sin(-arg)
-        elif coefficient == 0:
+        if coefficient == 0:
             return Integer(0)
+        elif coefficient.is_negative():
+            return -Sin(-arg)
         
-        return super().__new__(Sin)
+        return super().__new__(cls)
 
 class Cos(Trig):
     def __new__(cls, *args):
-        assert len(args) == 1, f"Cos expects one argument"
-        arg = args[0]
+        """To facilitate automatic simplifcation of trigonometric expressions,
+        the __new__ method is overwritten.
+        """
+        assert len(args) == 1, f"Cos expects a single argument"
+        arg = convert_primitive(args[0])
         coefficient = arg.coefficient()
-        if coefficient.is_negative():
-            return Cos(-arg)
-        elif coefficient == 0:
+        if coefficient == 0:
             return Integer(1)
         
-        return super().__new__(Cos)
+        new_instance = super().__new__(cls)
+        if coefficient.is_negative():
+            new_instance._arg = -arg
+            return new_instance
+        
+        new_instance._arg = None
+        return new_instance
+
+    def __init__(self, *args):
+        if self._arg is not None:
+            super().__init__(self._arg)
+        else:
+            super().__init__(*args)
 
 class Tan(Trig):
     pass
