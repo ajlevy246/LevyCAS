@@ -455,6 +455,12 @@ class Function(Expression):
 class Constant(Expression):
     """A Constant represents a constant value"""
 
+    def coefficient(self):
+        return self
+    
+    def term(self):
+        return Integer(1)
+
     def __lt__(self, other):
         """Total ordering for Constants: O-1"""
         if isinstance(other, Constant):

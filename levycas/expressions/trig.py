@@ -1,4 +1,4 @@
-from .expression import Expression, Power
+from .expression import Expression, Power, Integer
 
 class Trig(Expression):
     """Trig functions represent the trigonometric functions"""
@@ -48,10 +48,31 @@ class Trig(Expression):
         return self.arg.contains(other)
 
 class Sin(Trig):
-    pass
+    def __new__(cls, *args):
+        """Automatic simplification for trigonometric functions
+        requires the __new__ constructor to be overridden
+        """
+        assert len(args) == 1, f"Sin expects one argument"
+        arg = args[0]
+        coefficient = arg.coefficient()
+        if coefficient.is_negative():
+            return -Sin(-arg)
+        elif coefficient == 0:
+            return Integer(0)
+        
+        return super().__new__(Sin)
 
 class Cos(Trig):
-    pass
+    def __new__(cls, *args):
+        assert len(args) == 1, f"Cos expects one argument"
+        arg = args[0]
+        coefficient = arg.coefficient()
+        if coefficient.is_negative():
+            return Cos(-arg)
+        elif coefficient == 0:
+            return Integer(1)
+        
+        return super().__new__(Cos)
 
 class Tan(Trig):
     pass
