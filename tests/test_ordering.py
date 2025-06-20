@@ -34,26 +34,47 @@ class TestOrdering:
         assert Sum(a, c, d) < Sum(b, c, d)
         assert not Sum(b, c, d) < Sum(a, c, d)
 
-        assert Sum(c, d) < Sum(b, c, d)
-        assert not Sum(b, c, d) < Sum(c, d)
+    def test_elementary_orderings(self):
+        x, y, z = Variable("x"), Variable("y"), Variable("z")
 
-        assert Product(a, b) < Product(a, c)
-        assert not Product(a, c) < Product(a, b)
+        assert Cos(x) < Sin(x)
+        assert not Sin(x) < Cos(x)
 
-        assert Product(a, c, d) < Product(b, c, d)
-        assert not Product(b, c, d) < Product(a, c, d)
+        assert Cos(x) < Tan(x)
+        assert not Tan(x) < Cos(x)
 
-        assert Product(c, d) < Product(b, c, d)
-        assert not Product(b, c, d) < Product(c, d)
+        assert Exp(x) < Tan(x)
+        assert not Tan(x) < Exp(x)
 
-    def test_powers(self):
-        a, x = Variable('a'), Variable('x')
+        assert Exp(x) < Ln(x)
+        assert not Ln(x) < Exp(x)
 
-        assert Product(a, Power(x, Integer(2))) < Power(x, Integer(3))
-        assert not Power(x, Integer(3)) < Product(a, Power(x, Integer(2)))
+        assert Ln(x) < Factorial(x)
+        assert not Factorial(x) < Ln(x)
 
-        assert Power(x, Integer(3)) < Power(x, Integer(4))
-        assert not Power(x, Integer(4)) < Power(x, Integer(3))
+        assert Sin(x) < Sin(y)
+        assert not Sin(y) < Sin(x)
 
-        assert Power(a, Integer(1)) < Power(x, Integer(1))
-        assert not Power(x, Integer(1)) < Power(a, Integer(1))
+        assert Cos(x) < Cos(y)
+        assert not Cos(y) < Cos(x)
+
+        assert Exp(x) < Exp(y)
+        assert not Exp(y) < Exp(x)
+
+        assert Sin(x + y) < Sin(x + z)
+        assert not Sin(x + z) < Sin(x + y)
+
+        assert Exp(x * y) < Exp(x * z)
+        assert not Exp(x * z) < Exp(x * y)
+
+        assert Power(Cos(x), Integer(2)) < Power(Sin(x), Integer(2))
+        assert not Power(Sin(x), Integer(2)) < Power(Cos(x), Integer(2))
+
+        assert Power(Exp(x), Integer(2)) < Power(Exp(x), Integer(3))
+        assert not Power(Exp(x), Integer(3)) < Power(Exp(x), Integer(2))
+
+        assert Factorial(x) < Factorial(y)
+        assert not Factorial(y) < Factorial(x)
+
+        assert Sum(Sin(x), Integer(1)) < Sin(x)
+        assert not Sin(x) < Sum(Sin(x), Integer(1))
