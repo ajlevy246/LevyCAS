@@ -3,14 +3,14 @@
 import pytest
 from levycas.expressions import *
 
-def test_constant_ordering(self):
+def test_constant_ordering():
     assert Integer(2) < Rational(5, 2)
     assert not Rational(5, 2) < Integer(2)
 
     assert Integer(-1) < Integer(1)
     assert not Integer(1) < Integer(-1)
 
-def test_symbol_ordering(self):
+def test_symbol_ordering():
     assert (
         Variable('0')
         < Variable('1')
@@ -25,7 +25,7 @@ def test_symbol_ordering(self):
     assert not Variable('a') < Variable('Z')
     assert not Variable('A') < Variable('9')
 
-def test_sum_and_product_ordering(self):
+def test_sum_and_product_ordering():
     a, b, c, d = Variable('a'), Variable('b'), Variable('c'), Variable('d')
 
     assert Sum(a, b) < Sum(a, c)
@@ -34,7 +34,7 @@ def test_sum_and_product_ordering(self):
     assert Sum(a, c, d) < Sum(b, c, d)
     assert not Sum(b, c, d) < Sum(a, c, d)
 
-def test_elementary_orderings(self):
+def test_elementary_orderings():
     x, y, z = Variable("x"), Variable("y"), Variable("z")
 
     assert Cos(x) < Sin(x)
