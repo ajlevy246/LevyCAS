@@ -1,7 +1,8 @@
 """Methods acting on an expression's AST. These are calculus operations."""
 
 from ..expressions import *
-from .expression_ops import contains, copy
+from .expression_ops import contains, copy, substitute
+from .algebraic_ops import algebraic_expand
 from .trig_ops import trig_substitute
 
 def derivative(expr: Expression, wrt: Variable) -> Expression:
@@ -96,7 +97,7 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
 
     if integrated is None:
         expanded = algebraic_expand(expr)
-        if integrated != expanded:
+        if expr != expanded:
             integrated = integrate(expanded, wrt)
 
     return integrated
@@ -129,22 +130,21 @@ def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
 
     if expr == 0:
         return Integer(0)
-    
+
     elif not contains(expr, wrt):
         return expr * wrt
-    
 
     elif isinstance(expr, Power):
         base = expr.base()
         exponent = expr.exponent()
-        if not contains(exponent, wrt):
+        if base == wrt and not contains(exponent, wrt):
             return (1 / (exponent + 1)) * wrt ** (exponent + 1)
-        
-        elif exponent == wrt and not contains(base, wrt):
+
+        elif not contains(base, wrt) and exponent == wrt:
             return base ** wrt / Ln(base)
 
     substitution = {str(wrt) : Variable('x')}
-    test_expr = sym_eval(expr, **substitution)
+    test_expr = sym_eval(expr, **substitution) 
     return INTEGRAL_TABLE.get(test_expr, None)
 
 def _integrate_linear(expr: Expression, wrt: Variable) -> Expression | None:
@@ -162,6 +162,8 @@ def _integrate_linear(expr: Expression, wrt: Variable) -> Expression | None:
 
     if isinstance(expr, Product):
         independent, dependent = _separate_factors(expr, wrt)
+        if expr == dependent:
+            return None
         integral = integrate(dependent, wrt)
         return independent * integral if integral is not None else None
     
@@ -171,10 +173,62 @@ def _integrate_linear(expr: Expression, wrt: Variable) -> Expression | None:
             term_integral = integrate(term, wrt)
             if term_integral is None:
                 return None
+            print(f"{term_integral=}")
             integral += term_integral
         return integral
-    
+
     return None
+
+def _integrate_substitute(expr: Expression, wrt: Variable) -> Expression | None:
+    """Given an expression, attempts to integrate with u-substitution with 
+    respect to the given variable.
+
+    Args:
+        expr (Expression): The expression to integrate
+        wrt (Variable): The variable to integrate with respect to
+
+    Returns:
+        Expression | None: The integrated expression, or None if the integration fails.
+    """
+    possible_substitutions = _trial_substitutions(expr)
+    print(f"Possible substitutions: {possible_substitutions}")
+    for substitution in possible_substitutions:
+        if substitution != wrt and contains(substitution, wrt):
+            test_expr = substitute(expr / derivative(substitution, wrt), substitution, Variable('v'))
+            if not contains(test_expr, wrt):
+                return substitute(integrate(test_expr, Variable('v')), Variable('v'), substitution)
+
+    return None
+
+def _trial_substitutions(expr: Expression) -> set[Expression]:
+    """Given an expression, returns a set of complete sub-expressions
+    that are candidates for u-substitution. These candidates are all 
+    functions, arguments of functions, or bases/exponents of powers.
+
+    Args:
+        expr (Expression): The expression to search through.
+
+    Returns:
+        set[Expression]: Set of complete sub-expression to be used as substitution candidates.
+    """
+    candidates = set()
+    
+    operation = type(expr)
+    if operation in [Integer, Rational, Variable]:
+        return candidates
+    
+    #TODO: Have all functions (trigonometric, exponential) inherit from the Function class.
+    if isinstance(expr, Function):
+        candidates.add(expr)
+        candidates = candidates.union(set(expr.operands()))
+    elif operation == Power:
+        candidates.add(expr.base())
+        candidates.add(expr.exponent())
+
+    operands = expr.operands()
+    for operand in operands:
+        candidates = candidates.union(_trial_substitutions(operand))
+    return candidates
 
 def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
     """Given a product of factors, separates the factors into those independent of the given variable
