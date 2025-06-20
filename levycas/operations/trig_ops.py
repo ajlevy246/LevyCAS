@@ -305,8 +305,8 @@ def _contract_trig_product(expr: Product) -> Expression:
     elif second_op == Power:
         return _trig_contract_recursive(lhs * _contract_trig_power(rhs))
 
-    theta = lhs.arg
-    phi = rhs.arg
+    theta = lhs.operands()[0]
+    phi = rhs.operands()[0]
     plus = theta + phi
     minus = theta - phi
     if first_op == Sin and second_op == Sin:

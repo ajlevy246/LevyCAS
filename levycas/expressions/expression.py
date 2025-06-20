@@ -328,10 +328,17 @@ class Factorial(Expression):
     def __lt__(self, other):
         if isinstance(other, Factorial):
             return self.value < other.value
+
         if isinstance(other, Variable):
             if self.value == other:
                 return False
-            return self.value < other
+            return self < Factorial(other)
+
+        if isinstance(other, Elementary):
+            if self.value == other:
+                return False
+            return self < Factorial(other)
+
         return NotImplemented
 
     def operands(self):
@@ -377,6 +384,41 @@ class Variable(Expression):
     
     def operands(self):
         return [self.name]
+
+class Elementary(Expression):
+    """Core elementary functions include the exponential functions, logarithm and exponential, trigonometric and 
+    inverse trigonometric functions, and hyperbolic/inverse hyperbolic functions."""
+
+    def __init__(self, *args):
+        self.args = args
+
+    def operands(self):
+        return self.args
+
+    def __lt__(self, other):
+        self_kind = type(self).__name__
+        other_kind = type(other).__name__
+        if isinstance(other, Elementary):
+
+            if self_kind == other_kind:
+                self_args = self.args
+                other_args = other.args
+                for i in range(len(self_args)):
+                    if self_args[i] == other_args[i]:
+                        continue
+                    return self_args[i] < other_args[i]
+            return self_kind < other_kind
+        
+        elif isinstance(other, Variable):
+            if self_kind == other:
+                return False
+            return self_kind < other.name
+
+        return NotImplemented
+
+    def __repr__(self):
+        args_repr = "(" + ", ".join([str(arg) for arg in self.args]) + ")"
+        return type(self).__name__ + args_repr
 
 class Function(Expression):
     def __init__(self, name):

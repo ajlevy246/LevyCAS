@@ -7,7 +7,7 @@ from .expressions import (
     Constant, Integer, Rational, convert_primitive,
     UNDEFINED, CAS_ENV, Expression, Sum, Product, Div, Power, Factorial, Derivative, Special,
     Trig, Sin, Cos, Tan, Csc, Sec, Cot,
-    Variable, Function,
+    Variable, Function, Elementary,
     Exp, Ln
 )
 
@@ -25,7 +25,7 @@ __all__ = [
     'Constant', 'Integer', 'Rational', 'convert_primitive',
     'UNDEFINED', 'CAS_ENV', 'Expression', 'Sum', 'Product', 'Div', 'Power', 'Factorial', 'Derivative', 'Special',
     'trig_substitute', 'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot',
-    'Variable', 'Function',
+    'Variable', 'Function', 'Elementary',
     'Exp', 'Ln',
     'contains', 'copy', 'construct', 'map_op', 'substitute',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',

@@ -1,57 +1,15 @@
-from .expression import Expression, Power, Constant, Integer, convert_primitive
+from .expression import *
 
-class Trig(Expression):
+class Trig(Elementary):
     """Trig functions represent the trigonometric functions"""
-    orderings = ['Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot']
-
-    def __init__(self, *args):
-        assert len(args) == 1, "Trig functions expect one argument"
-        self.arg = convert_primitive(args[0])
-        
-    def __lt__(self, other):
-
-        #If they are the same type, compare values
-        if isinstance(other, type(self)): 
-            return self.arg < other.arg
-        
-        #If they are both trig functions, compare via precedence rules
-        if isinstance(other, Trig):
-            self_precedence = Trig.orderings.index(type(self).__name__)
-            other_precedence = Trig.orderings.index(type(other).__name__)
-            return self_precedence < other_precedence
-        
-        #If the other is a power, compare via power rules
-        if isinstance(other, Power):
-            return NotImplemented
-
-        #Otherwise, return false
-        if isinstance(other, Expression):
-            return False
-
-        return NotImplemented
-
-    def operands(self):
-        return [self.arg]
-
-    def sym_eval(self, **symbols):
-        return type(self)(self.arg.sym_eval(**symbols)).simplify()
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self.arg})"
-
-    def copy(self):
-        return type(self)(self.arg.copy())
-
-    def contains(self, other):
-        if self == other:
-            return True
-        return self.arg.contains(other)
+    pass
 
 class Sin(Trig):
     def __new__(cls, *args):
         """To facilitate automatic simplifcation of trigonometric expressions,
         the __new__ method is overwritten.
         """
+
         assert len(args) == 1, f"Sin expects a single argument"
         arg = convert_primitive(args[0])
 
@@ -60,7 +18,7 @@ class Sin(Trig):
             return Integer(0)
         elif coefficient.is_negative():
             return -Sin(-arg)
-        
+
         return super().__new__(cls)
 
 class Cos(Trig):
@@ -68,6 +26,7 @@ class Cos(Trig):
         """To facilitate automatic simplifcation of trigonometric expressions,
         the __new__ method is overwritten.
         """
+
         assert len(args) == 1, f"Cos expects a single argument"
         arg = convert_primitive(args[0])
         coefficient = arg.coefficient()

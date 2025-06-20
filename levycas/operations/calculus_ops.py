@@ -137,7 +137,7 @@ def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
     elif isinstance(expr, Power):
         base = expr.base()
         exponent = expr.exponent()
-        if base == wrt and not contains(exponent, wrt):
+        if base == wrt and not contains(exponent, wrt) and exponent != -1:
             return (1 / (exponent + 1)) * wrt ** (exponent + 1)
 
         elif not contains(base, wrt) and exponent == wrt:
