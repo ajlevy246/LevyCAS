@@ -143,7 +143,6 @@ def substitute(expr: Expression, sub_expr: Expression, replacement: Expression) 
     if not isinstance(expr, Expression):
         return expr
 
-    print(f"In {expr}, substituting {sub_expr} with {replacement}")
     if expr == sub_expr:
         return replacement
     
