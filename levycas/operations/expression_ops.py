@@ -127,3 +127,30 @@ def construct(operands: list[Expression], op: type[Expression]) -> Expression:
     
     else:
         return op(*operands)
+    
+def substitute(expr: Expression, sub_expr: Expression, replacement: Expression) -> Expression:
+    """Given an expression, replaces all instances of a complete sub-expression with 
+    a replacement.
+
+    Args:
+        expr (Expression): The expression to substitute in.
+        sub_expr (Expression): The sub-expression to replace.
+        replacement (Expression): The replacement
+
+    Returns:
+        Expression: The substituted expression
+    """
+    if not isinstance(expr, Expression):
+        return expr
+
+    print(f"In {expr}, substituting {sub_expr} with {replacement}")
+    if expr == sub_expr:
+        return replacement
+    
+    operation = type(expr)
+
+    if operation in [Variable, Integer, Rational]:
+        return expr
+    
+    replaced_operands = [substitute(operand, sub_expr, replacement) for operand in expr.operands()]
+    return construct(replaced_operands, operation)
