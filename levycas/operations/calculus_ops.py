@@ -144,8 +144,11 @@ def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
             return base ** wrt / Ln(base)
 
     substitution = {str(wrt) : Variable('x')}
-    test_expr = sym_eval(expr, **substitution) 
-    return INTEGRAL_TABLE.get(test_expr, None)
+    test_expr = sym_eval(expr, **substitution)
+    integrated = INTEGRAL_TABLE.get(test_expr, None)
+    if integrated is None:
+        return None
+    return substitute(integrated, Variable('x'), wrt)
 
 def _integrate_linear(expr: Expression, wrt: Variable) -> Expression | None:
     """Given an expression, integrates linearly with respect to the given variable.
@@ -173,7 +176,6 @@ def _integrate_linear(expr: Expression, wrt: Variable) -> Expression | None:
             term_integral = integrate(term, wrt)
             if term_integral is None:
                 return None
-            print(f"{term_integral=}")
             integral += term_integral
         return integral
 
@@ -191,12 +193,14 @@ def _integrate_substitute(expr: Expression, wrt: Variable) -> Expression | None:
         Expression | None: The integrated expression, or None if the integration fails.
     """
     possible_substitutions = _trial_substitutions(expr)
-    print(f"Possible substitutions: {possible_substitutions}")
     for substitution in possible_substitutions:
         if substitution != wrt and contains(substitution, wrt):
             test_expr = substitute(expr / derivative(substitution, wrt), substitution, Variable('v'))
             if not contains(test_expr, wrt):
-                return substitute(integrate(test_expr, Variable('v')), Variable('v'), substitution)
+                test_integral = integrate(test_expr, Variable('v'))
+                if test_integral is None:
+                    continue
+                return substitute(test_integral, Variable('v'), substitution)
 
     return None
 
@@ -218,7 +222,7 @@ def _trial_substitutions(expr: Expression) -> set[Expression]:
         return candidates
     
     #TODO: Have all functions (trigonometric, exponential) inherit from the Function class.
-    if isinstance(expr, Function):
+    if isinstance(expr, Elementary):
         candidates.add(expr)
         candidates = candidates.union(set(expr.operands()))
     elif operation == Power:
