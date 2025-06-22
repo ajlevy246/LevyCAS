@@ -13,7 +13,7 @@ from .expressions import (
 
 from .operations import (
     contains, copy, construct, map_op, substitute,
-    algebraic_expand, algebraic_expand_main, rationalize, linear_form,
+    algebraic_expand, algebraic_expand_main, rationalize, linear_form, quadratic_form,
     derivative, integrate,
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
     trig_simplify, trig_substitute, trig_contract, trig_expand
@@ -29,7 +29,7 @@ __all__ = [
     'Exp', 'Ln',
     'contains', 'copy', 'construct', 'map_op', 'substitute',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
-    'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form',
+    'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
     'derivative', 'integrate',
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial'
 ]

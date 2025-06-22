@@ -27,7 +27,15 @@ class TestIntegrate:
 
     def test_integrate_substitute(self):
         x, y = Variable("x"), Variable("y")
-        pass
+        
+        sub_test = integrate(Sin(x) * Cos(x), x)
+        assert (
+            # u = Sin(x) -> du = Cos(x)dx
+            sub_test == (1 / 2) * Sin(x) ** 2
+
+            # u = Cos(x) -> du = -Sin(x)dx
+            or sub_test == - (1 / 2) * Cos(x) ** 2
+        )
 
     def test_integrate_linear(self):
         x, y = Variable("x"), Variable("y")

@@ -191,36 +191,95 @@ def linear_form(expr: Expression, wrt: Variable) -> list[Expression] | None:
     """
     if expr == wrt:
         return [Integer(1), Integer(0)]
-    
+
     operation = type(expr)
     if operation in [Integer, Rational, Variable]:
         return [Integer(0), expr]
-    
+
     elif operation == Product:
         if not contains(expr, wrt):
             return [Integer(0), expr]
         
         elif not contains(expr / wrt, wrt):
             return [expr / wrt, Integer(0)]
-        
+
         return None
 
     elif operation == Sum:
-        first_term = expr.operands()[0]
-        first_linear_form = linear_form(first_term, wrt)
-        if first_linear_form is None:
-            return None
+        linear = [Integer(0), Integer(0)]
+        for term in expr.operands():
+            term_form = linear_form(term, wrt)
+            if term_form is None:
+                return None
+            
+            linear[0] += term_form[0]
+            linear[1] += term_form[1]
+        return linear
 
-        remainder_linear_form = linear_form(expr - first_term, wrt)
-        if remainder_linear_form is None:
-            return None
-        
-        return [
-            first_linear_form[0] + remainder_linear_form[0], 
-            first_linear_form[1] + remainder_linear_form[1]
-        ]
-    
     elif not contains(expr, wrt):
         return [Integer(0), expr]
+
+    return None
+
+def quadratic_form(expr: Expression, wrt: Variable) -> list[Expression] | None:
+    """Checks if the given expression is of the form
+    ax^2 + bx + c, where x is the given variable.
+
+    Args:
+        expr (Expression): The expression to check
+        wrt (Variable): The variable x
+
+    Returns:
+        list[Expression] | None: The list [a, b, c] or None if the expression is not quadratic.
+    """
+    if expr == wrt:
+        return [Integer(1), Integer(0), Integer(0)]
+
+    operation = type(expr)
+    if operation in [Integer, Rational, Variable]:
+        return [Integer(0), Integer(0), expr]
+
+    elif operation == Product:
+        if not contains(expr, wrt):
+            return [Integer(0), Integer(0), expr]
+
+        elif lin_form := linear_form(expr / wrt, wrt):
+            return [lin_form[0], lin_form[1], Integer(0)]
+
+        return None
+    
+    elif operation == Sum:
+        quadratic = [Integer(0), Integer(0), Integer(0)]
+        for term in expr.operands():
+            term_form = quadratic_form(term, wrt)
+            if term_form is None:
+                return None
+            
+            quadratic[0] += term_form[0]
+            quadratic[1] += term_form[1]
+            quadratic[2] += term_form[2]
+        return quadratic
+
+    elif operation == Power:
+        exponent = expr.exponent()
+        if contains(exponent, wrt):
+            return None
+
+        base = expr.base()
+        if base == wrt:
+            if exponent == 2:
+                return [Integer(1), Integer(0), Integer(0)]
+            elif exponent == 1:
+                return [Integer(0), Integer(1), Integer(0)]
+            
+            return None
+        
+        if contains(base, wrt):
+            return None
+        
+        return [Integer(0), Integer(0), expr]
+
+    elif not contains(expr, wrt):
+        return [Integer(0), Integer(0), expr]
     
     return None
