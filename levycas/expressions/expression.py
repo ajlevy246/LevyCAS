@@ -582,6 +582,11 @@ class Rational(Constant):
     def __repr__(self):
         return f"({self.left} / {self.right})"
 
+    def __eq__(self, other):
+        if isinstance(other, Number):
+            return super().__eq__(convert_primitive(other))
+        return NotImplemented
+
     def eval(self):
         return self.left / self.right
 

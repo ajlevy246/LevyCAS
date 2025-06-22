@@ -200,7 +200,7 @@ def linear_form(expr: Expression, wrt: Variable) -> list[Expression] | None:
         if not contains(expr, wrt):
             return [Integer(0), expr]
         
-        elif not contains(expr / wrt):
+        elif not contains(expr / wrt, wrt):
             return [expr / wrt, Integer(0)]
         
         return None

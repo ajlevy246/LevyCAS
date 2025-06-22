@@ -114,23 +114,30 @@ def construct(operands: list[Expression], op: type[Expression]) -> Expression:
     """
     if op == Sum:
         return sum(operands)
-    
+
     elif op == Product:
         prod = Integer(1)
         for operand in operands:
             prod *= operand
         return prod
-    
+
     elif op == Power:
         assert len(operands) == 2, f"Cannot construct a power from more/less than two arguments"
         return operands[0] ** operands[1]
     
     else:
         return op(*operands)
-    
+
 def substitute(expr: Expression, sub_expr: Expression, replacement: Expression) -> Expression:
     """Given an expression, replaces all instances of a complete sub-expression with 
     a replacement.
+
+    Example:
+        >>> substitute(x * (2 + y), (2 + y), x)
+        (x ** 2)
+
+        >>> substitute(2 + 2*x + 2*x**2, 2, 3)
+        (3 + 3*x + 3*x**3)
 
     Args:
         expr (Expression): The expression to substitute in.

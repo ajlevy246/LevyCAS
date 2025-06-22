@@ -1,6 +1,6 @@
 from .algebraic_ops import algebraic_expand, algebraic_expand_main, rationalize, linear_form
 from .calculus_ops import derivative, integrate
-from .expression_ops import contains, copy, construct, map_op, substitute,
+from .expression_ops import contains, copy, construct, map_op, substitute
 from .simplification_ops import simplify, sym_eval, simplify_power, simplify_product, simplify_sum, simplify_div, simplify_factorial
 from .trig_ops import trig_simplify, trig_substitute, trig_expand, trig_contract
 
