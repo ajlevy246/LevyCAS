@@ -2,7 +2,7 @@
 """
 
 from ..expressions import *
-from .expression_ops import construct
+from .expression_ops import construct, contains
 
 def algebraic_expand(expr: Expression) -> Expression:
     """Given an expression, returns an equivalent expression in expanded form.
@@ -176,3 +176,51 @@ def _rationalize_sum(first_term: Expression, second_term: Expression) -> Express
         return first_term + second_term
     else:
         return _rationalize_sum(m * s, n * r) / (r * s)
+
+def linear_form(expr: Expression, wrt: Variable) -> list[Expression] | None:
+    """Checks if the given expression is of the form
+    a*x + b, where x is the given variable.
+
+    Args:
+        expr (Expression): The expression to check
+        wrt (Variable): The variable x
+
+    Returns:
+        list[Expression] | None: The list [a, b], where a is the coefficient of x and b is the constant term,
+        or None if the expression is not linear.
+    """
+    if expr == wrt:
+        return [Integer(1), Integer(0)]
+    
+    operation = type(expr)
+    if operation in [Integer, Rational, Variable]:
+        return [Integer(0), expr]
+    
+    elif operation == Product:
+        if not contains(expr, wrt):
+            return [Integer(0), expr]
+        
+        elif not contains(expr / wrt):
+            return [expr / wrt, Integer(0)]
+        
+        return None
+
+    elif operation == Sum:
+        first_term = expr.operands()[0]
+        first_linear_form = linear_form(first_term, wrt)
+        if first_linear_form is None:
+            return None
+
+        remainder_linear_form = linear_form(expr - first_term, wrt)
+        if remainder_linear_form is None:
+            return None
+        
+        return [
+            first_linear_form[0] + remainder_linear_form[0], 
+            first_linear_form[1] + remainder_linear_form[1]
+        ]
+    
+    elif not contains(expr, wrt):
+        return [Integer(0), expr]
+    
+    return None

@@ -2,8 +2,8 @@
 """
 
 from ..expressions import *
-from numbers import Number
 
+from numbers import Number
 from typing import Callable 
 
 def contains(expr: Expression, sub: Expression) -> bool:
