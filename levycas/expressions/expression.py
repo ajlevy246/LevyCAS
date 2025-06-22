@@ -344,16 +344,6 @@ class Factorial(Expression):
     def operands(self):
         return [self.value]
 
-class Derivative(Expression):
-    """The anonymous derivative operator will be used when other derivative rules fail
-    See DERIV-7, page 183 Elementary Algorithms
-    """
-    def __init__(self, *args):
-        self.operands = args
-
-    def __repr__(self):
-        return f"Derivative({self.name})"
-
 class Special(Expression):
     """Special represents special cases"""
 

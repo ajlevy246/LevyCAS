@@ -58,3 +58,16 @@ class Sec(Trig):
 
 class Cot(Trig):
     pass
+
+class AntiTrig(Elementary):
+    """AntiTrig functions represent the inverse trigonometric functions"""
+    pass
+
+class Arctan(AntiTrig):
+    pass
+
+class Arccos(AntiTrig):
+    pass
+
+class Arcsin(AntiTrig):
+    pass

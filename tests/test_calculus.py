@@ -10,6 +10,19 @@ class TestDerivative:
 
         assert derivative(Sin(Integer(1)), x) == 0
 
+    def test_derivative_functions(self):
+        x = Variable('x')
+
+        assert derivative(Ln(x), x) == 1 / x
+        assert derivative(Exp(x), x) == Exp(x)
+
+        assert derivative(Tan(x), x) == 1 + Sin(x)**2 / Cos(x)**2
+        assert derivative(Cos(x), x) == -Sin(x)
+        assert derivative(Sin(x), x) == Cos(x)
+
+        assert derivative(Sec(x), x) == Sin(x) / Cos(x)**2
+        assert derivative(Csc(x), x) == -Cos(x) / Sin(x)**2
+        assert derivative(Cot(x), x) == -(1 + Cos(x)**2 / Sin(x)**2)
 
 class TestIntegrate:
     """Tests for the integrate operator"""
@@ -39,5 +52,5 @@ class TestIntegrate:
 
     def test_integrate_linear(self):
         x, y = Variable("x"), Variable("y")
-        
+
         # assert integrate(2*x + (1 / 2)*x**2, x) == x**2 + (1 / 6)*x**3 #-> Fails, because of incorrect processing of (1 / 6)
