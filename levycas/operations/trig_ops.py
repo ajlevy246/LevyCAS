@@ -18,6 +18,9 @@ def trig_simplify(expr: Expression) -> Expression:
     Returns:
         Expression: The simplified expression
     """
+    if isinstance(expr, Constant):
+        return expr
+    
     expr = rationalize(trig_substitute(expr))
     numerator = trig_contract(trig_expand(expr.num()))
     denominator = trig_contract(trig_expand(expr.denom()))

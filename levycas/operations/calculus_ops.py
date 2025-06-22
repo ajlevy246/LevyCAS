@@ -216,11 +216,11 @@ def _trial_substitutions(expr: Expression) -> set[Expression]:
         set[Expression]: Set of complete sub-expression to be used as substitution candidates.
     """
     candidates = set()
-    
+
     operation = type(expr)
     if operation in [Integer, Rational, Variable]:
         return candidates
-    
+
     #TODO: Have all functions (trigonometric, exponential) inherit from the Function class.
     if isinstance(expr, Elementary):
         candidates.add(expr)
