@@ -6,13 +6,13 @@ from ..expressions import *
 from numbers import Number
 from typing import Callable 
 
-def contains(expr: Expression, sub: Expression) -> bool:
-    """Checks whether the given expression contains the given
-    sub-expression as a *complete* argument.
+def contains(expr: Expression, subs: Expression | set[Expression]) -> bool:
+    """Checks whether the given expression contains any of the given
+    sub-expressions as a *complete* argument.
 
     Args:
         expr (Expression): Expression to check in.
-        sub (Expression): Sub-expression to check for.
+        sub (Expression | set[Expression]): Sub-expression to check for.
 
     Returns:
         bool: True if expr contains sub as a *complete* sub-expression.
@@ -23,7 +23,8 @@ def contains(expr: Expression, sub: Expression) -> bool:
     >>> contains((x + y) + z, y + z)
     False
     """
-    if expr == sub:
+    subs = {subs} if isinstance(subs, Expression) else subs
+    if expr in subs:
         return True
     else:
         for operand in expr.operands():
@@ -31,7 +32,7 @@ def contains(expr: Expression, sub: Expression) -> bool:
             #i.e, the operand of Variable('x') is the string 'x'
             if not isinstance(operand, Expression):
                 return False
-            if contains(operand, sub):
+            if contains(operand, subs):
                 return True
         return False
 
