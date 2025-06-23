@@ -30,3 +30,27 @@ def test_variables():
     assert variables(x**3 + 3*x**2*y+3*x*y**2 + y**3) == {x, y}
     assert variables(a*Sin(x)**2 + 2*b*Sin(x) + 3*c) == {a, b, c, Sin(x)}
     assert variables(1) == set()
+
+def test_coefficient():
+    x, y = Variable('x'), Variable('y')
+    a, b, c = Variable('a'), Variable('b'), Variable('c')
+
+    assert (
+        coefficient(a*x**2 + b*x + c, x, 2)
+        == a
+    )
+
+    assert (
+        coefficient(3*x*y**2 + 5*x**2*y + 7*x + 9, x, 1)
+        == 3*y**2 + 7
+    )
+
+    assert (
+        coefficient(3*x*y**2 + 5*x**2*y + 7*x + 9, x, 3)
+        == 0
+    ) 
+
+    assert (
+        coefficient(3*Sin(x)*x**2 + 2*Ln(x)*x + 4, x, 2)
+        is None
+    )

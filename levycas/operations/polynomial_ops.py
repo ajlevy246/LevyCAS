@@ -96,3 +96,91 @@ def variables(expr: Expression) -> set[Expression]:
         return vars
 
     return {expr}
+
+def coefficient(expr: Expression, var: Expression, degree: Integer) -> Expression | None:
+    """Given a generalized polynomial expression, 
+
+    Examples:
+        >>> coefficient(ax^2 + bx + c, x, 2)
+        a
+
+        >>> coefficient(3xy^2 + 5x^2y + 7x + 9, x, 1)
+        3y^2 + 7
+
+        >>> coefficient(3xy^2 + 5x^2y + 7x + 9, x, 3) 
+        0
+
+        >>> coefficient(3sin(x)x^2 + 2ln(x)x + 4, x, 2) 
+        None
+
+    Args:
+        expr (Expression): A generalized polynomial expression.
+        var (Expression): The generalized variable to extract the coefficient from.
+        degree (Integer): The exponent of the variable to extract the coefficient from.
+
+    Returns:
+        Expression | None: The coefficient of the generalized variable, or None if it does not exist.
+    """
+    degree = convert_primitive(degree)
+    if isinstance(expr, Sum):
+        if expr == var:
+            return degree if degree == Integer(1) else Integer(0)
+        sum_coeff = 0
+        for term in expr.operands():
+            f = _coefficient_monomial(term, var)
+            if f is None:
+                return None
+            term_coeff, term_degree = f
+            if term_degree == degree:
+                sum_coeff += term_coeff
+        return sum_coeff
+
+    else:
+        f = _coefficient_monomial(expr, var)
+        if f is None:
+            return None
+
+        factor_coeff, factor_degree = f
+        if factor_degree == degree:
+            return factor_coeff
+        return Integer(0) 
+
+def _coefficient_monomial(expr: Expression, var: Expression) -> list[Expression] | None:
+    """Given a monomial expression u and a variable x, returns the list [a, n]
+    where n is the degree of x and a is its coefficient in u.
+
+    Args:
+        expr (Expression): u
+        var (Expression): x
+
+    Returns:
+        list[Expression] | None: The list [a, n], or None if the operation fails.
+    """
+    if expr == var:
+        return [Integer(1), Integer(1)]
+
+    operation = type(expr)
+    if operation == Power:
+        base = expr.base()
+        exponent = expr.exponent()
+        if base == var and isinstance(exponent, Integer) and Integer(1) < exponent:
+            return [Integer(1), exponent]
+        
+    elif operation == Product:
+        m = Integer(0)
+        c = expr
+        for factor in expr.operands():
+            factor_coeff = _coefficient_monomial(factor, var)
+            if factor_coeff is None:
+                print(f"{factor=}")
+                return None
+            coeff, degree = factor_coeff
+            if degree != 0:
+                m = degree
+                c = expr / (var ** m)
+        return [c, m]
+
+    if not contains(expr, var):
+            return [expr, Integer(0)]
+
+    return None
