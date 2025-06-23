@@ -97,39 +97,6 @@ def variables(expr: Expression) -> set[Expression]:
 
     return {expr}
 
-def degree(expr: Expression, vars: Expression | set[Expression]) -> Integer | None:
-    """Given a generalized polynomial expression u and a set of parameters x,
-    returns the highest degree of x in u.
-
-    Args:
-        expr (Expression): The polynomial expression u
-        vars (Expression | set[Expression]): The parameter set x
-
-    Returns:
-        Integer: The degree of x in u, or None if the operation fails
-    """
-    vars = {vars} if not isinstance(vars, set) else vars
-    if isinstance(expr, Sum):
-        deg = Integer(0)
-        for term in expr.operands():
-            deg_sum = Integer(0)
-            for var in vars:
-                monomial = _coefficient_monomial(term, var)
-                if monomial is None:
-                    return None
-                deg_sum += monomial[1]
-            deg = deg_sum if deg < deg_sum else deg
-        return deg
-    else:
-        deg_sum = Integer(0)
-        for var in vars:
-            monomial = _coefficient_monomial(expr, var)
-            if monomial is None:
-                return None
-            
-            deg_sum += monomial[1]
-        return deg_sum
-
 def coefficient(expr: Expression, var: Expression, degree: Integer) -> Expression | None:
     """Given a generalized polynomial expression, 
 
@@ -205,7 +172,6 @@ def _coefficient_monomial(expr: Expression, var: Expression) -> list[Expression]
         for factor in expr.operands():
             factor_coeff = _coefficient_monomial(factor, var)
             if factor_coeff is None:
-                print(f"{factor=}")
                 return None
             coeff, degree = factor_coeff
             if degree != 0:
@@ -218,6 +184,39 @@ def _coefficient_monomial(expr: Expression, var: Expression) -> list[Expression]
 
     return None
 
+def degree(expr: Expression, vars: Expression | set[Expression]) -> Integer | None:
+    """Given a generalized polynomial expression u and a set of parameters x,
+    returns the highest degree of x in u.
+
+    Args:
+        expr (Expression): The polynomial expression u
+        vars (Expression | set[Expression]): The parameter set x
+
+    Returns:
+        Integer: The degree of x in u, or None if the operation fails
+    """
+    vars = {vars} if not isinstance(vars, set) else vars
+    if isinstance(expr, Sum):
+        deg = Integer(0)
+        for term in expr.operands():
+            deg_sum = Integer(0)
+            for var in vars:
+                monomial = _coefficient_monomial(term, var)
+                if monomial is None:
+                    return None
+                deg_sum += monomial[1]
+            deg = deg_sum if deg < deg_sum else deg
+        return deg
+    else:
+        deg_sum = Integer(0)
+        for var in vars:
+            monomial = _coefficient_monomial(expr, var)
+            if monomial is None:
+                return None
+            
+            deg_sum += monomial[1]
+        return deg_sum
+
 def leading_coefficient(expr: Expression, var: Expression) -> Expression | None:
     """Given a generalized polynomial expression u with parameter x, returns 
     the coefficient of the highest power of x in u.
@@ -229,5 +228,22 @@ def leading_coefficient(expr: Expression, var: Expression) -> Expression | None:
     Returns:
         Expression | None: Coefficient of the highest power of x
     """
-    deg = degree(expr, var)
-    return coefficient(expr, var, deg)
+    if isinstance(expr, Sum):
+        deg = Integer(0)
+        coeff = Integer(0)
+        for term in expr.operands():
+            deg_sum = Integer(0)
+            coeff_sum = Integer(0)
+            monomial = _coefficient_monomial(term, var)
+            if monomial is None:
+                return None
+            deg_sum += monomial[1]
+            coeff_sum += monomial[0]
+            if deg == deg_sum:
+                coeff += coeff_sum
+            elif deg < deg_sum:
+                deg = deg_sum
+                coeff = coeff_sum
+        return coeff
+    else:
+        return _coefficient_monomial(expr, var)[0]

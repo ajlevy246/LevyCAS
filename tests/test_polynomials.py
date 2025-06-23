@@ -1,4 +1,4 @@
-"""Tests for the polynomial operators monomial, polynomial, et cetera"""
+"""Tests for the polynomial operators is_monomial, is_polynomial, coefficient, et cetera"""
 import pytest
 
 from levycas import *
@@ -55,6 +55,25 @@ def test_coefficient():
         is None
     )
 
+def test_leading_coefficient():
+    x, y = Variable('x'), Variable('y')
+    a, b, c = Variable('a'), Variable('b'), Variable('c')
+
+    assert (
+        leading_coefficient(a*x + b*x + y, x)
+        == (a + b)
+    )
+
+    assert (
+        leading_coefficient(3*Sin(x) + a*Sin(x)**2*b + 2*y*x, Sin(x))
+        == a*b
+    )
+
+    assert (
+        leading_coefficient(3*x*Cos(y)**3 + Cos(y)**2 + y*Cos(y) + 4*a*b*Cos(y)**3, Cos(y))
+        == 3*x + 4*a*b
+    )
+
 def test_degree():
     x, y = Variable('x'), Variable('y')
     a, b, c = Variable('a'), Variable('b'), Variable('c')
@@ -77,4 +96,9 @@ def test_degree():
     assert (
         degree(a*Sin(x)**2 +  b*Sin(x) + c, Sin(x))
         == 2
+    )
+
+    assert (
+        degree(2*x**2*y*a**3 + y*x*a**6, {a, x, y})
+        == 8
     )
