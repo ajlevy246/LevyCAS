@@ -97,6 +97,39 @@ def variables(expr: Expression) -> set[Expression]:
 
     return {expr}
 
+def degree(expr: Expression, vars: Expression | set[Expression]) -> Integer | None:
+    """Given a generalized polynomial expression u and a set of parameters x,
+    returns the highest degree of x in u.
+
+    Args:
+        expr (Expression): The polynomial expression u
+        vars (Expression | set[Expression]): The parameter set x
+
+    Returns:
+        Integer: The degree of x in u, or None if the operation fails
+    """
+    vars = {vars} if not isinstance(vars, set) else vars
+    if isinstance(expr, Sum):
+        deg = Integer(0)
+        for term in expr.operands():
+            deg_sum = Integer(0)
+            for var in vars:
+                monomial = _coefficient_monomial(term, var)
+                if monomial is None:
+                    return None
+                deg_sum += monomial[1]
+            deg = deg_sum if deg < deg_sum else deg
+        return deg
+    else:
+        deg_sum = Integer(0)
+        for var in vars:
+            monomial = _coefficient_monomial(expr, var)
+            if monomial is None:
+                return None
+            
+            deg_sum += monomial[1]
+        return deg_sum
+
 def coefficient(expr: Expression, var: Expression, degree: Integer) -> Expression | None:
     """Given a generalized polynomial expression, 
 
@@ -184,3 +217,17 @@ def _coefficient_monomial(expr: Expression, var: Expression) -> list[Expression]
             return [expr, Integer(0)]
 
     return None
+
+def leading_coefficient(expr: Expression, var: Expression) -> Expression | None:
+    """Given a generalized polynomial expression u with parameter x, returns 
+    the coefficient of the highest power of x in u.
+
+    Args:
+        expr (Expression): The expression u
+        var (Expression): The parameter x
+
+    Returns:
+        Expression | None: Coefficient of the highest power of x
+    """
+    deg = degree(expr, var)
+    return coefficient(expr, var, deg)

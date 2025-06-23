@@ -54,3 +54,27 @@ def test_coefficient():
         coefficient(3*Sin(x)*x**2 + 2*Ln(x)*x + 4, x, 2)
         is None
     )
+
+def test_degree():
+    x, y = Variable('x'), Variable('y')
+    a, b, c = Variable('a'), Variable('b'), Variable('c')
+
+    assert (
+        degree(3*x**2 + 4*x + 4, x)
+        == 2
+    )
+
+    assert (
+        degree(3*x**3*y + x**3 + y, {x, y})
+        == 4
+    )
+
+    assert (
+        degree(3*a*x**2*y**3*b**4, {x, b})
+        == 6
+    )
+
+    assert (
+        degree(a*Sin(x)**2 +  b*Sin(x) + c, Sin(x))
+        == 2
+    )

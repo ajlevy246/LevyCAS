@@ -17,7 +17,7 @@ from .operations import (
     Deriv, derivative, integrate,
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
     trig_simplify, trig_substitute, trig_contract, trig_expand,
-    is_monomial, is_polynomial, variables, coefficient
+    is_monomial, is_polynomial, variables, coefficient, degree
 )
 
 __all__ = [
@@ -30,8 +30,8 @@ __all__ = [
     'Exp', 'Ln',
     'contains', 'copy', 'construct', 'map_op', 'substitute',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
-    'is_monomial', 'is_polynomial', 'variables', 'coefficient',
+    'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree',
     'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
-    'Deriv', 'derivative', 'integrate',
+    'Deriv', 'derivative', 'integrate', 
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial'
 ]
