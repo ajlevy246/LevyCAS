@@ -81,19 +81,19 @@ class Expression:
     """
     def base(self):
         return self
-    
+
     def exponent(self):
         return Integer(1)
-    
+
     def coefficient(self):
         return Integer(1)
-    
+
     def term(self):
         return Product(self)
 
     def num(self):
         return self
-    
+
     def denom(self):
         return Integer(1)
 
@@ -103,7 +103,7 @@ class Expression:
         both expressions should be ASAE (Automatically-Simplified Arithmetic Expressions)."""
 
         return str(self) == str(other)
-    
+
     def __hash__(self):
         return hash(str(self))
 
@@ -115,7 +115,7 @@ class Expression:
             return not (self < other)
         else:
             return NotImplemented
-    
+
     def __add__(self, other):
         from ..operations import simplify_sum
         other = convert_primitive(other)
@@ -144,7 +144,7 @@ class Expression:
         from ..operations import simplify_power
         other = convert_primitive(other)
         return simplify_power(Power(self, other)) if isinstance(other, Expression) else NotImplemented
-    
+
     """Right hand dunder methods for treating ints as Integers"""
     def __radd__(self, other):
         other = convert_primitive(other)
@@ -502,7 +502,7 @@ class Constant(Expression):
             return True
         
         return NotImplemented
-    
+
     def __add__(self, other):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
@@ -529,7 +529,7 @@ class Constant(Expression):
         right_num = denom_lcm * other.num()
         new_num = left_num - right_num
         return Rational(new_num, denom_lcm).lowest_terms()
-           
+
     def __mul__(self, other):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
@@ -577,15 +577,18 @@ class Rational(Constant):
             return super().__eq__(convert_primitive(other))
         return NotImplemented
 
+    def __hash__(self):
+        return super().__hash__()
+
     def eval(self):
         return self.left / self.right
 
     def is_positive(self):
         return (self.left < 0) if (self.right < 0) else (self.left > 0)
-    
+
     def is_negative(self):
         return (self.left < 0) if (self.right < 0) else (self.left > 0)
-    
+
     def lowest_terms(self):
         """Simplifies a fraction into lowest terms"""
         n = self.left
@@ -602,13 +605,13 @@ class Rational(Constant):
         
         else:
             return Rational(-n // g, -d // g)
-        
+
     def operands(self):
         return [self.left, self.right]
-    
+
     def num(self):
         return self.left
-    
+
     def denom(self):
         return self.right
 
@@ -637,13 +640,13 @@ class Integer(Constant):
 
     def operands(self):
         return [self.value]
-    
+
     def __int__(self):
         return self.value
-    
+
     def num(self):
         return self.value
-    
+
     def denom(self):
         return 1
 

@@ -2,7 +2,7 @@
 
 from ..expressions import *
 from .expression_ops import contains, copy, substitute
-from .algebraic_ops import algebraic_expand
+from .algebraic_ops import algebraic_expand, linear_form, quadratic_form
 from .trig_ops import trig_substitute
 
 class Deriv(Elementary):
@@ -44,10 +44,6 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
         lhs = w * v ** (w - 1) * _derivative_recursive(v, wrt)
         rhs = _derivative_recursive(w, wrt) * v ** w * Ln(v)
         return (lhs + rhs)
-    
-    elif operation == Exp:
-        arg = operands[0]
-        return (_derivative_recursive(arg, wrt) * expr)
 
     elif operation == Sum:
         derived_operands = [_derivative_recursive(operand, wrt) for operand in operands]
@@ -61,21 +57,36 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
         w = expr / v
         return (_derivative_recursive(v, wrt) * w + v * _derivative_recursive(w, wrt))
 
-    elif operation == Sin:
+    elif isinstance(expr, Elementary):
         arg = operands[0]
-        return (Cos(arg) * _derivative_recursive(arg, wrt))
 
-    elif operation == Cos:
-        arg = operands[0]
-        return (-1 * Sin(arg) * _derivative_recursive(arg, wrt))
+        if operation == Deriv:
+            return Deriv(expr, wrt) * _derivative_recursive(arg)
+
+        elif operation == Exp:
+            return (_derivative_recursive(arg, wrt) * expr)
+
+        elif operation == Ln:
+            return (_derivative_recursive(arg, wrt) / arg)
+
+        elif operation == Sin:
+            return (Cos(arg) * _derivative_recursive(arg, wrt))
+
+        elif operation == Cos:
+            return (-1 * Sin(arg) * _derivative_recursive(arg, wrt))
+
+        elif operation == Arccos:
+            return -_derivative_recursive(arg, wrt) / (1 - arg**2)**(1 / 2)
+
+        elif operation == Arcsin:
+            return _derivative_recursive(arg, wrt) / (1 - arg**2)**(1 / 2)
+
+        elif operation == Arctan:
+            return _derivative_recursive(arg, wrt) / (1 + arg**2)
 
     else:
         if not contains(expr, wrt):
             return Integer(0)
-        
-        if isinstance(expr, Ln):
-            arg = operands[0]
-            return (_derivative_recursive(arg, wrt) / arg)
 
         return Deriv(expr, wrt)
 
@@ -119,19 +130,6 @@ def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
     """
     from .simplification_ops import sym_eval
 
-    """Table of known integrals. Uses anonymous variable 'x'"""
-    INTEGRAL_TABLE = {
-        Variable('x')  : (1 / 2) * Variable('x') ** 2,                 #x -> (1/2)x^2
-        1 / Variable('x') : Ln(Variable('x')),                         #1 / x -> Ln(x)
-        Cos(Variable('x')) : Sin(Variable('x')),                       #Cos(x) -> Sin(x)
-        Sin(Variable('x')) : -Cos(Variable('x')),                      #Sin(x) -> -Cos(x)
-        Exp(Variable('x')) : Exp(Variable('x')),                       #Exp(x) -> Exp(x)
-        Sec(Variable('x'))**2 : Tan(Variable('x')),                    #Sec(x)^2 -> Tan(x)
-        -Csc(Variable('x'))**2 : Cot(Variable('x')),                   #-Csc(x)^2 -> Cot(x)
-        -Csc(Variable('x')) * Cot(Variable('x')) : Csc(Variable('x')), #-Csc(x)*Cot(x) -> Csc(x)
-        Sec(Variable('x')) * Tan(Variable('x')) : Sec(Variable('x')),  #Sec(x)Tan(x) -> Sec(x)
-    }
-
     if expr == 0:
         return Integer(0)
 
@@ -146,6 +144,19 @@ def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
 
         elif not contains(base, wrt) and exponent == wrt:
             return base ** wrt / Ln(base)
+
+    """Table of known integrals, especially containing elementary functions. Uses anonymous variable x"""
+    INTEGRAL_TABLE = {
+        Variable('x')  : (1 / 2) * Variable('x') ** 2,                 #x -> (1/2)x^2
+        1 / Variable('x') : Ln(Variable('x')),                         #1 / x -> Ln(x)
+        Cos(Variable('x')) : Sin(Variable('x')),                       #Cos(x) -> Sin(x)
+        Sin(Variable('x')) : -Cos(Variable('x')),                      #Sin(x) -> -Cos(x)
+        Exp(Variable('x')) : Exp(Variable('x')),                       #Exp(x) -> Exp(x)
+        Sec(Variable('x'))**2 : Tan(Variable('x')),                    #Sec(x)^2 -> Tan(x)
+        -Csc(Variable('x'))**2 : Cot(Variable('x')),                   #-Csc(x)^2 -> Cot(x)
+        -Csc(Variable('x')) * Cot(Variable('x')) : Csc(Variable('x')), #-Csc(x)*Cot(x) -> Csc(x)
+        Sec(Variable('x')) * Tan(Variable('x')) : Sec(Variable('x')),  #Sec(x)Tan(x) -> Sec(x)
+    }
 
     substitution = {str(wrt) : Variable('x')}
     test_expr = sym_eval(expr, **substitution)
@@ -259,3 +270,41 @@ def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
             independent *= factor
 
     return [independent, dependent]
+
+def _integrate_rational(expr: Expression, wrt: Variable) -> Expression | None:
+    """Given an expression in rational form, attemps to integrate with respect to the given variable.
+    Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c)
+
+    Args:
+        expr (Expression): The expression to integrate
+        wrt (Variable): The variable to integrate with respect to
+
+    Returns:
+        Expression | None: The integrated expression, or None if the integration fails.
+    """
+    numerator = linear_form(expr.num(), wrt)
+    if numerator is None:
+        return None
+    r, s = numerator
+
+    denominator = quadratic_form(expr.denom(), wrt)
+    if denominator is None or denominator[0] == 0:
+        return None
+    a, b, c = denominator
+
+    if r == 0:
+        discriminant = b**2 - 4 * a * c
+        if isinstance(discriminant, Constant):
+            if discriminant == 0:
+                return (-2) / (2 * a * wrt + b)
+            
+            elif discriminant.is_positive():
+                #TODO: hyperbolic trigonometric functions not yet implemented
+                # return -2 * Arctanh((2*a*wrt + b) / (discriminant)**(1 / 2)) / (discriminant)
+                return None
+
+        return 2 * Arctan((2*a*wrt + b) / (-discriminant)**(1 / 2)) / (-discriminant)**(1 / 2)
+
+    quadratic = a*wrt**2 + b*wrt + c
+    return (r / 2*a) * Ln(quadratic) + (s - r*b / (2*a)) * integrate(quadratic, wrt)
+

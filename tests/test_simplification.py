@@ -18,7 +18,7 @@ class TestSimplification:
         assert (
             2*(x + 1) + 3*(x + 1)
             == 5*(x + 1)
-            == 5*x + 5 #-> Requires distribution of constants over sums
+            == 5*x + 5
         )
 
         assert (
@@ -29,7 +29,7 @@ class TestSimplification:
 
         assert (
             5*x**2 + 4*x + 1 - 4*x - 5*x**2 - 1
-            == 5*x**2 + 4*x + 1 - (4*x + 5*x**2 + 1) #-> Requires distribution of constants over sums
+            == 5*x**2 + 4*x + 1 - (4*x + 5*x**2 + 1)
             == 0
         )
 
