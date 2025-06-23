@@ -53,3 +53,46 @@ def is_polynomial(expr: Expression, vars: Expression | set[Expression]) -> bool:
         return True
     
     return is_monomial(expr, vars)
+
+def variables(expr: Expression) -> set[Expression]:
+    """For a generalized polynomial expression, returns the set of parameters.
+
+    Examples:
+        >>> variables(x**3 + 3*x**2*y+3*x*y**2 + y**3)
+        {x, y}
+
+        >>> variables(a*sin(x)**2 + 2*b*Sin(x) + 3c)
+        {a, b, c, Sin(x)}
+
+        >>> variables(1)
+        {}
+
+    Args:
+        expr (Expression): A generalized polynomial expression.
+
+    Returns:
+        set[Expression]: The set of parameters, or the empty set
+    """
+    if isinstance(expr, Constant) or not isinstance(expr, Expression):
+        return set()
+
+    operation = type(expr)
+    if operation == Power:
+        exponent = expr.exponent()
+        if isinstance(exponent, Integer) and Integer(1) < exponent:
+            return {expr.base()}
+        return {expr}
+
+    elif operation == Sum:
+        vars = set()
+        for term in expr.operands():
+            vars |= variables(term)
+        return vars
+
+    elif operation == Product:
+        vars = set()
+        for factor in expr.operands():
+            vars |= variables(factor)
+        return vars
+
+    return {expr}

@@ -22,3 +22,11 @@ def test_polynomial():
     
     assert not is_polynomial((x / y) + 2*y, {x, y})
     assert not is_polynomial((x + 1) * (x + 3), x)
+
+def test_variables():
+    x, y = Variable('x'), Variable('y')
+    a, b, c = Variable('a'), Variable('b'), Variable('c')
+
+    assert variables(x**3 + 3*x**2*y+3*x*y**2 + y**3) == {x, y}
+    assert variables(a*Sin(x)**2 + 2*b*Sin(x) + 3*c) == {a, b, c, Sin(x)}
+    assert variables(1) == set()
