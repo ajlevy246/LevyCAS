@@ -304,7 +304,7 @@ def leading_monomial(expr: Expression, ordering: list[Expression]) -> Expression
     coeff = coefficient(expr, var, exponent)
     return var**exponent * leading_monomial(coeff, remaining)
 
-def monomial_division(dividend: Expression, divisor: Expression) -> Expression:
+def monomial_divide(dividend: Expression, divisor: Expression) -> Expression:
     """Computes the division u / v, where u is a polynomial and v is a monomial,
     both with rational coefficients.
 
@@ -326,7 +326,7 @@ def monomial_division(dividend: Expression, divisor: Expression) -> Expression:
             remainder += term
     return [quotient, remainder]
 
-def polynomial_division(dividend: Expression, divisor: Expression, ordering: list[Expression]) -> list[Expression]:
+def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[Expression]) -> list[Expression]:
     """Given two general polynomial expressions with rational coefficients, performs polynomial
     division and returns the result  
 
@@ -341,9 +341,9 @@ def polynomial_division(dividend: Expression, divisor: Expression, ordering: lis
     quotient = Integer(0)
     remainder = dividend
     lm = leading_monomial(divisor, ordering)
-    f = monomial_division(remainder, lm)[0]
+    f = monomial_divide(remainder, lm)[0]
     while f != 0:
         quotient += f
         remainder = algebraic_expand(remainder - f * divisor)
-        f = monomial_division(remainder, lm)[0]
+        f = monomial_divide(remainder, lm)[0]
     return [quotient, remainder]

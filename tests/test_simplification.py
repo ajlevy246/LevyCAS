@@ -1,8 +1,6 @@
 import pytest
 from levycas import *
 
-#TODO: Add the distribution of constants over sums in the simplification procedure?
-
 class TestSimplification:
     """Tests for automatic simplification of expressions"""
     def test_sum(self):

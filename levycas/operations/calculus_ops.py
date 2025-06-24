@@ -3,7 +3,7 @@
 from ..expressions import *
 from .expression_ops import contains, copy, substitute
 from .algebraic_ops import algebraic_expand, linear_form, quadratic_form
-from .trig_ops import trig_substitute
+from .polynomial_ops import is_polynomial, polynomial_divide, degree
 
 class Deriv(Elementary):
     """Anonymous derivative class"""
@@ -110,6 +110,9 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
 
     if integrated is None:
         integrated = _integrate_substitute(expr, wrt)
+
+    if integrated is None:
+        integrated = _integrate_rational(expr, wrt)
 
     if integrated is None:
         expanded = algebraic_expand(expr)
@@ -308,4 +311,49 @@ def _integrate_rational(expr: Expression, wrt: Variable) -> Expression | None:
 
     quadratic = a*wrt**2 + b*wrt + c
     return (r / 2*a) * Ln(quadratic) + (s - r*b / (2*a)) * integrate(quadratic, wrt)
+
+def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
+    """Given an expression in rational form, attemps to integrate with respect to the given variable.
+    Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c)
+
+    Args:
+        expr (Expression): The expression to integrate
+        wrt (Variable): The variable to integrate with respect to
+
+    Returns:
+        Expression | None: The integrated expression, or None if the integration fails.
+    """
+    denominator = expr.denom()
+    if not is_polynomial(denominator, wrt):
+        return None
+    denom_degree = degree(denominator, wrt)
+    if not int(denom_degree) <= 2:
+        return None
+
+    numerator = expr.num()
+    if not is_polynomial(numerator, wrt):
+        return None
+    num_degree = degree(numerator, wrt)
+    if num_degree > denom_degree:
+        return integrate(polynomial_divide(numerator, denominator, [wrt]), wrt)
+    
+    a, b, c = quadratic_form(denominator, wrt)
+    discriminant = b**2 - 4*a*c 
+    if numerator == 1:
+        if isinstance(discriminant, Integer):
+            if discriminant == 0:
+                return -2 / (2*a*wrt + b)
+            elif discriminant.is_positive():
+                #Hyperbolic arctanh not yet implemented
+                return None
+        
+        return 2 * Arctan((2*a*wrt + b)/(-discriminant)**(1/2)) / (-discriminant)**(1/2)
+
+    else:
+        if num_degree == 1:
+            r, s = linear_form(numerator, wrt)
+            alpha = r / (2*a)
+            beta = s - r*b/(2*a)
+            #Correction from Elementary Algorithms, beta -> 1/beta
+            return alpha*Ln(denominator) + (1/beta) * integrate(1 / denominator, wrt)
 

@@ -168,7 +168,7 @@ def test_polynomial_division():
     dividend = 2*x**2*y + 3*x**2 + 4*x*y + 5*x + 6*y + 7
     divisor = x*y
 
-    divide = lambda x, y: polynomial_division(x, y, ordering)
+    divide = lambda x, y: polynomial_divide(x, y, ordering)
 
     assert (
         divide(dividend, divisor)
