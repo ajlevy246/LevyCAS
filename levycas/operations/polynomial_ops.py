@@ -1,6 +1,9 @@
 """Operations on generalized polynomial expressions, both single and multivariate cases"""
+from numbers import Number
+
 from ..expressions import *
 from .expression_ops import contains
+from .algebraic_ops import algebraic_expand
 
 def is_monomial(expr: Expression, vars: Expression | set[Expression]) -> bool:
     """Checks whether the given expression is a monomial in the given variables.
@@ -300,3 +303,47 @@ def leading_monomial(expr: Expression, ordering: list[Expression]) -> Expression
     exponent = degree(expr, var)
     coeff = coefficient(expr, var, exponent)
     return var**exponent * leading_monomial(coeff, remaining)
+
+def monomial_division(dividend: Expression, divisor: Expression) -> Expression:
+    """Computes the division u / v, where u is a polynomial and v is a monomial,
+    both with rational coefficients.
+
+    Args:
+        dividend (Expression): A polynomial with rational coefficients
+        divisor (Expression): A monomial with rational coefficient.
+
+    Returns:
+        Expression: The list [Q, R] where Q is the quotient and R the remainder of the division.
+    """
+    terms = dividend.operands() if isinstance(dividend, Sum) else [dividend]
+    quotient = Integer(0)
+    remainder = Integer(0)
+    for term in terms:
+        term_quot = term / divisor
+        if isinstance(term_quot.denom(), (Constant, Number)):
+            quotient += term_quot
+        else:
+            remainder += term
+    return [quotient, remainder]
+
+def polynomial_division(dividend: Expression, divisor: Expression, ordering: list[Expression]) -> list[Expression]:
+    """Given two general polynomial expressions with rational coefficients, performs polynomial
+    division and returns the result  
+
+    Args:
+        dividend (Expression): A rational polynomial
+        denominator (Expression): A rational polynomial
+        ordering (list[Expression]): Ordered list of generalized variables
+
+    Returns:
+        list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
+    """
+    quotient = Integer(0)
+    remainder = dividend
+    lm = leading_monomial(divisor, ordering)
+    f = monomial_division(remainder, lm)[0]
+    while f != 0:
+        quotient += f
+        remainder = algebraic_expand(remainder - f * divisor)
+        f = monomial_division(remainder, lm)[0]
+    return [quotient, remainder]

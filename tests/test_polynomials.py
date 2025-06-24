@@ -155,11 +155,48 @@ def test_leading_monomial():
         lm(uv)
         == algebraic_expand(lm(u) * lm(v))
     )
-    if less(lm(u), lm(v)):
-        assert (
-            less(lm(uw), lm(vw))
-        )
-    elif less(lm(v), lm(u)):
-        assert (
-            less(lm(vw), lm(uw))
-        )
+
+    #lm(u) < lm(v) => lm(uw) < lm(vw), where w \neq 0
+    assert (
+        not less(lm(uw), lm(vw)) or less(lm(u), lm(v))
+    )
+
+def test_polynomial_division():
+    x, y = Variable('x'), Variable('y')
+    ordering = [x, y]
+
+    dividend = 2*x**2*y + 3*x**2 + 4*x*y + 5*x + 6*y + 7
+    divisor = x*y
+
+    divide = lambda x, y: polynomial_division(x, y, ordering)
+
+    assert (
+        divide(dividend, divisor)
+        == [(2*x + 4), (3*x**2 + 5*x + 6*y + 7)]
+    )
+    assert (
+        divide(x**3 + 2*x**2 + x, x + 1)
+        == [x**2 + x, 0]
+    ) 
+    assert (
+        divide(x**2 + 2, x + 1)
+        == [x - 1, 3]
+    )
+    assert (
+        divide(x*y + y**2, y)
+        == [x+y, 0]
+        and
+        divide(x*y + y**2, x)
+        == [y, y**2]
+    )
+    assert (
+        divide(x**2 + x*y + 1, x + y)
+        == [x, 1]
+        and
+        divide(x**2 + x*y + 1, y)
+        == [x, x**2 + 1]
+    )
+    assert (
+        divide(x**2*y + x*y**2 + y**3, x*y + y**2)
+        == [x, y**3]
+    )
