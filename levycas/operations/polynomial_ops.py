@@ -207,13 +207,13 @@ def degree(expr: Expression, vars: Expression | set[Expression]) -> Integer | No
                 deg_sum += monomial[1]
             deg = deg_sum if deg < deg_sum else deg
         return deg
+
     else:
         deg_sum = Integer(0)
         for var in vars:
             monomial = _coefficient_monomial(expr, var)
             if monomial is None:
                 return None
-            
             deg_sum += monomial[1]
         return deg_sum
 
@@ -247,3 +247,28 @@ def leading_coefficient(expr: Expression, var: Expression) -> Expression | None:
         return coeff
     else:
         return _coefficient_monomial(expr, var)[0]
+
+def lex_lt(first: Expression, second: Expression, ordering: list[Expression]) -> bool:
+    """Returns the monomial ordering of two expressions. True if first < second, 
+    or false otherwise. Default behavior is lexicographic ordering. 
+
+    If both monomials have the same variable part, then
+    both first < second and second < first are false.
+
+    Args:
+        first (Expression): The first monomial to compare
+        second (Expression): The second monomial to compare
+        ordering (list[Expression]): The ordering of the generalized variables
+
+    Returns:
+        bool: True if first < second; False otherwise
+    """
+    for var in ordering:
+        first_deg = degree(first, var)
+        second_deg = degree(second, var)
+        if first_deg == second_deg:
+            continue
+        
+        return True if first_deg < second_deg else False
+
+    return False

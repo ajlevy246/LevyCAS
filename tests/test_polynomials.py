@@ -102,3 +102,34 @@ def test_degree():
         degree(2*x**2*y*a**3 + y*x*a**6, {a, x, y})
         == 8
     )
+
+def test_lex_ordering():
+    x, y, z = Variable('x'), Variable('y'), Variable('z')
+    a, b, c = Variable('a'), Variable('b'), Variable('c')
+
+    alphabetical = [a, b, c, x, y, z]
+    reverse_alphabetical = alphabetical[::-1]
+
+    assert lex_lt(x**2 * y**3 * z**4, x**2 * y**4 * z**3, alphabetical)
+    assert not lex_lt(x**2 * y**3 * z**4, x**2 * y**4 * z**3, reverse_alphabetical)
+
+    assert not lex_lt(x**2 * y**4 * z**3, x**2 * y**3 * z**4, alphabetical)
+    assert lex_lt(x**2 * y**4 * z**3, x**2 * y**3 * z**4, reverse_alphabetical)
+    
+    assert lex_lt(x * y**2 * z, x**2 * y, alphabetical)
+    assert not lex_lt(x * y**2 * z, x**2 * y, reverse_alphabetical)
+
+    assert not lex_lt(x**2 * y, x * y**2 * z, alphabetical)
+    assert lex_lt(x**2 * y, x * y**2 * z, reverse_alphabetical)
+
+    assert lex_lt(y*z**5, x, alphabetical)
+    assert not lex_lt(y*z**5, x, reverse_alphabetical)
+
+    assert not lex_lt(x, y*z**5, alphabetical)
+    assert lex_lt(x, y*z**5, reverse_alphabetical)
+
+    assert not lex_lt(2*x*y, 3*x*y, alphabetical)
+    assert not lex_lt(2*x*y, 3*x*y, reverse_alphabetical)
+
+    assert not lex_lt(3*x*y, 2*x*y, alphabetical)
+    assert not lex_lt(3*x*y, 2*x*y, reverse_alphabetical)
