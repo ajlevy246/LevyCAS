@@ -19,6 +19,7 @@ def derivative(expr: Expression, wrt: Variable) -> Expression:
     Returns:
         Expression: The computed derivative.
     """
+    return _derivative_recursive(expr, wrt)
     return _derivative_recursive(trig_substitute(expr), wrt)
 
 def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
@@ -59,30 +60,43 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
 
     elif isinstance(expr, Elementary):
         arg = operands[0]
+        arg_deriv = _derivative_recursive(arg, wrt)
 
         if operation == Deriv:
-            return Deriv(expr, wrt) * _derivative_recursive(arg)
+            return Deriv(expr, wrt) * arg_deriv
 
         elif operation == Exp:
-            return (_derivative_recursive(arg, wrt) * expr)
+            return (arg_deriv * expr)
 
         elif operation == Ln:
-            return (_derivative_recursive(arg, wrt) / arg)
+            return (arg_deriv / arg)
 
         elif operation == Sin:
-            return (Cos(arg) * _derivative_recursive(arg, wrt))
+            return (Cos(arg) * arg_deriv)
 
         elif operation == Cos:
-            return (-1 * Sin(arg) * _derivative_recursive(arg, wrt))
+            return (-1 * Sin(arg) * arg_deriv)
+
+        elif operation == Tan:
+            return (Sec(arg)**2 * arg_deriv)
+
+        elif operation == Sec:
+            return Sec(arg) * Tan(arg) * arg_deriv
+        
+        elif operation == Csc:
+            return -Cot(arg) * Csc(arg) * arg_deriv
+        
+        elif operation == Cot:
+            return -Csc(arg)**2 * arg_deriv
 
         elif operation == Arccos:
-            return -_derivative_recursive(arg, wrt) / (1 - arg**2)**(1 / 2)
+            return -arg_deriv / (1 - arg**2)**(1 / 2)
 
         elif operation == Arcsin:
-            return _derivative_recursive(arg, wrt) / (1 - arg**2)**(1 / 2)
+            return arg_deriv / (1 - arg**2)**(1 / 2)
 
         elif operation == Arctan:
-            return _derivative_recursive(arg, wrt) / (1 + arg**2)
+            return arg_deriv / (1 + arg**2)
 
     else:
         if not contains(expr, wrt):
@@ -247,7 +261,7 @@ def _trial_substitutions(expr: Expression) -> set[Expression]:
     operands = expr.operands()
     for operand in operands:
         candidates = candidates.union(_trial_substitutions(operand))
-    return candidates
+    return sorted(candidates)
 
 def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
     """Given a product of factors, separates the factors into those independent of the given variable

@@ -133,3 +133,6 @@ def test_lex_ordering():
 
     assert not lex_lt(3*x*y, 2*x*y, alphabetical)
     assert not lex_lt(3*x*y, 2*x*y, reverse_alphabetical)
+
+def test_leading_monomial():
+    x, y = Variable('x'), Variable('y')

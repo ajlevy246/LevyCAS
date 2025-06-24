@@ -16,13 +16,13 @@ class TestDerivative:
         assert derivative(Ln(x), x) == 1 / x
         assert derivative(Exp(x), x) == Exp(x)
 
-        assert derivative(Tan(x), x) == 1 + Sin(x)**2 / Cos(x)**2
+        assert derivative(Tan(x), x) == Sec(x)**2
         assert derivative(Cos(x), x) == -Sin(x)
         assert derivative(Sin(x), x) == Cos(x)
 
-        assert derivative(Sec(x), x) == Sin(x) / Cos(x)**2
-        assert derivative(Csc(x), x) == -Cos(x) / Sin(x)**2
-        assert derivative(Cot(x), x) == -(1 + Cos(x)**2 / Sin(x)**2)
+        assert derivative(Sec(x), x) == Sec(x) * Tan(x)
+        assert derivative(Csc(x), x) == -Cot(x) * Csc(x)
+        assert derivative(Cot(x), x) == -Csc(x)**2
 
 class TestIntegrate:
     """Tests for the integrate operator"""
@@ -41,16 +41,65 @@ class TestIntegrate:
     def test_integrate_substitute(self):
         x, y = Variable("x"), Variable("y")
         
-        sub_test = integrate(Sin(x) * Cos(x), x)
+        #Elementary function substitution
         assert (
-            # u = Sin(x) -> du = Cos(x)dx
-            sub_test == (1 / 2) * Sin(x) ** 2
+            integrate(Sin(x) * Cos(x), x)
+            == - (1 / 2) * Cos(x) ** 2
+        )
+        assert (
+            integrate(Cos(3*x), x)
+            == Rational(1, 3) * Sin(3*x)
+        )
+        assert (
+            integrate(Sin(x**2) * 2*x, x)
+            == -Cos(x**2)
+        )
+        assert (
+            integrate(Exp(2*x), x) 
+            == (1 / 2) * Exp(2*x)
+        )
+        assert (
+            integrate(Ln(x)**3 * (1 / x), x)
+            == (1 / 4) * Ln(x)**4
+        )
 
-            # u = Cos(x) -> du = -Sin(x)dx
-            or sub_test == - (1 / 2) * Cos(x) ** 2
+        #Algebraic substitution
+        assert (
+            integrate((3*x + 1)**4, x)
+            == Rational(1, 15) * (3*x + 1)**5
+        )
+        assert (
+            integrate((5*x + 2)**(1 / 2), x)
+            == Rational(2, 15) * (5*x + 2) ** (3 / 2)
+        )
+        assert (
+            integrate(1 / (x*Ln(x)), x)
+            == Ln(Ln(x))
+        )
+
+        #Rational expressions
+        assert (
+            integrate((2*x) / (x**2 + 1), x)
+            == Ln(x**2 + 1)
+        )
+
+        assert (
+            integrate(x / (x**2 + 1)**2, x)
+            == -(1 / 2) / (1 + x**2)
+        )
+
+        #Trig substitution
+        assert (
+            integrate(Cos(x)**2 * Sin(x), x)
+            == -Rational(1, 3) * Cos(x)**3
+        )
+
+        assert (
+            integrate(Sec(x)**2 * Tan(x), x)
+            == Sec(x)**2 / 2
         )
 
     def test_integrate_linear(self):
         x, y = Variable("x"), Variable("y")
 
-        # assert integrate(2*x + (1 / 2)*x**2, x) == x**2 + (1 / 6)*x**3 #-> Fails, because of incorrect processing of (1 / 6)
+        assert integrate(2*x + (1 / 2)*x**2, x) == x**2 + Rational(1, 6)*x**3
