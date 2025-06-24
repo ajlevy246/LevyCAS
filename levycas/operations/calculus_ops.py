@@ -10,19 +10,6 @@ class Deriv(Elementary):
     pass
 
 def derivative(expr: Expression, wrt: Variable) -> Expression:
-    """Take the derivative of an expression with respect to a variable.
-
-    Args:
-        expr (Expression): The expression to derivate
-        wrt (Variable): The variable to take the derivative with respect to
-
-    Returns:
-        Expression: The computed derivative.
-    """
-    return _derivative_recursive(expr, wrt)
-    return _derivative_recursive(trig_substitute(expr), wrt)
-
-def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
     """Recursively computed derivative.
 
     Args:
@@ -42,25 +29,25 @@ def _derivative_recursive(expr: Expression, wrt: Variable) -> Expression:
     elif operation == Power:
         v = expr.base()
         w = expr.exponent()
-        lhs = w * v ** (w - 1) * _derivative_recursive(v, wrt)
-        rhs = _derivative_recursive(w, wrt) * v ** w * Ln(v)
+        lhs = w * v ** (w - 1) * derivative(v, wrt)
+        rhs = derivative(w, wrt) * v ** w * Ln(v)
         return (lhs + rhs)
 
     elif operation == Sum:
-        derived_operands = [_derivative_recursive(operand, wrt) for operand in operands]
+        derived_operands = [derivative(operand, wrt) for operand in operands]
         return sum(derived_operands)
 
     elif operation == Product:
         if len(operands) == 1:
-            return _derivative_recursive(operands[0], wrt)
+            return derivative(operands[0], wrt)
         
         v = operands[0]
         w = expr / v
-        return (_derivative_recursive(v, wrt) * w + v * _derivative_recursive(w, wrt))
+        return (derivative(v, wrt) * w + v * derivative(w, wrt))
 
     elif isinstance(expr, Elementary):
         arg = operands[0]
-        arg_deriv = _derivative_recursive(arg, wrt)
+        arg_deriv = derivative(arg, wrt)
 
         if operation == Deriv:
             return Deriv(expr, wrt) * arg_deriv

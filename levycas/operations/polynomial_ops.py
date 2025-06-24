@@ -268,7 +268,35 @@ def lex_lt(first: Expression, second: Expression, ordering: list[Expression]) ->
         second_deg = degree(second, var)
         if first_deg == second_deg:
             continue
-        
+
         return True if first_deg < second_deg else False
 
     return False
+
+def leading_monomial(expr: Expression, ordering: list[Expression]) -> Expression:
+    """Returns the leading monomial of a rational polynomial expression. The order of monomials
+    is ordered based on the given lexicographical ordering.
+
+    Examples:
+        >>> expr = 3*x**2*y + 4*x*y**2 + y**3 + x + 1
+        >>> leading_monomial(expr, [x, y])
+        3 * x**2 * y
+
+        >>> leading_monomial(expr, [y, x]])
+        y**3
+
+    Args:
+        expr (Expression): A rational polynomial expression
+        ordering (list[Expression]): An ordering of generalized variables
+
+    Returns:
+        Expression: The leading monomial of the polynomial
+    """
+    if len(ordering) == 0:
+        return expr
+
+    var = ordering[0]
+    remaining = ordering[1::]
+    exponent = degree(expr, var)
+    coeff = coefficient(expr, var, exponent)
+    return var**exponent * leading_monomial(coeff, remaining)

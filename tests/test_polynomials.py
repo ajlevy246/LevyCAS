@@ -136,3 +136,30 @@ def test_lex_ordering():
 
 def test_leading_monomial():
     x, y = Variable('x'), Variable('y')
+    lm = lambda y: leading_monomial(y, [x, y])
+    less = lambda x, y: lex_lt(x, y, [x, y])
+
+    expr = 3*x**2*y + 4*x*y**2 + y**3 + x + 1
+    assert leading_monomial(expr, [x, y]) == 3*x**2*y
+    assert leading_monomial(expr, [y, x]) == y**3
+
+    u = 3*x**2*y**3 + 5*x*y**2 + 2*x*y + 4*x + 2*y + 1
+    v = 2*x**3*y**2 + 3*x**2*y + x*y + 3*x + 4*y + 1
+    uv = algebraic_expand(u*v)
+
+    w = 4*x*y+ 2*x + 3*y + 4
+    uw = algebraic_expand(u*w)
+    vw = algebraic_expand(v*w)
+
+    assert (
+        lm(uv)
+        == algebraic_expand(lm(u) * lm(v))
+    )
+    if less(lm(u), lm(v)):
+        assert (
+            less(lm(uw), lm(vw))
+        )
+    elif less(lm(v), lm(u)):
+        assert (
+            less(lm(vw), lm(uw))
+        )
