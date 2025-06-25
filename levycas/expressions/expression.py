@@ -512,7 +512,7 @@ class Constant(Expression):
         left_num = self.num() * denom_lcm // self.denom()
         right_num = other.num() * denom_lcm // other.denom()
         new_num = left_num + right_num
-        return Rational(new_num, denom_lcm).lowest_terms()
+        return Rational(new_num, denom_lcm)
 
     def __sub__(self, other):
         other = convert_primitive(other)
@@ -528,7 +528,7 @@ class Constant(Expression):
         left_num = denom_lcm * self.num()
         right_num = denom_lcm * other.num()
         new_num = left_num - right_num
-        return Rational(new_num, denom_lcm).lowest_terms()
+        return Rational(new_num, denom_lcm)
 
     def __mul__(self, other):
         other = convert_primitive(other)
@@ -542,7 +542,7 @@ class Constant(Expression):
 
         new_num = self.num() * other.num()
         new_denom = self.denom() * other.denom()
-        return Rational(new_num, new_denom).lowest_terms()
+        return Rational(new_num, new_denom)
 
     def __pow__(self, other):
         other = convert_primitive(other)
@@ -555,19 +555,32 @@ class Constant(Expression):
         else:
             new_num = self.num() ** other.eval()
             new_denom = self.denom() ** other.eval()
-        return Rational(new_num, new_denom).lowest_terms()
+        return Rational(new_num, new_denom)
 
 class Rational(Constant):
     """A rational expression is a constant; a fraction of two integers"""
-    def __init__(self, *args):
-        for arg in args:
-            assert isinstance(arg, int), f"arg {arg} is {type(arg)}"
 
+    def __new__(cls, *args):
+        """To faciliatate automatic simplification of Rational expression,
+        the __new__ method is overwritten.
+        
+        First, a new Rational instance is created. Then, the _factory method is called,
+        which returns a simplified Rational object.
+        """
         if len(args) == 1:
-            self.left = args[0]
-            self.right = 1
-        else:
-            super().__init__(*args)
+            args = [args[0], 1]
+
+        new_instance = super().__new__(cls)
+        print(type(new_instance))
+        new_instance.left = args[0]
+        new_instance.right = args[1]
+        return new_instance.lowest_terms()
+
+    def __init__(self, *args):
+        """The __new__ function is responsible for automatic simplification
+        no mutation is done here.
+        """
+        pass
 
     def __repr__(self):
         return f"({self.left} / {self.right})"
@@ -591,20 +604,27 @@ class Rational(Constant):
 
     def lowest_terms(self):
         """Simplifies a fraction into lowest terms"""
+        print(f"Lowest terms: {self.left} / {self.right}")
         n = self.left
         d = self.right
         if d == 0:
             return UNDEFINED
-        
+
         if n % d == 0:
             return Integer(n // d)
-        
+
         g = gcd(n, d)
         if  d > 0:
-            return Rational(n // g, d // g)
-        
+            print(f"{d} > 0, new num = {n // g}, new denom = {d // g}")
+            self.left = n // g
+            self.right = d // g
+            print(f"Returning {self}")
+            return self
+
         else:
-            return Rational(-n // g, -d // g)
+            self.left = -n // g
+            self.right = -d // g
+            return self
 
     def operands(self):
         return [self.left, self.right]
@@ -688,6 +708,6 @@ def convert_primitive(num: Number) -> Constant:
             if denominator == 1:
                 return Integer(numerator)
             else:
-                return Rational(numerator, denominator).lowest_terms()
+                return Rational(numerator, denominator)
     except:
         raise ValueError(f"Could not convert {num} to Rational.")
