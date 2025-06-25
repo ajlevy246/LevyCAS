@@ -18,10 +18,8 @@ def simplify(expr: Expression) -> Expression:
     """
     operation = type(expr)
 
-    if operation in [Integer, Variable]:
+    if isinstance(expr, (Constant, Variable)):
         return expr
-    elif operation == Rational:
-        return expr.lowest_terms()
 
     simplified_operands = [simplify(operand) for operand in expr.operands()]
     if UNDEFINED in simplified_operands:

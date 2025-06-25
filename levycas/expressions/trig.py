@@ -34,18 +34,14 @@ class Cos(Trig):
             return Integer(1)
         
         new_instance = super().__new__(cls)
+        new_instance.args = [arg]
         if coefficient.is_negative():
-            new_instance._arg = -arg
-            return new_instance
+            new_instance.args = [-arg]
         
-        new_instance._arg = None
         return new_instance
 
     def __init__(self, *args):
-        if self._arg is not None:
-            super().__init__(self._arg)
-        else:
-            super().__init__(*args)
+        pass
 
 class Tan(Trig):
     pass

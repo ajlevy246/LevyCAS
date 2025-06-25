@@ -571,9 +571,28 @@ class Rational(Constant):
             args = [args[0], 1]
 
         new_instance = super().__new__(cls)
-        print(type(new_instance))
-        new_instance.left = args[0]
-        new_instance.right = args[1]
+        n = args[0]
+        d = args[1]
+
+        #Simplify to lowest terms
+        if d == 0:
+            return UNDEFINED
+
+        if n % d == 0:
+            return Integer(n // d)
+
+        g = gcd(n, d)
+        if  d > 0:
+            new_instance.left = n // g
+            new_instance.right = d // g
+            return new_instance
+
+        else:
+            new_instance.left = -n // g
+            new_instance.right = -d // g
+            return new_instance
+
+
         return new_instance.lowest_terms()
 
     def __init__(self, *args):
@@ -601,30 +620,6 @@ class Rational(Constant):
 
     def is_negative(self):
         return (self.left < 0) if (self.right < 0) else (self.left > 0)
-
-    def lowest_terms(self):
-        """Simplifies a fraction into lowest terms"""
-        print(f"Lowest terms: {self.left} / {self.right}")
-        n = self.left
-        d = self.right
-        if d == 0:
-            return UNDEFINED
-
-        if n % d == 0:
-            return Integer(n // d)
-
-        g = gcd(n, d)
-        if  d > 0:
-            print(f"{d} > 0, new num = {n // g}, new denom = {d // g}")
-            self.left = n // g
-            self.right = d // g
-            print(f"Returning {self}")
-            return self
-
-        else:
-            self.left = -n // g
-            self.right = -d // g
-            return self
 
     def operands(self):
         return [self.left, self.right]
