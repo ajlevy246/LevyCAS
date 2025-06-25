@@ -335,7 +335,8 @@ def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
         return None
     num_degree = degree(numerator, wrt)
     if num_degree > denom_degree:
-        return integrate(polynomial_divide(numerator, denominator, [wrt]), wrt)
+        quotient, remainder = polynomial_divide(numerator, denominator, [wrt])
+        return integrate(quotient + remainder / denominator, wrt)
     
     a, b, c = quadratic_form(denominator, wrt)
     discriminant = b**2 - 4*a*c 

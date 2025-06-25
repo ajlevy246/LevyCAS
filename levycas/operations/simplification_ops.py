@@ -406,7 +406,7 @@ def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expre
     """
     if not isinstance(expr, Expression) or isinstance(expr, Constant):
         return expr
-    
+
     if isinstance(expr, Variable):
         definition = symbols.get(expr, expr)
         if definition is expr:
