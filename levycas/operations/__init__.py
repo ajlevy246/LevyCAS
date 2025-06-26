@@ -3,7 +3,7 @@ from .calculus_ops import Deriv, derivative, integrate
 from .expression_ops import contains, copy, construct, map_op, substitute
 from .simplification_ops import simplify, sym_eval, simplify_power, simplify_product, simplify_sum, simplify_div, simplify_factorial
 from .trig_ops import trig_simplify, trig_substitute, trig_expand, trig_contract
-from .polynomial_ops import is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_gcd, extended_euclidean
+from .polynomial_ops import is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide
 
 __all__ = [
     'contains', 'copy', 'construct', 'map_op', 'substitute',
@@ -12,5 +12,5 @@ __all__ = [
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
-    'monomial_divide', 'polynomial_divide', 'polynomial_gcd', 'extended_euclidean'
+    'monomial_divide', 'polynomial_divide'
 ]

@@ -513,31 +513,43 @@ class Constant(Expression):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
             return super().__sub__(other)
-        
-        if isinstance(self, Integer):
-            self = Rational(self.eval(), 1)
-        if isinstance(other, Integer):
-            other = Rational(other.eval(), 1)
 
+        print(f"Subtracting {self} - {other}")
         denom_lcm = lcm(self.denom(), other.denom())
-        left_num = denom_lcm * self.num()
-        right_num = denom_lcm * other.num()
+        left_num = self.num() * denom_lcm // self.denom()
+        right_num = other.num() * denom_lcm // other.denom()
         new_num = left_num - right_num
+        print(f"Returning {new_num} / {denom_lcm}")
         return Rational(new_num, denom_lcm)
 
     def __mul__(self, other):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
             return super().__mul__(other)
-        
-        if isinstance(self, Integer):
-            self = Rational(self.eval(), 1)
-        if isinstance(other, Integer):
-            other = Rational(other.eval(), 1)
 
         new_num = self.num() * other.num()
         new_denom = self.denom() * other.denom()
         return Rational(new_num, new_denom)
+    
+    def __abs__(self):
+        if self == 0 or self.is_positive():
+            return self
+        return -self
+
+    def __floordiv__(self, other):
+        other = convert_primitive(other)
+        if not isinstance(other, Constant):
+            return NotImplemented
+        
+        div = self / other
+        return Integer(div.num() // div.denom())
+
+    def __mod__(self, other):
+        other = convert_primitive(other)
+        if not isinstance(other, Constant):
+            return NotImplemented
+        print(f"mod is {self} - {other} * {self // other}")
+        return (self - other * (self // other))
 
 class Rational(Constant):
     """A rational expression is a constant; a fraction of two integers"""
@@ -687,15 +699,6 @@ class Integer(Constant):
         
         #Otherwise, requires factorization (noy yet implemented); see sympy Integer._eval_pow algorithm
         return super().__pow__(other)
-
-    def __abs__(self):
-        return self if self.value >= 0 else -self
-
-    def __mod__(self, other):
-        if not isinstance(other, Integer):
-            return NotImplemented
-        
-        return Integer(self.eval() & other.eval())
 
     def eval(self):
         return self.value
