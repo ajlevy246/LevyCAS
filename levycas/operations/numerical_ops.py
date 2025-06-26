@@ -65,9 +65,19 @@ def factor_integer(a: Integer | int) -> dict[int, int]:
     
     factors = dict()
     while a != 1:
+        #Base case
+        if is_prime(a):
+            factors[a] = factors.get(a, 0) + 1
+            return factors
+
         new_factor = _pollard_rho(a)
         a //= new_factor
-        factors[new_factor] = factors.get(new_factor, 0) + 1
+
+        #New factor may not be prime, in which case recursion is used.
+        new_factors = factor_integer(new_factor)
+        new_factors = {key: val + factors.get(key, 0) for key, val in new_factors.items()}
+        factors.update(new_factors)
+
     return factors
 
 def is_prime(a: Integer) -> bool:
@@ -84,7 +94,7 @@ def is_prime(a: Integer) -> bool:
     from sympy import isprime
     return isprime(a)
 
-def _pollard_rho(n: Integer) -> Integer | None:
+def _pollard_rho(n: Integer, check_prime = False) -> Integer | None:
     """An implementation of Pollard Rho algorithm for integer factorization.
     Given an integer a, returns d, a non-trivial divisor of a. 
     
@@ -109,20 +119,26 @@ def _pollard_rho(n: Integer) -> Integer | None:
     #Bounds check
     if n < 4:
         return n
-    if is_prime(n):
+    if check_prime and is_prime(n):
         return n
     
+    #Cheap check for even
+    if n % 2 == 0:
+        return 2
+
     b = d = Integer(1)
     x = y = Integer(0)
     g = lambda val: (val ** 2 + b) % n
 
     for x in range(n):
-        for b in range(1, n - 2):
+        for b in range(1, n - 1):
             while d == 1:
                 x = g(x)
                 y = g(g(y))
                 d = gcd(abs(x - y), n)
             if d == n:
+                #Failure, repeat with new parameters
+                d = 1
                 continue
             return d
     raise ValueError(f"Could not factor {n} with Pollard's Rho Algorithm")

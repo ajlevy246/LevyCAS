@@ -659,6 +659,9 @@ class Integer(Constant):
         """Returns the value of the integer"""
         return str(self.value)
 
+    def __hash__(self):
+        return hash(self.eval())
+
     def __pow__(self, other):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
