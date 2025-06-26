@@ -676,17 +676,16 @@ class Integer(Constant):
                 return (-1)**other * Rational(1, -self) ** -other
             else:
                 return Rational(1, self**-other)
-            
+
+        #Check if base is a perfect n-th power
         from math import log
-        #n-th root test
         n = other.denom()
         assert other.is_positive() and other != 1, f"Rational simplification of {other} failed?"
-        nth_root = log(self, n)
-        if abs(int(nth_root) - nth_root) < MIN_ERROR:
-            return Integer(int(nth_root)) ** other.num()
+        nth_root = int(self) ** (1 / n)
+        if abs(nth_root - int(nth_root)) < MIN_ERROR:
+            return Integer(int(nth_root))
         
-        #Otherwise, requires factorization; see sympy Integer._eval_pow algorithm
-
+        #Otherwise, requires factorization (noy yet implemented); see sympy Integer._eval_pow algorithm
         return super().__pow__(other)
 
 

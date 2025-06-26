@@ -135,3 +135,7 @@ class TestSimplification:
             x ** Rational(3, 2)
             == x * x**Rational(1, 2)
         )
+        assert (
+            2*x**Rational(3, 2)
+            == 2 * x * x**Rational(1, 2)
+        )
