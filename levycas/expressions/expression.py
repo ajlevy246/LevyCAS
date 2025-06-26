@@ -688,7 +688,14 @@ class Integer(Constant):
         #Otherwise, requires factorization (noy yet implemented); see sympy Integer._eval_pow algorithm
         return super().__pow__(other)
 
+    def __abs__(self):
+        return self if self.value >= 0 else -self
 
+    def __mod__(self, other):
+        if not isinstance(other, Integer):
+            return NotImplemented
+        
+        return Integer(self.eval() & other.eval())
 
     def eval(self):
         return self.value
