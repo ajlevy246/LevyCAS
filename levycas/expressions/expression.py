@@ -101,13 +101,7 @@ class Expression:
         return hash(str(self))
 
     def __gt__(self, other):
-        #This method is called as the "inverse" of the lt method
-        #i.e: if (a < b) returns NotImplemented, this ensures that
-        # (not b < a) is returned
-        if isinstance(other, Expression):
-            return not (self < other)
-        else:
-            return NotImplemented
+        return not (self < other)
 
     def __add__(self, other):
         from ..operations import simplify_sum
@@ -160,6 +154,10 @@ class Expression:
     def __rpow__(self, other):
         other = convert_primitive(other)
         return (other ** self) if isinstance(other, Expression) else NotImplemented
+    
+    def __rmod__(self, other):
+        other = convert_primitive(other)
+        return (other % self) if isinstance(other, Expression) else NotImplemented
 
 class Sum(Expression):
     """A Sum is the sum of two terms"""
@@ -496,7 +494,7 @@ class Constant(Expression):
         if isinstance(other, Expression):
             return True
         
-        return NotImplemented
+        return self.eval() < other
 
     def __add__(self, other):
         other = convert_primitive(other)

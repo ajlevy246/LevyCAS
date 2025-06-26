@@ -1,5 +1,5 @@
 """Operations acting on Constants (rationals)."""
-from levycas.expressions import Integer
+from levycas.expressions import Integer, convert_primitive
 
 def gcd(a: Integer, b: Integer) -> Integer:
     """Computes the greated common divisor of two integers using binary gcd algorithm.
@@ -11,8 +11,15 @@ def gcd(a: Integer, b: Integer) -> Integer:
     Returns:
         Integer: gcd(a, b)
     """
-    a, a_d = _reduce(a)
-    b, b_d = _reduce(b)
+    if a == 1 or b == 1:
+        return Integer(1)
+    if a == 0:
+        return b
+    if b == 0:
+        return a
+
+    a, a_d = _reduce(abs(a))
+    b, b_d = _reduce(abs(b))
     d = a_d if a_d < b_d else b_d
 
     while a != b:
@@ -22,7 +29,6 @@ def gcd(a: Integer, b: Integer) -> Integer:
             b = _reduce(b - a)[0]
 
     return Integer(2 ** d) * abs(a)
-
 
 def _reduce(a: Integer) -> tuple[Integer]:
     """Helper method to reduce an even number to an odd one,
@@ -40,7 +46,7 @@ def _reduce(a: Integer) -> tuple[Integer]:
         a //= 2
     return a, d
 
-def factor_integer(a: Integer) -> dict[int, int]:
+def factor_integer(a: Integer | int) -> dict[int, int]:
     """Given an integer, returns a dictionary with key, value pairs (p, m),
     with p the prime factor and m it's multiplicity. 
 
@@ -52,12 +58,16 @@ def factor_integer(a: Integer) -> dict[int, int]:
     Returns:
         dict[Integer, Integer]: The dictionary with keys p and values m
     """
+    if isinstance(a, int):
+        a = Integer(a)
+    if not isinstance(a, Integer):
+        raise TypeError(f"factor_integer does not support {type(a)}")
+    
     factors = dict()
     while a != 1:
         new_factor = _pollard_rho(a)
         a //= new_factor
         factors[new_factor] = factors.get(new_factor, 0) + 1
-        print(f"new factor: {new_factor}, new check {a}")
     return factors
 
 def is_prime(a: Integer) -> bool:
@@ -74,7 +84,7 @@ def is_prime(a: Integer) -> bool:
     from sympy import isprime
     return isprime(a)
 
-def _pollard_rho(n: Integer, x: Integer = Integer(0), b: Integer = Integer(1)) -> Integer | None:
+def _pollard_rho(n: Integer) -> Integer | None:
     """An implementation of Pollard Rho algorithm for integer factorization.
     Given an integer a, returns d, a non-trivial divisor of a. 
     
@@ -85,39 +95,35 @@ def _pollard_rho(n: Integer, x: Integer = Integer(0), b: Integer = Integer(1)) -
     see: https://en.wikipedia.org/wiki/Pollard%27s_rho_algorithm
 
     Args:
-        n (Integer): The Integer to factor
-        x (int, optional): Preset starting search value. Defaults to 0.
-        b (int, optional) Preset offset for the searching polynomial. Defaults to 1.
+        n (Integer): The Integer to factor, n > 3
 
     Returns:
         Integer | None: A non-trivial factor of a.
     """
-    #Bounds check
-    if x < Integer(0) or not x < n:
-        raise ValueError(f"Could not find any divisors of {n}; check starting x")
-    if b < Integer(1) or not b < (n - 2):
-        raise ValueError(f"Could not find any divisors of {n}; check starting b")
+    if isinstance(n, int):
+        n = Integer(n)
 
+    if not isinstance(n, Integer):
+        raise TypeError(f"Cannot factor type {type(n)}")
+
+    #Bounds check
+    if n < 4:
+        return n
+    if is_prime(n):
+        return n
+    
+    b = d = Integer(1)
+    x = y = Integer(0)
     g = lambda val: (val ** 2 + b) % n
 
-    y, d = x, Integer(1)
-    while d == 1:
-        x = g(x)
-        y = g(g(y))
-        print(f"Calculating gcd({abs(x - y)}, {n})")
-        d = gcd(abs(x - y), n)
+    for x in range(n):
+        for b in range(1, n - 2):
+            while d == 1:
+                x = g(x)
+                y = g(g(y))
+                d = gcd(abs(x - y), n)
+            if d == n:
+                continue
+            return d
+    raise ValueError(f"Could not factor {n} with Pollard's Rho Algorithm")
 
-    if d == n:
-        print(f"Checking primality of {n}")
-        #Check primality on first iteration only
-        if x == 0 and b == 1 and is_prime(n): 
-            return n
-        
-        #Algorithm failed, iterate starting values:
-        if x == n - 1:
-            if b == n - 3:
-                raise ValueError(f"Could not find any divisors of {n}??")
-            return _pollard_rho(n, 0, b + 1)
-        return _pollard_rho(n, x + 1)
-
-    return d
