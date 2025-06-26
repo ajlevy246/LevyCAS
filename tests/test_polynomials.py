@@ -170,33 +170,35 @@ def test_polynomial_division():
 
     divide = lambda x, y: polynomial_divide(x, y, ordering)
 
+    quot, rem = divide(dividend, divisor)
     assert (
-        divide(dividend, divisor)
+        [quot, rem]
         == [(2*x + 4), (3*x**2 + 5*x + 6*y + 7)]
+        and dividend == algebraic_expand(quot * divisor + rem)
     )
     assert (
         divide(x**3 + 2*x**2 + x, x + 1)
-        == [x**2 + x, 0]
+        == (x**2 + x, 0)
     ) 
     assert (
         divide(x**2 + 2, x + 1)
-        == [x - 1, 3]
+        == (x - 1, 3)
     )
     assert (
         divide(x*y + y**2, y)
-        == [x+y, 0]
+        == (x+y, 0)
         and
         divide(x*y + y**2, x)
-        == [y, y**2]
+        == (y, y**2)
     )
     assert (
         divide(x**2 + x*y + 1, x + y)
-        == [x, 1]
+        == (x, 1)
         and
         divide(x**2 + x*y + 1, y)
-        == [x, x**2 + 1]
+        == (x, x**2 + 1)
     )
     assert (
         divide(x**2*y + x*y**2 + y**3, x*y + y**2)
-        == [x, y**3]
+        == (x, y**3)
     )

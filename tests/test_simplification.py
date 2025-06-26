@@ -81,8 +81,8 @@ class TestSimplification:
 
         x = Rational(49, 1)
         assert (
-            x ** Rational(1, 7)
-            == 2
+            x ** Rational(1, 2)
+            == 7
         )
 
     def test_basics(self):

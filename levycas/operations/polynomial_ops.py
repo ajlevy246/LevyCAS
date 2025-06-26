@@ -295,6 +295,8 @@ def leading_monomial(expr: Expression, ordering: list[Expression]) -> Expression
     Returns:
         Expression: The leading monomial of the polynomial
     """
+    ordering = ordering if isinstance(ordering, list) else [ordering]
+
     if len(ordering) == 0:
         return expr
 
@@ -326,9 +328,12 @@ def monomial_divide(dividend: Expression, divisor: Expression) -> Expression:
             remainder += term
     return [quotient, remainder]
 
-def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[Expression]) -> list[Expression]:
-    """Given two general polynomial expressions with rational coefficients, performs polynomial
-    division and returns the result  
+def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[Expression]) -> tuple[Expression]:
+    """Given two general polynomial expressions with rational coefficients, performs monomial-based
+    division and returns the result [Quotient, Remainder]
+
+    This is the polynomial long division algorithm from Mathematical Methods. Polynomial division
+    ensures that deg(R) < deg(Divisor). Division is performed with respect to the monomial ordering given.
 
     Args:
         dividend (Expression): A rational polynomial
@@ -346,4 +351,20 @@ def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[
         quotient += f
         remainder = algebraic_expand(remainder - f * divisor)
         f = monomial_divide(remainder, lm)[0]
-    return [quotient, remainder]
+    return (quotient, remainder)
+
+def polynomial_psuedo_division(dividend: Expression, divisor: Expression, ordering: list[Expression]) -> tuple[Expression]:
+    """Given two general polynomial expressions with rational coefficients, performs monomial-based
+    division and returns the result [Quotient, Remainder]
+
+    This is the polynomial long division algorithm from Mathematical Methods. Polynomial division
+    ensures that deg(R) < deg(Divisor). Division is performed with respect to the monomial ordering given.
+
+    Args:
+        dividend (Expression): A rational polynomial
+        denominator (Expression): A rational polynomial
+        ordering (list[Expression]): Ordered list of generalized variables
+
+    Returns:
+        list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
+    """
