@@ -514,12 +514,10 @@ class Constant(Expression):
         if not isinstance(other, Constant):
             return super().__sub__(other)
 
-        print(f"Subtracting {self} - {other}")
         denom_lcm = lcm(self.denom(), other.denom())
         left_num = self.num() * denom_lcm // self.denom()
         right_num = other.num() * denom_lcm // other.denom()
         new_num = left_num - right_num
-        print(f"Returning {new_num} / {denom_lcm}")
         return Rational(new_num, denom_lcm)
 
     def __mul__(self, other):
@@ -548,7 +546,6 @@ class Constant(Expression):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
             return NotImplemented
-        print(f"mod is {self} - {other} * {self // other}")
         return (self - other * (self // other))
 
 class Rational(Constant):
@@ -684,7 +681,6 @@ class Integer(Constant):
 
         if other.is_negative():
             if self.is_negative():
-                print(f"Returning {(-1)**other} times {Rational(1, -self)} raised to {-other}")
                 return (-1)**other * Rational(1, -self) ** -other
             else:
                 return Rational(1, self**-other)
