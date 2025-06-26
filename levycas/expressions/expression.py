@@ -722,6 +722,12 @@ class Integer(Constant):
 
     def __index__(self):
         return self.value
+    
+    def __mod__(self, other):
+        other = convert_primitive(other)
+        if not isinstance(other, Integer):
+            return super().__mod__(other)
+        return Integer(self.eval() % other.eval())
 
 #============== METHODS =================
 
