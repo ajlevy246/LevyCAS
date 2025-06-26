@@ -357,4 +357,3 @@ def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
             beta = s - r*b/(2*a)
             #Correction from Elementary Algorithms, beta -> 1/beta
             return alpha*Ln(denominator) + (1/beta) * integrate(1 / denominator, wrt)
-

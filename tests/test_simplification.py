@@ -76,6 +76,15 @@ class TestSimplification:
             == b**3 / a**2
         )
 
+    def test_rationals(self):
+        x, y, z = Variable('x'), Variable('y'), Variable('z')
+
+        x = Rational(49, 1)
+        assert (
+            x ** Rational(1, 7)
+            == 2
+        )
+
     def test_basics(self):
         x, y, z = Variable('x'), Variable('y'), Variable('z')
         a, b, c = Variable('a'), Variable('b'), Variable('c')
@@ -116,8 +125,13 @@ class TestSimplification:
 
     def test_sympy(self):
         """These tests were adapted from sympy/core/tests"""
-        x, y = Variable('x'), Variable("y")
+        x = Rational(1, 5)
 
         assert (
-            Rational(1, 5)
+            x ** (1 / 2)
+            == Integer(5)**Rational(1, 2) / Integer(5)
+        )
+        assert (
+            x ** Rational(3, 2)
+            == x * x**Rational(1, 2)
         )

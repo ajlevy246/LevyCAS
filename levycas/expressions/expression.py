@@ -2,12 +2,6 @@
 from math import gcd, lcm, comb, factorial
 from numbers import Number
 
-#TODO: Create Construct(operation, operands) operator to remove
-#"operation()" calls in trig_ops!.
-
-#TODO: Infinite recursion issue:
-#1: Integer(1) / 1
-
 #TODO: Change the simplify operation to return a new expression, instead of altering in place??
 #perhaps make it a static function under Expression
 
@@ -50,13 +44,12 @@ from numbers import Number
 #1: g(x, y) = g(0, 0) + g(0, 1)
 #"None is not a valid function definition"
 
-#TODO: Fix algebraic expand: Elementary Algorithms page 253
-#Use example: (x + 1)(x + 2) -> (x^2) + (3*x) + 2
-
-
 """Undefined flyweight; default value for expressions that can not be evaluated
 """
 UNDEFINED = "UNDEFINED" 
+
+"""Minimumn threshold used to determine if a float is an integer"""
+MIN_ERROR = 10 ** -30
 
 #============ OPERATIONS ===============
 
@@ -218,6 +211,8 @@ class Product(Expression):
 
     def __repr__(self):
         if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
+            if self.factors[0] == -1:
+                return "-" + str(self.factors[1])
             return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
         
         factor_repr = [str(factor) for factor in self.factors]
@@ -544,19 +539,6 @@ class Constant(Expression):
         new_denom = self.denom() * other.denom()
         return Rational(new_num, new_denom)
 
-    def __pow__(self, other):
-        other = convert_primitive(other)
-        if not isinstance(other, Integer):
-            return super().__pow__(other)
-        
-        if other.is_negative():
-            new_num = self.denom() ** -other.eval()
-            new_denom = self.num() ** -other.eval()
-        else:
-            new_num = self.num() ** other.eval()
-            new_denom = self.denom() ** other.eval()
-        return Rational(new_num, new_denom)
-
 class Rational(Constant):
     """A rational expression is a constant; a fraction of two integers"""
 
@@ -571,8 +553,8 @@ class Rational(Constant):
             args = [args[0], 1]
 
         new_instance = super().__new__(cls)
-        n = args[0]
-        d = args[1]
+        n = int(args[0])
+        d = int(args[1])
 
         #Simplify to lowest terms
         if d == 0:
@@ -585,15 +567,12 @@ class Rational(Constant):
         if  d > 0:
             new_instance.left = n // g
             new_instance.right = d // g
-            return new_instance
 
         else:
             new_instance.left = -n // g
             new_instance.right = -d // g
-            return new_instance
 
-
-        return new_instance.lowest_terms()
+        return new_instance
 
     def __init__(self, *args):
         """The __new__ function is responsible for automatic simplification
@@ -612,6 +591,38 @@ class Rational(Constant):
     def __hash__(self):
         return super().__hash__()
 
+    def __pow__(self, other):
+        other = convert_primitive(other)
+        if isinstance(other, Integer):
+            if other.is_negative():
+                new_num = self.denom() ** -other.eval()
+                new_denom = self.num() ** -other.eval()
+            else:
+                new_num = self.num() ** other.eval()
+                new_denom = self.denom() ** other.eval()
+            return Rational(new_num, new_denom)
+
+        elif isinstance(other, Rational):
+            #Rationalization algorithm
+            #adapted from sympy's Rational
+            p, q = other.num(), other.denom()
+            intpart = p // q
+            if intpart:
+                intpart += 1
+                remfracpart = intpart * q - p
+                rationalfracpart = Rational(remfracpart, q)
+                if self.num() != 1:
+                    return Integer(self.num()) ** other * Integer(self.denom()) ** rationalfracpart * Rational(1, self.denom()**intpart)
+                return Integer(self.denom())**rationalfracpart * Rational(1, self.denom()**intpart)
+            else:
+                remfracpart = q - p
+                rationalfracpart = Rational(remfracpart, q)
+                if self.num() != 1:
+                    return Integer(self.num()) ** other * Integer(self.denom())**rationalfracpart*Rational(1, self.denom())
+                return Integer(self.denom())**rationalfracpart * Rational(1, self.denom())
+        
+        return super().__pow__(other)
+
     def eval(self):
         return self.left / self.right
 
@@ -619,7 +630,7 @@ class Rational(Constant):
         return (self.left < 0) if (self.right < 0) else (self.left > 0)
 
     def is_negative(self):
-        return (self.left < 0) if (self.right < 0) else (self.left > 0)
+        return (self.left < 0) if (self.right > 0) else (self.left > 0)
 
     def operands(self):
         return [self.left, self.right]
@@ -640,6 +651,45 @@ class Integer(Constant):
     def __repr__(self):
         """Returns the value of the integer"""
         return str(self.value)
+
+    def __pow__(self, other):
+        other = convert_primitive(other)
+        if not isinstance(other, Constant):
+            return super().__pow__(other)
+
+        if isinstance(other, Integer):
+            if other == 0:
+                return Integer(1)
+
+            elif other.is_positive():
+                return Integer(self.eval() ** other.eval()) #too expensive for large integers?
+
+            else:
+                assert other.is_negative(), f'{other}; problem with is_positive/is_negative?'
+                base = self.eval()
+                exp = -other.eval()
+                return Rational(1, base**exp)
+
+        if other.is_negative():
+            if self.is_negative():
+                print(f"Returning {(-1)**other} times {Rational(1, -self)} raised to {-other}")
+                return (-1)**other * Rational(1, -self) ** -other
+            else:
+                return Rational(1, self**-other)
+            
+        from math import log
+        #n-th root test
+        n = other.denom()
+        assert other.is_positive() and other != 1, f"Rational simplification of {other} failed?"
+        nth_root = log(self, n)
+        if abs(int(nth_root) - nth_root) < MIN_ERROR:
+            return Integer(int(nth_root)) ** other.num()
+        
+        #Otherwise, requires factorization; see sympy Integer._eval_pow algorithm
+
+        return super().__pow__(other)
+
+
 
     def eval(self):
         return self.value

@@ -11,7 +11,6 @@ __all__ = [
     'Deriv', 'derivative', 'integrate',
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
-
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
     'monomial_divide', 'polynomial_divide'
 ]
