@@ -1,4 +1,6 @@
 """Operations acting on Constants (rationals)."""
+from functools import cache
+
 from levycas.expressions import Integer, convert_primitive
 
 def gcd(a: Integer, b: Integer) -> Integer:
@@ -38,7 +40,7 @@ def _reduce(a: Integer) -> tuple[Integer]:
         a (Integer): Integer to reduce
 
     Returns:
-        tuple[Integer]: (a', d) where a' and d are such that a = a'/2**d
+        tuple[Integer]: (a', d) where a' and d are such that a' = a/2**d
     """
     d = 0
     while a % 2 == 0:
@@ -80,19 +82,51 @@ def factor_integer(a: Integer | int) -> dict[int, int]:
 
     return factors
 
-def is_prime(a: Integer) -> bool:
+@cache
+def is_prime(n: Integer) -> bool:
     """Primality test for the given integer, implemented only for small
-    integers right now < 2 ^ 64
+    integers right now. Implements the Miller-Rabin test for the first 12 prime bases.
+
+    Utilizies functools cache for faster lookups.
+
+    This test is deterministic for integers up to 2**64, and for larger integers it is
+    probabilistic, but almost always accurate.
+
+    See: https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test#Testing_against_small_sets_of_bases
 
     Args:
-        a (Integer): The integer to test
+        n (Integer): The integer to test
 
     Returns:
-        bool: True if a is prime, False otherwise
+        bool: True if n is prime, False otherwise
     """
-    #TODO: Implement a working primality test
-    from sympy import isprime
-    return isprime(a)
+    if n < 2:
+        return False
+    
+    #Check manually against first few small primes:
+    SMALL_PRIMES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37)
+    if n in SMALL_PRIMES:
+        return True
+    elif (
+        n % 2 == 0
+        or n % 3 == 0
+        or n % 5 == 0
+        or n % 7 == 0
+    ):
+        return False
+
+    d, s = _reduce(n - 1)
+    print(f"{n - 1} = 2 ** {s} * {d}")
+    for a in SMALL_PRIMES: #Small bases sufficient for ints up to 2^64
+        x = (a ** d) % n
+        for i in range(s):
+            y = (x * x) % n
+            if y == 1 and x != 1 and x != n - 1:
+                return False
+            x = y
+        if x != 1:
+            return False
+    return True
 
 def _pollard_rho(n: Integer, check_prime = False) -> Integer | None:
     """An implementation of Pollard Rho algorithm for integer factorization.

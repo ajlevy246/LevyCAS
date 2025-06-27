@@ -16,6 +16,25 @@ def test_gcd():
     assert gcd(12, Integer(-8)) == 4
     assert gcd(Integer(-12), Integer(-8)) == 4
 
+def test_is_prime():
+    ip = lambda x: is_prime(Integer(x))
+    
+    assert not ip(1)
+    assert not ip(23452)
+    assert not ip(4385379)
+    assert not ip(32453453)
+
+    assert ip(2)
+    assert ip(3)
+    assert ip(5)
+    assert ip(7)
+    assert ip(11)
+
+    assert ip(5431)
+    assert ip(89071)
+    assert ip(10853)
+    assert ip(79987)
+
 def test_factor_integer():
     assert (
         factor_integer(2198374)
