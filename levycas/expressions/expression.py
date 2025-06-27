@@ -1,5 +1,5 @@
 """Classes for internal representations of mathematical expressions"""
-from math import gcd, lcm, comb, factorial
+from math import lcm, comb, factorial
 from numbers import Number
 
 #TODO: Change the simplify operation to return a new expression, instead of altering in place??
@@ -540,6 +540,12 @@ class Constant(Expression):
         div = self / other
         return Integer(div.num() // div.denom())
 
+    def __rfloordiv__(self, other):
+        other = convert_primitive(other)
+        if not isinstance(other, Constant):
+            return NotImplemented
+        return other // self
+
     def __mod__(self, other):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
@@ -570,7 +576,8 @@ class Rational(Constant):
         if n % d == 0:
             return Integer(n // d)
 
-        g = gcd(n, d)
+        from ..operations import gcd
+        g = int(gcd(n, d))
         if  d > 0:
             new_instance.left = n // g
             new_instance.right = d // g
@@ -600,35 +607,45 @@ class Rational(Constant):
 
     def __pow__(self, other):
         other = convert_primitive(other)
-        if isinstance(other, Integer):
-            if other.is_negative():
-                new_num = self.denom() ** -other.eval()
-                new_denom = self.num() ** -other.eval()
-            else:
-                new_num = self.num() ** other.eval()
-                new_denom = self.denom() ** other.eval()
-            return Rational(new_num, new_denom)
-
-        elif isinstance(other, Rational):
-            #Rationalization algorithm
-            #adapted from sympy's Rational
-            p, q = other.num(), other.denom()
-            intpart = p // q
-            if intpart:
-                intpart += 1
-                remfracpart = intpart * q - p
-                rationalfracpart = Rational(remfracpart, q)
-                if self.num() != 1:
-                    return Integer(self.num()) ** other * Integer(self.denom()) ** rationalfracpart * Rational(1, self.denom()**intpart)
-                return Integer(self.denom())**rationalfracpart * Rational(1, self.denom()**intpart)
-            else:
-                remfracpart = q - p
-                rationalfracpart = Rational(remfracpart, q)
-                if self.num() != 1:
-                    return Integer(self.num()) ** other * Integer(self.denom())**rationalfracpart*Rational(1, self.denom())
-                return Integer(self.denom())**rationalfracpart * Rational(1, self.denom())
+        if not isinstance(other, Expression):
+            return NotImplemented
+        if not isinstance(other, Constant):
+            return super().__pow__(other)
         
-        return super().__pow__(other)
+        if isinstance(other, Integer):
+            if other == 0:
+                return Integer(1)
+            elif other.is_negative():
+                nexpt = -other
+                if nexpt == 1:
+                    return Rational(self.denom(), self.num())
+                if self.is_negative():
+                    return (-1)**other * (-Rational())**nexpt
+                else:
+                    return Rational(self.denom(), self.num())**nexpt
+            else:
+                return Rational(self.num() ** other.eval(), self.denom() ** other.eval())
+
+        assert isinstance(other, Rational), f"{other} is not Rational exponent?"
+        #Algorithm adapted from sympy, see: https://github.com/sympy/sympy/blob/master/sympy/core/numbers.py#L1570
+
+        bp, bq = self.num(), self.denom()
+        ep, eq = other.num(), other.denom()
+
+        intpart = ep // eq
+        if intpart:
+            intpart += 1
+            remfracpart = intpart * eq - ep
+            ratfracpart = Rational(remfracpart, eq)
+            if bp != 1:
+                return Integer(bp)**other * Integer(bq) ** ratfracpart * Rational(1, bp**intpart)
+            return Integer(bq)**ratfracpart * Rational(1, bq**intpart)
+        else:
+            remfracpart = eq - ep
+            ratfracpart = Rational(remfracpart, eq)
+            if bp != 1:
+                return Integer(bp)**other * Integer(bq) ** ratfracpart * Rational(1, bq)
+            return Integer(bq)**ratfracpart * Rational(1, bq)
 
     def eval(self):
         return self.left / self.right
@@ -664,38 +681,74 @@ class Integer(Constant):
 
     def __pow__(self, other):
         other = convert_primitive(other)
+        if not isinstance(other, Expression):
+            return NotImplemented
+
         if not isinstance(other, Constant):
             return super().__pow__(other)
-
-        if isinstance(other, Integer):
-            if other == 0:
-                return Integer(1)
-
-            elif other.is_positive():
-                return Integer(self.eval() ** other.eval()) #too expensive for large integers?
-
-            else:
-                assert other.is_negative(), f'{other}; problem with is_positive/is_negative?'
-                base = self.eval()
-                exp = -other.eval()
-                return Rational(1, base**exp)
+        
+        if self == 1 or other == 0:
+            return Integer(1)
 
         if other.is_negative():
+            nexpt = -other
             if self.is_negative():
-                return (-1)**other * Rational(1, -self) ** -other
-            else:
-                return Rational(1, self**-other)
-
-        #Check if base is a perfect n-th power
-        from math import log
-        n = other.denom()
-        assert other.is_positive() and other != 1, f"Rational simplification of {other} failed?"
-        nth_root = int(self) ** (1 / n)
-        if abs(nth_root - int(nth_root)) < MIN_ERROR:
-            return Integer(int(nth_root))
+                return (-1)**int(other) * Rational(1, -self.value) ** nexpt
+            return Rational(1, self.value) ** nexpt
         
-        #Otherwise, requires factorization (noy yet implemented); see sympy Integer._eval_pow algorithm
-        return super().__pow__(other)
+        if isinstance(other, Integer):
+            return Integer(self.value ** int(other))
+
+        assert isinstance(other, Rational), f"{other} is not Rational exponent?"
+        ep, eq = other.num(), other.denom()
+        nthroot = abs(self.value) ** (1 / eq)
+        if abs(nthroot - int(nthroot)) < MIN_ERROR:
+            result = Integer(int(nthroot) ** abs(ep))
+            if self.is_negative():
+                #result *= (-1) ** other 
+                raise ValueError(f"Could not compute {self} ** {other}, imaginary numbers not yet supported")
+            return result
+        
+        #The following simplification algorithm is adapted from sympy
+        #It converts rational powers b^(p / q) -> a * sqrt(b) * c^(r / s)
+        #See: https://github.com/sympy/sympy/blob/master/sympy/core/numbers.py#L2078
+        from ..operations import factor_integer, gcd
+        factors = factor_integer(abs(self))
+        out_int, out_rad = 1, 1
+        sqr_dict = dict()
+
+        #Remove multiples of q
+        for prime, exponent in factors.items():
+            exponent *= ep
+            quot, rem = divmod(exponent, eq)
+            if quot > 0:
+                out_int *= prime ** quot
+            if rem > 0:
+                g = gcd(rem, eq)
+                if g != 1:
+                    out_rad *= prime ** Rational(rem // g, eq // g)
+                else:
+                    sqr_dict[prime] = rem
+        
+        sqr_int, sqr_gcd = 1, 0
+        #Calculate gcd of remaining powers
+        for prime, exponent in sqr_dict.items():
+            sqr_gcd = gcd(sqr_gcd, exponent)
+            if sqr_gcd == 1:
+                break
+            sqr_gcd = int(sqr_gcd)
+
+        #Calculate remainder
+        for prime, exponent in sqr_dict.items():
+            sqr_int *= prime ** (exponent // sqr_gcd)
+        if sqr_int == abs(self) and out_int == 1 and out_rad == 1:
+            #No simplification could be performed
+            return Power(self, other)
+
+        result = out_int * out_rad * (sqr_int ** Rational(sqr_gcd, eq))
+        if self.is_negative():
+            result *= (-1) ** other
+        return result
 
     def eval(self):
         return self.value

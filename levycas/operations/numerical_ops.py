@@ -1,7 +1,7 @@
 """Operations acting on Constants (rationals)."""
 from functools import cache
 
-from levycas.expressions import Integer, convert_primitive
+from levycas.expressions import Integer
 
 def gcd(a: Integer, b: Integer) -> Integer:
     """Computes the greated common divisor of two integers using binary gcd algorithm.
@@ -116,7 +116,6 @@ def is_prime(n: Integer) -> bool:
         return False
 
     d, s = _reduce(n - 1)
-    print(f"{n - 1} = 2 ** {s} * {d}")
     for a in SMALL_PRIMES: #Small bases sufficient for ints up to 2^64
         x = (a ** d) % n
         for i in range(s):
