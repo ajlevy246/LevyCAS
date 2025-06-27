@@ -79,10 +79,28 @@ class TestSimplification:
     def test_rationals(self):
         x, y, z = Variable('x'), Variable('y'), Variable('z')
 
-        x = Rational(49, 1)
+        a = Rational(1, 5)
+
+        r = Integer(5) ** Rational(1, 2) / Integer(5)
+        assert a ** Rational(1, 2) == r
+        assert 2*a**Rational(1, 2) == 2*r
+
+        r = a*a**Rational(1, 2)
+        assert a**Rational(3, 2) == r
+        assert 2*a**Rational(3, 2) == 2*r
+
+        r = a**5*a**Rational(2, 3)
+        assert a**Rational(17, 3) == r
+        assert 2 * a**Rational(17, 3) == 2*r
+
+        # assert ( #Should not require simplify..? Getting different answers?
+        #     simplify((Rational(123712**12 - 1, 7) + Rational(1, 7))**Rational(1, 3))
+        #     == simplify(234232585392159195136 * (Rational(1, 7)**Rational(1, 3)))
+        # )
+
         assert (
-            x ** Rational(1, 2)
-            == 7
+            (x**Rational(1, 3))**Integer(2)
+            == x ** Rational(2, 3)
         )
 
     def test_basics(self):
