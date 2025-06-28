@@ -679,7 +679,7 @@ class Integer(Constant):
     def __hash__(self):
         return hash(self.eval())
 
-    def __pow__(self, other):
+    def __pow__(self, other, mod=None):
         other = convert_primitive(other)
         if not isinstance(other, Expression):
             return NotImplemented
@@ -687,6 +687,12 @@ class Integer(Constant):
         if not isinstance(other, Constant):
             return super().__pow__(other)
         
+        if mod is not None:
+            mod = convert_primitive(mod)
+            if not isinstance(other, Integer) or not isinstance(mod, Integer):
+                raise ValueError(f"{mod=} is not a supported modulus for {self} ^ {other}")
+            return pow(int(self), int(other), int(mod))
+
         if self == 1 or other == 0:
             return Integer(1)
 

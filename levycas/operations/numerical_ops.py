@@ -43,6 +43,7 @@ def _reduce(a: Integer) -> tuple[Integer]:
     Returns:
         tuple[Integer]: (a', d) where a' and d are such that a' = a/2**d
     """
+    a = int(a)
     d = 0
     while a % 2 == 0:
         d += 1
@@ -98,6 +99,7 @@ def is_prime(n: Integer) -> bool:
     Returns:
         bool: True if n is prime, False otherwise
     """
+    n = int(n)
     if n < 2:
         return False
     
@@ -105,19 +107,12 @@ def is_prime(n: Integer) -> bool:
     SMALL_PRIMES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37)
     if n in SMALL_PRIMES:
         return True
-    elif (
-        n % 2 == 0
-        or n % 3 == 0
-        or n % 5 == 0
-        or n % 7 == 0
-    ):
-        return False
 
     d, s = _reduce(n - 1)
     for a in SMALL_PRIMES: #Small bases sufficient for ints up to 2^64
-        x = (a ** d) % n
+        x = pow(a, d, n)
         for i in range(s):
-            y = (x * x) % n
+            y = pow(x, 2, n)
             if y == 1 and x != 1 and x != n - 1:
                 return False
             x = y
