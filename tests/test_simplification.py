@@ -101,7 +101,7 @@ class TestSimplification:
         assert a**Rational(17, 3) == r
         assert 2 * a**Rational(17, 3) == 2*r
 
-        # assert ( #Should not require simplify..? Getting different answers?
+        # assert ( #Should not require simplify..? Getting different integral parts?
         #     simplify((Rational(123712**12 - 1, 7) + Rational(1, 7))**Rational(1, 3))
         #     == simplify(234232585392159195136 * (Rational(1, 7)**Rational(1, 3)))
         # )

@@ -13,12 +13,13 @@ def gcd(a: Integer, b: Integer) -> Integer:
     Returns:
         Integer: gcd(a, b)
     """
+    a, b = int(a), int(b)
     if a == 1 or b == 1:
         return Integer(1)
     if a == 0:
-        return b
+        return Integer(b)
     if b == 0:
-        return a
+        return Integer(a)
 
     a, a_d = _reduce(abs(a))
     b, b_d = _reduce(abs(b))
@@ -30,7 +31,7 @@ def gcd(a: Integer, b: Integer) -> Integer:
         else:
             b = _reduce(b - a)[0]
 
-    return Integer(2 ** d) * abs(a)
+    return Integer(2 ** d * abs(a))
 
 def _reduce(a: Integer) -> tuple[Integer]:
     """Helper method to reduce an even number to an odd one,
@@ -60,10 +61,7 @@ def factor_integer(a: Integer | int) -> dict[int, int]:
     Returns:
         dict[Integer, Integer]: The dictionary with keys p and values m
     """
-    if isinstance(a, int):
-        a = Integer(a)
-    if not isinstance(a, Integer):
-        raise TypeError(f"factor_integer does not support {type(a)}")
+    a = int(a)
     
     factors = dict()
     while a != 1:
@@ -143,11 +141,7 @@ def _pollard_rho(n: Integer, check_prime = False) -> Integer | None:
     Returns:
         Integer | None: A non-trivial factor of a.
     """
-    if isinstance(n, int):
-        n = Integer(n)
-
-    if not isinstance(n, Integer):
-        raise TypeError(f"Cannot factor type {type(n)}")
+    n = int(n)
 
     #Bounds check
     if n < 4:
@@ -159,8 +153,8 @@ def _pollard_rho(n: Integer, check_prime = False) -> Integer | None:
     if n % 2 == 0:
         return 2
 
-    b = d = Integer(1)
-    x = y = Integer(0)
+    b = d = 1
+    x = y = 0
     g = lambda val: (val ** 2 + b) % n
 
     for x in range(n):
