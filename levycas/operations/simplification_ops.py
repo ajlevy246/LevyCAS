@@ -63,7 +63,7 @@ def simplify_power(expr: Power) -> Expression:
     
     if isinstance(w, Constant):
         if isinstance(v, Constant):
-            return expr
+            return v ** w
         elif w == 0:
             return Integer(1)
         elif w == 1:
@@ -73,7 +73,7 @@ def simplify_power(expr: Power) -> Expression:
             s = v.exponent()
             new_exponent = simplify_product(Product(s, w))
             new_power = Power(r, new_exponent)
-            if isinstance(new_exponent, Integer):
+            if isinstance(new_exponent, Constant):
                 return simplify_power(new_power)
             return new_power
         elif isinstance(v, Product):
@@ -166,30 +166,6 @@ def simplify_factorial(expr: Factorial) -> Expression:
         from math import factorial
         return Integer(factorial(int(operand)))
     return expr
-
-def simplify_cos(expr: Cos) -> Expression:
-    """Given an expression Cos(v), does basic 
-    simplification based on the argument.
-    
-    Args:
-        expr (Cos): The expression to simplify
-
-    Returns:
-        Expression: The simplified expression
-    """
-    pass
-
-def simplify_sin(expr: Sin) -> Expression:
-    """Given an expression Sin(v), does  basic
-    simplification based on the argument.
-
-    Args:
-        expr (Sin): The expression to simplify
-
-    Returns:
-        Expression: The simplified expression
-    """
-    pass
 
 def flatten_factors(factors: list[Expression]) -> list[Expression]:
     """Given a list of factors, combines those with like bases (e.g. [x, x] -> [x^2])

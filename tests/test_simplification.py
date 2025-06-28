@@ -75,6 +75,14 @@ class TestSimplification:
             a*b**2 / (a**3 * b**-1)
             == b**3 / a**2
         )
+        assert (
+            Integer(5)**Rational(1, 2) / Integer(10)
+            == (Integer(20)**Rational(1, 2))**Integer(-1)
+            == (Integer(2)*Integer(5)**Rational(1, 2))**Integer(-1)
+            == Rational(1, 2) * (Integer(5)**Rational(1, 2))**Integer(-1)
+            == Integer(1) / (Integer(2) * Integer(5) ** Rational(1, 2))
+            == Integer(1) / Integer(20) ** Rational(1, 2)
+        )
 
     def test_rationals(self):
         x, y, z = Variable('x'), Variable('y'), Variable('z')
