@@ -1,9 +1,9 @@
 """Operations acting on Constants (rationals)."""
 from functools import cache
 
-from levycas.expressions import Integer
+from levycas.expressions import Constant, Integer, Rational
 
-def gcd(a: Integer, b: Integer) -> Integer:
+def gcd(a: Constant, b: Constant) -> Integer:
     """Computes the greated common divisor of two integers using binary gcd algorithm.
 
     Args:
@@ -13,6 +13,9 @@ def gcd(a: Integer, b: Integer) -> Integer:
     Returns:
         Integer: gcd(a, b)
     """
+    if isinstance(a, Rational) or isinstance(b, Rational):
+        return Integer(1)
+    
     a, b = int(a), int(b)
     if a == 1 or b == 1:
         return Integer(1)

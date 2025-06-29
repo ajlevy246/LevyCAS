@@ -4,6 +4,7 @@ from numbers import Number
 from ..expressions import *
 from .expression_ops import contains
 from .algebraic_ops import algebraic_expand
+from .numerical_ops import gcd
 
 def is_monomial(expr: Expression, vars: Expression | set[Expression]) -> bool:
     """Checks whether the given expression is a monomial in the given variables.
@@ -353,20 +354,98 @@ def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[
         f = monomial_divide(remainder, lm)[0]
     return (quotient, remainder)
 
-def polynomial_psuedo_division(dividend: Expression, divisor: Expression, ordering: list[Expression]) -> tuple[Expression]:
+def polynomial_pseudo_divide(dividend: Expression, divisor: Expression, var: Expression) -> tuple[Expression]:
     """Given two general polynomial expressions with rational coefficients, performs monomial-based
     pseudo-division and returns the result [Quotient, Remainder]
 
     Psuedo-division is required as a variant of the euclidean division algorithm for which all remainders
-    are polynomials with integer coefficients.
+    are polynomials with integer coefficients. 
 
+    Psuedo-division and polynomial long-division are equivalent when the leading coefficient
+    of the divisor is a unit. This means that they are equivalent for all univariate polynomials
+    with rational coefficients.
 
     Args:
         dividend (Expression): A rational polynomial
         denominator (Expression): A rational polynomial
-        ordering (list[Expression]): Ordered list of generalized variables
+        var (Expression): A generalized variable
 
     Returns:
         list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
     """
-    pass
+    p = 0
+    s = dividend
+    m = degree(s, var)
+    n = degree(divisor, var)
+    delta = max(m - n + 1, 0)
+    lcv = coefficient(divisor, var, n)
+    sigma = 0
+    while n < m: 
+        lcs = coefficient(s, var, m)
+        p = lcv * p + lcs * var ** (m - n)
+        s = algebraic_expand(lcv * s - lcs * divisor * var ** (m - n))
+        sigma += 1
+        m = degree(s, var)
+    return (algebraic_expand(lcv ** (delta - sigma) * p), algebraic_expand(lcv**(delta -sigma) * s))
+
+#TODO: Interpret the content() operator for univariate and multivariate polynomials.
+#Requires first the implementation for univariate, which is relied on by the multivariate
+#case. Algorithm should be recursive. 
+
+def _is_univariate(expr: Expression, var: Expression) -> bool:
+    """Determines if an expression is univariate with respect 
+    to the given variable.
+
+    Args:
+        expr (Expression): The polynomial to check
+        var (Expression): The generalized variable to check respect to
+
+    Returns:
+        bool: True if the polynomial expression is univariate wrt var
+    """
+    return variables(expr) == variables(var)
+
+def _univariate_gcd(u: Expression, v: Expression,  x: Expression) -> Constant:
+    """Computes the gcd of a univariate polynomial in x.
+
+    Args:
+        u (Expression): u(x)
+        v (Expression): v(x)
+        var (Expression): x
+
+    Returns:
+        Constant: gcd(u, v)
+    """
+    if u == 0 and v == 0:
+        return Integer(0)
+    
+    while v != 0:
+        remainder = polynomial_divide(u, v, x)[1]
+        u = v
+        v = remainder
+    return algebraic_expand(u / leading_coefficient(u, x))
+
+def polynomial_content(expr: Expression, var: Expression) -> Expression:
+    """Determines the polynomial content of a polynomial u in x. This is 
+    a generalization of the greatest common denominator of coefficients.
+
+    See: https://en.wikipedia.org/wiki/Primitive_part_and_content
+
+    Args:
+        expr (Expression): The polynomial u(x)
+        var (Expression): The generalized variable x
+
+    Returns:
+        Expression: The content part of the polynomial
+    """
+    if _is_univariate(expr, var):
+        #The univariate case; expr has rational coefficients.
+        content = Integer(0)
+        if isinstance(expr, Sum):
+            for term in expr.operands():
+                content = gcd(content, leading_coefficient(term))
+            return content
+        if expr == 0:
+            return content
+        return gcd(content, leading_coefficient(expr, var))
+    return None
