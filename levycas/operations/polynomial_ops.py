@@ -101,6 +101,29 @@ def variables(expr: Expression) -> set[Expression]:
 
     return {expr}
 
+def _fill_variables(expr: Expression, vars: Expression | list[Expression]) -> list[Expression]:
+    """For many of the following algorithm, it is necessary to get a list of parameters for a given
+    multivariate polynomial. Given an expression and a partially filled list of generalized variables,
+    returns the filled list. 
+
+    Examples:
+        >>> _fill_variables(x*y*z, x | [x])
+        [x, y, z]
+
+    Args:
+        expr (Expression): _description_
+        vars (Expression | list[Expression]): _description_
+
+    Returns:
+        list[Expression]: _description_
+    """
+    vars = vars if isinstance(vars, list) else [vars]
+    all_vars = variables(expr)
+    for var in all_vars:
+        if isinstance(var, Variable) and var not in vars:
+            vars.append(var)
+    return vars
+
 def coefficient(expr: Expression, var: Expression, degree: Integer) -> Expression | None:
     """Given a generalized polynomial expression, 
 
@@ -458,10 +481,7 @@ def polynomial_gcd(u: Expression, v: Expression, x: Expression | list[Expression
     Returns:
         Expression: gcd(u(*x), v(*x))
     """
-    x = x if isinstance(list) else [x]
-    if len(x) == 1:
-        assert _is_univariate(u, x) and _is_univariate(v, x), f"Polynomial gcd algorithm failed? Make sure all variables were passed in correctly."
-        return _univariate_gcd(u, v, x)
+    pass
 
 def polynomial_content(expr: Expression, vars: list[Expression] | Expression) -> Expression:
     """Determines the polynomial content of a polynomial u in x. This is 
@@ -480,7 +500,7 @@ def polynomial_content(expr: Expression, vars: list[Expression] | Expression) ->
     if expr == 0:
         return Integer(0)
 
-    vars = vars if isinstance(vars, list) else [vars]
+    vars = _fill_variables(expr, vars)
     main_var = vars[0]
     num_vars = len(vars)
     terms = expr.operands() if isinstance(expr, Sum) else [expr]
