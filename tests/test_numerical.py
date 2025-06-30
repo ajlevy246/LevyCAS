@@ -16,6 +16,11 @@ def test_gcd():
     assert gcd(12, Integer(-8)) == 4
     assert gcd(Integer(-12), Integer(-8)) == 4
 
+    #Over the field of rational numbers, we have that gcd(a, b) = 1 whenever a or b is non-zero
+    assert gcd(Rational(2384729374, 123), 0) == 1
+    assert gcd(0, Rational(234857, 2394)) == 1
+    assert gcd(Rational(123354, 2), Rational(2345, 2)) == 1
+
 def test_is_prime():
     ip = lambda x: is_prime(Integer(x))
     

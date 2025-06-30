@@ -50,7 +50,7 @@ class TestExpansion:
 
     def test_expansion_rational(self):
         """Rational expansion tests for the algebraic_expand operator"""
-        x = Variable('x')
+        x, y = Variable('x'), Variable('y')
         
         assert (
             algebraic_expand((1 - x**2) / ((1 - x)*(1 + x)))
