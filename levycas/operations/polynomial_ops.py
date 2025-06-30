@@ -405,7 +405,7 @@ def _is_univariate(expr: Expression, var: Expression) -> bool:
     """
     return variables(expr) == variables(var)
 
-def _univariate_gcd(u: Expression, v: Expression,  x: Expression) -> Constant:
+def _univariate_gcd(u: Expression, v: Expression,  x: Expression) -> Expression:
     """Computes the gcd of a univariate polynomial in x.
 
     Args:
@@ -416,16 +416,54 @@ def _univariate_gcd(u: Expression, v: Expression,  x: Expression) -> Constant:
     Returns:
         Constant: gcd(u, v)
     """
-    if u == 0 and v == 0:
-        return Integer(0)
-    
-    while v != 0:
-        remainder = polynomial_divide(u, v, x)[1]
-        u = v
-        v = remainder
-    return algebraic_expand(u / leading_coefficient(u, x))
+    return _extended_euclidean(u, v, x)[0]
 
-def polynomial_content(expr: Expression, var: Expression) -> Expression:
+def _extended_euclidean(u: Expression, v: Expression, x: Expression) -> tuple[Expression]:
+    """Extended euclidean algorithm for univariate polynomials.
+
+    Args:
+        u (Expression): u(x)
+        v (Expression): v(x)
+        x (tuple[Expression]): Parameter x
+
+    Returns:
+        Expression: The list [g, r, s] where gcd(u, v) = g = u*r + v*s
+    """
+    if u == 0 and v == 0:
+        return [0, 0, 0]
+
+    U, V = u, v
+    app, ap = 1, 0
+    bpp, bp = 0, 1
+    while V != 0:
+        q, r = polynomial_divide(U, V, x)
+        a, b = app - q * ap, bpp - q * bp
+        app, bpp = ap, bp
+        ap, bp = a, b
+        U, V = V, r
+    c = leading_coefficient(U, x)
+    app, bpp = algebraic_expand(app / c), algebraic_expand(bpp / c)
+    U = algebraic_expand(U / c)
+    return (U, app, bpp)
+
+def polynomial_gcd(u: Expression, v: Expression, x: Expression | list[Expression]) -> Expression:
+    """Computes the greatest common divisor of a multivariate polynomial. Recurses by treating the 
+    given polynomials as univariate with respect to the first variable in the given ordering.
+
+    Args:
+        u (Expression): u(*x)
+        v (Expression): v(*x)
+        x (Expression | list[Expression]): The ordering of generalized variables 
+
+    Returns:
+        Expression: gcd(u(*x), v(*x))
+    """
+    x = x if isinstance(list) else [x]
+    if len(x) == 1:
+        assert _is_univariate(u, x) and _is_univariate(v, x), f"Polynomial gcd algorithm failed? Make sure all variables were passed in correctly."
+        return _univariate_gcd(u, v, x)
+
+def polynomial_content(expr: Expression, vars: list[Expression] | Expression) -> Expression:
     """Determines the polynomial content of a polynomial u in x. This is 
     a generalization of the greatest common denominator of coefficients.
 
@@ -433,19 +471,38 @@ def polynomial_content(expr: Expression, var: Expression) -> Expression:
 
     Args:
         expr (Expression): The polynomial u(x)
-        var (Expression): The generalized variable x
+        vars (Expression | list[Expression]): The generalized variable x
 
     Returns:
         Expression: The content part of the polynomial
     """
-    if _is_univariate(expr, var):
-        #The univariate case; expr has rational coefficients.
-        content = Integer(0)
-        if isinstance(expr, Sum):
-            for term in expr.operands():
-                content = gcd(content, leading_coefficient(term))
-            return content
-        if expr == 0:
-            return content
-        return gcd(content, leading_coefficient(expr, var))
-    return None
+    #All univariate non-zero polynomials in Q[x] have content 1
+    if expr == 0:
+        return Integer(0)
+
+    vars = vars if isinstance(vars, list) else [vars]
+    main_var = vars[0]
+    num_vars = len(vars)
+    terms = expr.operands() if isinstance(expr, Sum) else [expr]
+    common_degrees = [None for var in vars]
+    content = Integer(0)
+
+    #Extract the common (minimum) degree for all variables except main_var,
+    #and the common coefficient shared by all terms.
+    for term in terms:
+        content = gcd(content, term.coefficient())
+        for i in range(num_vars):
+            if vars[i] == main_var:
+                common_degrees[i] = 0
+            else:
+                curr_degree = degree(term, vars[i])
+                curr_common = common_degrees[i]
+                if common_degrees[i] is None:
+                    common_degrees[i] = curr_degree
+                else:
+                    common_degrees[i] = curr_common if curr_common < curr_degree else curr_degree
+
+    for i in range(len(vars)):
+        content *= vars[i] ** common_degrees[i]
+    return content
+
