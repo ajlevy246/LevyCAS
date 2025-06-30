@@ -20,9 +20,9 @@ def gcd(a: Constant, b: Constant) -> Integer:
     if a == 1 or b == 1:
         return Integer(1)
     if a == 0:
-        return Integer(b)
+        return abs(Integer(b))
     if b == 0:
-        return Integer(a)
+        return abs(Integer(a))
 
     a, a_d = _reduce(abs(a))
     b, b_d = _reduce(abs(b))

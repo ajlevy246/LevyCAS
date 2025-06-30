@@ -31,8 +31,9 @@ def algebraic_expand(expr: Expression) -> Expression:
         remaining = expr / first_factor
         new_num = _expand_product(algebraic_expand(first_factor).num(), algebraic_expand(remaining).num())
         new_denom = _expand_product(algebraic_expand(first_factor).denom(), algebraic_expand(remaining).denom())
+
         return new_num / new_denom
-    
+
     elif operation == Power:
         return _expand_power(algebraic_expand(operands[0]), algebraic_expand(operands[1]))
     
@@ -63,6 +64,7 @@ def algebraic_expand_main(expr: Expression) -> Expression:
     elif operation == Product:
         first_factor = operands[0]
         remaining = expr / first_factor
+        return _expand_product(first_factor, remaining)
         new_num = _expand_product(first_factor.num(), remaining.num())
         new_denom = _expand_product(first_factor.denom(), remaining.denom()) 
         return new_num / new_denom
