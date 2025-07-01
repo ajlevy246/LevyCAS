@@ -18,7 +18,8 @@ from .operations import (
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
     trig_simplify, trig_substitute, trig_contract, trig_expand,
     is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_pseudo_divide, polynomial_content,
-    gcd, factor_integer, is_prime
+    polynomial_gcd, polynomial_divide_recursive,
+    gcd, factor_integer, is_prime, radical
 )
 
 __all__ = [
@@ -32,9 +33,9 @@ __all__ = [
     'contains', 'copy', 'construct', 'map_op', 'substitute',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
-    'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content',
+    'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive',
     'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
     'Deriv', 'derivative', 'integrate', 
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
-    'gcd', 'factor_integer', 'is_prime'
+    'gcd', 'factor_integer', 'is_prime', 'radical'
 ]

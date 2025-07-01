@@ -168,3 +168,19 @@ def _pollard_rho(n: Integer, check_prime = False) -> Integer | None:
             return d
     raise ValueError(f"Could not factor {n} with Pollard's Rho Algorithm")
 
+def radical(n: Integer) -> Integer:
+    """Computes the radical of an integer, defined
+    as the product of its unique prime factors.
+
+    Args:
+        n (Integer): The integer whose radical is computed
+
+    Returns:
+        Integer: rad(n); the product of its unique prime factors
+    """
+    n = int(n)
+    factors = factor_integer(n)
+    rad = Integer(1)
+    for factor in factors.keys():
+        rad *= factor
+    return rad
