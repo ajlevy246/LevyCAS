@@ -202,3 +202,7 @@ def test_polynomial_division():
         divide(x**2*y + x*y**2 + y**3, x*y + y**2)
         == (x, y**3)
     )
+
+def test_polynomial_gcd():
+    x, y, z = Variable('x'), Variable('y'), Variable('z')
+    pass

@@ -74,3 +74,21 @@ def test_factor_integer():
             7: 3
         }
     )
+
+def test_radical():
+    assert (
+        radical(16)
+        == 2
+    )
+    assert (
+        radical(17)
+        == 17
+    )
+    assert (
+        radical(18)
+        == 6
+    )
+    assert (
+        radical(1000000)
+        == 10
+    )
