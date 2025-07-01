@@ -205,4 +205,19 @@ def test_polynomial_division():
 
 def test_polynomial_gcd():
     x, y, z = Variable('x'), Variable('y'), Variable('z')
-    pass
+    assert (
+        polynomial_gcd(x**2 * y + x*y**2, x*y, [x, y])
+        == x * y
+    )
+    assert (
+        polynomial_gcd(x**2 + 2*x*y + y**2, x + y, [x, y])
+        == x + y
+    )
+    assert (
+        polynomial_gcd(x**2 + y**2, Integer(1), [x, y])
+        == 1
+    )
+    assert (
+        polynomial_gcd(x**2 + y, x + y**2, [x, y])
+        == 1
+    )

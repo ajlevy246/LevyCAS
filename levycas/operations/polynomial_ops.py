@@ -222,6 +222,10 @@ def degree(expr: Expression, vars: Expression | set[Expression]) -> Integer | No
     Returns:
         Integer: The degree of x in u, or None if the operation fails
     """
+    #By convention, the degree of the zero-polynomial is -oo. Here, 
+    #I'll default to -1 until -oo is implemented.
+    if expr == 0:
+        return -1
     vars = {vars} if not isinstance(vars, set) else vars
     if isinstance(expr, Sum):
         deg = Integer(0)
@@ -330,6 +334,37 @@ def leading_monomial(expr: Expression, ordering: list[Expression]) -> Expression
     coeff = coefficient(expr, var, exponent)
     return var**exponent * leading_monomial(coeff, remaining)
 
+def polynomial_divide_recursive(u: Expression, v: Expression, L: list[Expression]) -> tuple[Expression]:
+    """Recursively computes the polynomial quotient of u and v.
+
+    Args:
+        u (Expression): _description_
+        v (Expression): _description_
+        L (list[Expression]): _description_
+    """
+    #If the list of generalized variables is empty, this is 
+    #just rational number division
+    if len(L) == 0:
+        if v == 0:
+            raise ZeroDivisionError
+        return [u / v, Integer(0)]
+    
+    x = L[0]
+    r = u
+    m, n = degree(r, x), degree(v, x)
+    q = 0
+    lcv = leading_coefficient(v, x)
+    while not m < n: #Iterate until degree of the that of the divisor.
+        lcr = leading_coefficient(r, x)
+        c, rem = polynomial_divide_recursive(lcr, lcv, L[1::])
+        if rem != 0 or c == 0:
+            break
+
+        q += c * x ** (m - n)
+        r = algebraic_expand(r - c * v * x **(m -n))
+        m = degree(r, x)
+    return (algebraic_expand(q), r)
+
 def monomial_divide(dividend: Expression, divisor: Expression) -> Expression:
     """Computes the division u / v, where u is a polynomial and v is a monomial,
     both with rational coefficients.
@@ -377,7 +412,7 @@ def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[
         f = monomial_divide(remainder, lm)[0]
     return (quotient, remainder)
 
-def polynomial_pseudo_divide(dividend: Expression, divisor: Expression, var: Expression) -> tuple[Expression]:
+def polynomial_pseudo_divide(u: Expression, v: Expression, x: Expression) -> tuple[Expression]:
     """Given two general polynomial expressions with rational coefficients, performs monomial-based
     pseudo-division and returns the result [Quotient, Remainder]
 
@@ -396,20 +431,20 @@ def polynomial_pseudo_divide(dividend: Expression, divisor: Expression, var: Exp
     Returns:
         list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
     """
-    p = 0
-    s = dividend
-    m = degree(s, var)
-    n = degree(divisor, var)
-    delta = max(m - n + 1, 0)
-    lcv = coefficient(divisor, var, n)
+    p, s = 0, u
+    m, n = degree(s, x), degree(v, x)
+    delta = m - n + 1
+    delta = 0 if delta < 0 else delta
+    lcv = coefficient(v, x, n)
     sigma = 0
-    while n < m: 
-        lcs = coefficient(s, var, m)
-        p = lcv * p + lcs * var ** (m - n)
-        s = algebraic_expand(lcv * s - lcs * divisor * var ** (m - n))
+    while not m < n:
+        lcs = coefficient(s, x, m)
+        p = lcv * p + lcs * x**(m - n)
+        s = algebraic_expand(lcv * s - lcs * v * x ** (m - n))
         sigma += 1
-        m = degree(s, var)
-    return (algebraic_expand(lcv ** (delta - sigma) * p), algebraic_expand(lcv**(delta -sigma) * s))
+        m = degree(s, x)
+    return [algebraic_expand(lcv ** (delta - sigma) * p), algebraic_expand(lcv ** (delta - sigma) * s)]
+
 
 #TODO: Interpret the content() operator for univariate and multivariate polynomials.
 #Requires first the implementation for univariate, which is relied on by the multivariate
@@ -469,21 +504,65 @@ def _extended_euclidean(u: Expression, v: Expression, x: Expression) -> tuple[Ex
     U = algebraic_expand(U / c)
     return (U, app, bpp)
 
-def polynomial_gcd(u: Expression, v: Expression, x: Expression | list[Expression]) -> Expression:
-    """Computes the greatest common divisor of a multivariate polynomial. Recurses by treating the 
-    given polynomials as univariate with respect to the first variable in the given ordering.
+def polynomial_gcd(u: Expression, v: Expression, L: list[Expression]) -> Expression:
+    """Given u, v that are two multivariate polynomials with variables in L and rational coefficients,
+    computes the greatest common divisor gcd(u, v) and returns it (normalized).
 
     Args:
-        u (Expression): u(*x)
-        v (Expression): v(*x)
-        x (Expression | list[Expression]): The ordering of generalized variables 
+        u (Expression): u(*L), a multivariate polynomial with rational coefficients.
+        v (Expression): v(*L), a multivariate polynomial with rational coefficients.
+        L (list[Expression]): The ordered list of variables
 
     Returns:
-        Expression: gcd(u(*x), v(*x))
+        Expression: gcd(u, v)
     """
-    pass
+    if u == 0:
+        return _normalize(v, L)
+    if v == 0:
+        return _normalize(u, L)
+    return _normalize(_polynomial_gcd_rec(u, v, L), L)
 
-def polynomial_content(expr: Expression, vars: list[Expression] | Expression) -> Expression:
+def _polynomial_gcd_rec(u: Expression, v: Expression, L: list[Expression]) -> Expression:
+    """Given u, v that are two multivariate polynomials with variables in L and rational coefficients,
+    computes the greatest common divisor gcd(u, v), and returns it (non-normalized).
+
+    Args:
+        u (Expression): u(*L), a multivariate polynomial with rational coefficients.
+        v (Expression): v(*L), a multivariate polynomial with rational coefficients.
+        L (list[Expression]): The ordered list of variables
+
+    Returns:
+        Expression: gcd(u, v)
+    """
+    if len(L) == 0:
+        return gcd(u, v)
+    x, R = L[0], L[1::]
+    cont_u, cont_v = polynomial_content(u, x, R), polynomial_content(v, x, R)
+    d = _polynomial_gcd_rec(cont_u, cont_v, R)
+    pp_u, pp_v = polynomial_divide_recursive(u, cont_u, L)[0], polynomial_divide_recursive(v, cont_v, L)[0]
+    while pp_v != 0:
+        quot, rem = polynomial_pseudo_divide(pp_u, pp_v, x)
+        if rem == 0:
+            pp_r = 0
+        else:
+            cont_r = polynomial_content(rem, x, R)
+            pp_r = polynomial_divide_recursive(u, cont_r, L)[0]
+        pp_u = pp_v
+        pp_v = pp_r
+    pgcd = algebraic_expand(d * pp_u)
+    return pgcd
+
+def _normalize(u, L):
+    if len(L) == 0:
+        return abs(u)
+    content = polynomial_content(u, L[0], L[1::]).coefficient()
+    quot, rem = polynomial_divide(u, content, L)
+    assert rem == 0, f"???"
+    return quot
+
+#TODO: Mathematical Methods in the exercise says that this method should use mv_poly_gcd_rec to compute 
+#the content of the auxiliary variables. Change this shitty ahh method to use the other one.
+def polynomial_content(expr: Expression, main_var: Expression, vars: list[Expression] | Expression) -> Expression:
     """Determines the polynomial content of a polynomial u in x. This is 
     a generalization of the greatest common denominator of coefficients.
 
@@ -496,33 +575,11 @@ def polynomial_content(expr: Expression, vars: list[Expression] | Expression) ->
     Returns:
         Expression: The content part of the polynomial
     """
-    #All univariate non-zero polynomials in Q[x] have content 1
-    if expr == 0:
-        return Integer(0)
-
-    vars = _fill_variables(expr, vars)
-    main_var = vars[0]
-    num_vars = len(vars)
-    terms = expr.operands() if isinstance(expr, Sum) else [expr]
-    common_degrees = [None for var in vars]
     content = Integer(0)
+    if expr == 0:
+        return content
 
-    #Extract the common (minimum) degree for all variables except main_var,
-    #and the common coefficient shared by all terms.
+    terms = expr.operands() if isinstance(expr, Sum) else [expr]
     for term in terms:
-        content = gcd(content, term.coefficient())
-        for i in range(num_vars):
-            if vars[i] == main_var:
-                common_degrees[i] = 0
-            else:
-                curr_degree = degree(term, vars[i])
-                curr_common = common_degrees[i]
-                if common_degrees[i] is None:
-                    common_degrees[i] = curr_degree
-                else:
-                    common_degrees[i] = curr_common if curr_common < curr_degree else curr_degree
-
-    for i in range(len(vars)):
-        content *= vars[i] ** common_degrees[i]
+        content = polynomial_gcd(content, leading_coefficient(term, main_var), vars)
     return content
-
