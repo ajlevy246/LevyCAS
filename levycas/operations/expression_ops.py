@@ -27,6 +27,9 @@ def contains(expr: Expression, subs: Expression | set[Expression]) -> bool:
     if expr in subs:
         return True
     else:
+        if not isinstance(expr, Expression):
+            return False
+
         for operand in expr.operands():
             #The following case covers terminal expressions
             #i.e, the operand of Variable('x') is the string 'x'
