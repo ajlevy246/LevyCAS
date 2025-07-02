@@ -275,43 +275,6 @@ def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
 
     return [independent, dependent]
 
-def _integrate_rational(expr: Expression, wrt: Variable) -> Expression | None:
-    """Given an expression in rational form, attemps to integrate with respect to the given variable.
-    Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c)
-
-    Args:
-        expr (Expression): The expression to integrate
-        wrt (Variable): The variable to integrate with respect to
-
-    Returns:
-        Expression | None: The integrated expression, or None if the integration fails.
-    """
-    numerator = linear_form(expr.num(), wrt)
-    if numerator is None:
-        return None
-    r, s = numerator
-
-    denominator = quadratic_form(expr.denom(), wrt)
-    if denominator is None or denominator[0] == 0:
-        return None
-    a, b, c = denominator
-
-    if r == 0:
-        discriminant = b**2 - 4 * a * c
-        if isinstance(discriminant, Constant):
-            if discriminant == 0:
-                return (-2) / (2 * a * wrt + b)
-            
-            elif discriminant.is_positive():
-                #TODO: hyperbolic trigonometric functions not yet implemented
-                # return -2 * Arctanh((2*a*wrt + b) / (discriminant)**(1 / 2)) / (discriminant)
-                return None
-
-        return 2 * Arctan((2*a*wrt + b) / (-discriminant)**(1 / 2)) / (-discriminant)**(1 / 2)
-
-    quadratic = a*wrt**2 + b*wrt + c
-    return (r / 2*a) * Ln(quadratic) + (s - r*b / (2*a)) * integrate(quadratic, wrt)
-
 def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
     """Given an expression in rational form, attemps to integrate with respect to the given variable.
     Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c)
@@ -343,9 +306,10 @@ def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
     if numerator == 1:
         if isinstance(discriminant, Integer):
             if discriminant == 0:
-                return -2 / (2*a*wrt + b)
+                return -1 / (a*(a*wrt + b))
             elif discriminant.is_positive():
                 #Hyperbolic arctanh not yet implemented
+                print(f"Hyperbolic arctanh not yet implemented")
                 return None
         
         return 2 * Arctan((2*a*wrt + b)/(-discriminant)**(1/2)) / (-discriminant)**(1/2)
@@ -356,4 +320,5 @@ def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
             alpha = r / (2*a)
             beta = s - r*b/(2*a)
             #Correction from Elementary Algorithms, beta -> 1/beta
-            return alpha*Ln(denominator) + (1/beta) * integrate(1 / denominator, wrt)
+            factor = integrate(1 / denominator, wrt)
+            return None if factor is None else alpha*Ln(denominator) + beta * factor
