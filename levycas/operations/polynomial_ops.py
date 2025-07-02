@@ -412,7 +412,7 @@ def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[
         f = monomial_divide(remainder, lm)[0]
     return (quotient, remainder)
 
-def polynomial_pseudo_divide(u: Expression, v: Expression, x: Expression) -> tuple[Expression]:
+def polynomial_pseudo_divide(dividend: Expression, divisor: Expression, var: Expression) -> list[Expression]:
     """Given two general polynomial expressions with rational coefficients, performs monomial-based
     pseudo-division and returns the result [Quotient, Remainder]
 
@@ -423,6 +423,8 @@ def polynomial_pseudo_divide(u: Expression, v: Expression, x: Expression) -> tup
     of the divisor is a unit. This means that they are equivalent for all univariate polynomials
     with rational coefficients.
 
+    Algorithm adapted from https://pqnelson.github.io/org-notes/math/rings/polynomial.html#h-a46c3f92-c5c8-4218-b5b1-0f992b6d96fe, section 2.2
+    
     Args:
         dividend (Expression): A rational polynomial
         denominator (Expression): A rational polynomial
@@ -431,24 +433,19 @@ def polynomial_pseudo_divide(u: Expression, v: Expression, x: Expression) -> tup
     Returns:
         list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
     """
-    p, s = 0, u
-    m, n = degree(s, x), degree(v, x)
-    delta = m - n + 1
-    delta = 0 if delta < 0 else delta
-    lcv = coefficient(v, x, n)
-    sigma = 0
-    while not m < n:
-        lcs = coefficient(s, x, m)
-        p = lcv * p + lcs * x**(m - n)
-        s = algebraic_expand(lcv * s - lcs * v * x ** (m - n))
-        sigma += 1
-        m = degree(s, x)
-    return [algebraic_expand(lcv ** (delta - sigma) * p), algebraic_expand(lcv ** (delta - sigma) * s)]
+    c = leading_coefficient(divisor, var)
+    n = 1 + (degree(divisor, var) - degree(divisor, var))
+    q = 0
+    r = dividend
 
+    while r != 0 and not (degree(r, var) < degree(divisor, var)):
+        s = leading_coefficient(r, var) * var**(degree(r, var) - degree(divisor, var))
+        n -= 1
+        q = s + c * q
+        r = algebraic_expand(c * r - s * divisor)
 
-#TODO: Interpret the content() operator for univariate and multivariate polynomials.
-#Requires first the implementation for univariate, which is relied on by the multivariate
-#case. Algorithm should be recursive. 
+    factor = c ** n
+    return algebraic_expand(factor * q), algebraic_expand(factor * r)
 
 def _is_univariate(expr: Expression, var: Expression) -> bool:
     """Determines if an expression is univariate with respect 
@@ -522,9 +519,11 @@ def polynomial_gcd(u: Expression, v: Expression, L: list[Expression]) -> Express
         return _normalize(u, L)
     return _normalize(_polynomial_gcd_rec(u, v, L), L)
 
-def _polynomial_gcd_rec(u: Expression, v: Expression, L: list[Expression]) -> Expression:
+def _polynomial_gcd_rec(u, v, L):
     """Given u, v that are two multivariate polynomials with variables in L and rational coefficients,
     computes the greatest common divisor gcd(u, v), and returns it (non-normalized).
+
+    This is the sub-resultant algorithm given in Mathematical Methods.
 
     Args:
         u (Expression): u(*L), a multivariate polynomial with rational coefficients.
@@ -536,21 +535,38 @@ def _polynomial_gcd_rec(u: Expression, v: Expression, L: list[Expression]) -> Ex
     """
     if len(L) == 0:
         return gcd(u, v)
+    
     x, R = L[0], L[1::]
-    cont_u, cont_v = polynomial_content(u, x, R), polynomial_content(v, x, R)
-    d = _polynomial_gcd_rec(cont_u, cont_v, R)
-    pp_u, pp_v = polynomial_divide_recursive(u, cont_u, L)[0], polynomial_divide_recursive(v, cont_v, L)[0]
-    while pp_v != 0:
-        quot, rem = polynomial_pseudo_divide(pp_u, pp_v, x)
-        if rem == 0:
-            pp_r = 0
-        else:
-            cont_r = polynomial_content(rem, x, R)
-            pp_r = polynomial_divide_recursive(u, cont_r, L)[0]
-        pp_u = pp_v
-        pp_v = pp_r
-    pgcd = algebraic_expand(d * pp_u)
-    return pgcd
+    U, V = (v, u) if degree(u, x) < degree(v, x) else (u, v)
+    cont_U, cont_V = polynomial_content(U, x, R), polynomial_content(V, x, R)
+    d = _polynomial_gcd_rec(cont_U, cont_V, R)
+    U, V = polynomial_divide_recursive(U, cont_U, L)[0], polynomial_divide_recursive(V, cont_V, L)[0]
+    g = _polynomial_gcd_rec(leading_coefficient(U, x), leading_coefficient(V, x), R)
+
+    i = 1
+    while V != 0:
+        r = polynomial_pseudo_divide(U, V, x)[1]
+        if r != 0:
+            if i == 1:
+                delta = degree(U, x) - degree(V, x) + 1
+                psi = -1
+                beta = (-1)**delta
+            elif i > 1:
+                delta_p = delta
+                delta = degree(U, x) - degree(V, x) + 1
+                f = leading_coefficient(U, x)
+                psi = polynomial_divide_recursive(algebraic_expand(-f)**(delta_p - 1), algebraic_expand(psi**(delta_p - 2)), R)[0]
+                beta = algebraic_expand(-f * psi**(delta - 1))
+            U = V
+            V = polynomial_divide_recursive(r, beta, L)[0]
+            i += 1
+        elif r == 0:
+            U, V = V, r
+    s = polynomial_divide_recursive(leading_coefficient(U, x), g, R)[0]
+    W = polynomial_divide_recursive(U, s, L)[0]
+    cont_W = polynomial_content(W, x, R)
+    pp_W = polynomial_divide_recursive(W, cont_W, L)[0]
+    return algebraic_expand(d * pp_W)
 
 def _normalize(u, L):
     if len(L) == 0:
@@ -560,8 +576,6 @@ def _normalize(u, L):
     assert rem == 0, f"???"
     return quot
 
-#TODO: Mathematical Methods in the exercise says that this method should use mv_poly_gcd_rec to compute 
-#the content of the auxiliary variables. Change this shitty ahh method to use the other one.
 def polynomial_content(expr: Expression, main_var: Expression, vars: list[Expression] | Expression) -> Expression:
     """Determines the polynomial content of a polynomial u in x. This is 
     a generalization of the greatest common denominator of coefficients.

@@ -205,6 +205,38 @@ def test_polynomial_division():
 
 def test_polynomial_gcd():
     x, y, z = Variable('x'), Variable('y'), Variable('z')
+
+    #univariate tests - basic
+    assert (
+        polynomial_gcd(x**2 - 1, x - 1, [x])
+        == x - 1
+    )
+    assert (
+        polynomial_gcd(x**2 + 2*x + 1, x + 1, [x])
+        == x + 1
+    )
+    assert (
+        polynomial_gcd(x**2 - 4*x + 4, x - 2, [x])
+        == x - 2
+    )
+    assert (
+        polynomial_gcd(x**2 - 3*x + 2, x - 1, [x])
+        == x - 1
+    )
+    assert (
+        polynomial_gcd(x**2 - 5*x + 6, x - 2, [x])
+        == x - 2
+    )
+
+    #univariate tests - coprime
+    assert (
+        1
+        == polynomial_gcd(x**2 + 1, x + 1, [x])
+        == polynomial_gcd(x**2 - 2*x + 2, x - 1, [x])
+        == polynomial_gcd(x**4 + x + 2, x**3 + x**2 + x + 2, [x])
+    )
+
+    #multivariate tests; working with subresultant algorithm
     assert (
         polynomial_gcd(x**2 * y + x*y**2, x*y, [x, y])
         == x * y
@@ -221,3 +253,23 @@ def test_polynomial_gcd():
         polynomial_gcd(x**2 + y, x + y**2, [x, y])
         == 1
     )
+
+    #multivariate tests with higher degrees
+    assert (
+        1
+        == polynomial_gcd(x + y, x - y, [x, y])
+        == polynomial_gcd(x**2 + y**2, x**2 - y**2, [x, y])
+        == polynomial_gcd(x**2 + y**2, x + y, [x, y])
+    )    
+    assert (
+        polynomial_gcd(x**2*y + x*y**2, x*y**2 + y**3, [x, y])
+        == x*y + y**2
+    )
+
+    #Mathematical Methods example test - works, but is time-consuming.
+    # u = x**3*y**2 + 6*x**4*y + 9*x**5 + 4*x**2*y**2 + 24*x**3*y + 36*x**4 + 5*x*y**2 + 30*y*x**2 + 45*x**3 + 2*y**2 + 12*y*x + 18*x**2
+    # v = x**5*y**2 + 8*x**4*y + 16*x**3 + 12*x**4*y**2 + 96*x**3*y + 192*x**2 + 45*x**3*y**2 + 360*y*x**2 + 720*x + 50*x**2*y**2 + 400*y*x + 800
+    # assert (
+    #     polynomial_gcd(u, v, [x, y])
+    #     == x + 2
+    # )
