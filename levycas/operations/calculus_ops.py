@@ -4,6 +4,7 @@ from ..expressions import *
 from .expression_ops import contains, copy, substitute
 from .algebraic_ops import algebraic_expand, linear_form, quadratic_form
 from .polynomial_ops import is_polynomial, polynomial_divide, degree
+from .trig_ops import trig_simplify
 
 class Deriv(Elementary):
     """Anonymous derivative class"""
@@ -118,6 +119,11 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
         expanded = algebraic_expand(expr)
         if expr != expanded:
             integrated = integrate(expanded, wrt)
+
+    if integrated is None:
+        simp = trig_simplify(expr)
+        if expr != simp:
+            integrated = integrate(simp, wrt)
 
     return integrated
 

@@ -513,6 +513,7 @@ def polynomial_gcd(u: Expression, v: Expression, L: list[Expression]) -> Express
     Returns:
         Expression: gcd(u, v)
     """
+    u, v = algebraic_expand(u), algebraic_expand(v)
     if u == 0:
         return _normalize(v, L)
     if v == 0:

@@ -103,3 +103,15 @@ class TestIntegrate:
         x, y = Variable("x"), Variable("y")
 
         assert integrate(2*x + (1 / 2)*x**2, x) == x**2 + Rational(1, 6)*x**3
+
+    def test_integrate_miscellaneous(self):
+        x, y = Variable('x'), Variable('y')
+
+        assert (
+            integrate(Cos(x) / (Sin(x)**2 + 3*Sin(x) + 4), x)
+            == 2 * (Arctan((3 + 2 * Sin(x)) / 7 ** Rational(1, 2)) / 7**Rational(1, 2))
+        )
+        assert (
+            integrate(Sin(2*x)**3 * Cos(2*x)**4, x)
+            == trig_simplify(Cos(2*x)**5 * (5*Cos(4*x) - 9) / 140)
+        )
