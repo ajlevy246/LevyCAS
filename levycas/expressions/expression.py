@@ -165,7 +165,7 @@ class Sum(Expression):
         self.terms = list(terms)
         
     def __repr__(self):
-        term_repr = [str(term) for term in self.terms]
+        term_repr = [str(term) for term in self.terms[::-1]]
         return "(" + " + ".join(term_repr) + ")"
     
     def __lt__(self, other):

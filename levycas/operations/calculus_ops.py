@@ -166,6 +166,7 @@ def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
         -Csc(Variable('x'))**2 : Cot(Variable('x')),                   #-Csc(x)^2 -> Cot(x)
         -Csc(Variable('x')) * Cot(Variable('x')) : Csc(Variable('x')), #-Csc(x)*Cot(x) -> Csc(x)
         Sec(Variable('x')) * Tan(Variable('x')) : Sec(Variable('x')),  #Sec(x)Tan(x) -> Sec(x)
+        Ln(Variable('x')) : Variable('x') * Ln(Variable('x')) - Variable('x') #Ln(x) -> xLn(x) - x
     }
 
     substitution = {str(wrt) : Variable('x')}
