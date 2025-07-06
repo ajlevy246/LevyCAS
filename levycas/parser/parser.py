@@ -10,11 +10,11 @@ lv = False #lexing verbose
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
     ("NUMBER",    r'(\d+\.?\d*|\d*\.\d+)'),   #Matches a decimal
-    ("TRIG_SIN",       r'(?i)sin'),           #Matches sin function, case insensitive
-    ("TRIG_COS",       r'(?i)cos'),           #Matches cos function, case insensitive
-    ("TRIG_TAN",       r'(?i)tan'),           #Matches tan function, case insensitive
-    ("TRIG_CSC",       r'(?i)csc'),           #Matches csc function, case insensitive
-    ("TRIG_SEC",       r'(?i)sec'),           #Matches sec function, case insensitive
+    ("TRIG_SIN",       r'(?:i)sin'),           #Matches sin function, case insensitive
+    ("TRIG_COS",       r'(?:i)cos'),           #Matches cos function, case insensitive
+    ("TRIG_TAN",       r'(?:i)tan'),           #Matches tan function, case insensitive
+    ("TRIG_CSC",       r'(?:i)csc'),           #Matches csc function, case insensitive
+    ("TRIG_SEC",       r'(?:i)sec'),           #Matches sec function, case insensitive
     ("VARIABLE",  r'[a-zA-Z]'),               #Matches a single letter
     ("EXP",       r'\^'),                     #Matches a single exponential symbol  
     ("PLUS",      r'\+'),                     #Matches a plus sign
