@@ -556,7 +556,7 @@ def _polynomial_gcd_rec(u, v, L):
                 delta_p = delta
                 delta = degree(U, x) - degree(V, x) + 1
                 f = leading_coefficient(U, x)
-                psi = polynomial_divide_recursive(algebraic_expand(-f)**(delta_p - 1), algebraic_expand(psi**(delta_p - 2)), R)[0]
+                psi = polynomial_divide_recursive(algebraic_expand(-f)**(delta_p), algebraic_expand(psi**(delta_p - 1)), R)[0]
                 beta = algebraic_expand(-f * psi**(delta - 1))
             U = V
             V = polynomial_divide_recursive(r, beta, L)[0]
