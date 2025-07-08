@@ -61,3 +61,17 @@ Cos(x) · Sin(x)
 >>> derivative(x * Ln(x) - x, x)
 Ln(x)
 ```
+
+### Partial Fractions and Rationalization
+```python
+>>> from levycas import Variable, rationalize
+>>> from levycas import univariate_partial_fractions as partial
+>>> x = Variable('x')
+
+# (8x+7) / (x+2)(x-1) -> 3/(x+2) + 5/(x-1)
+>>> partial(8*x + 7, x + 2, x - 1, x)
+3, 5
+
+# 3 / (x+2) + 5 / (x-1) -> (8x+7) / (x+2)(x-1)
+>>> rationalize(3 / (x + 2) + 5 / (x - 1))
+((x + -1) ^ -1) · ((x + 2) ^ -1) · (8x + 7)
