@@ -487,9 +487,9 @@ def _univariate_gcd(u: Expression, v: Expression,  x: Expression) -> Expression:
     Returns:
         Constant: gcd(u, v)
     """
-    return _extended_euclidean(u, v, x)[0]
+    return _univariate_extended_euclidean(u, v, x)[0]
 
-def _extended_euclidean(u: Expression, v: Expression, x: Expression) -> tuple[Expression]:
+def _univariate_extended_euclidean(u: Expression, v: Expression, x: Expression) -> tuple[Expression]:
     """Extended euclidean algorithm for univariate polynomials.
 
     Args:
@@ -516,6 +516,26 @@ def _extended_euclidean(u: Expression, v: Expression, x: Expression) -> tuple[Ex
     app, bpp = algebraic_expand(app / c), algebraic_expand(bpp / c)
     U = algebraic_expand(U / c)
     return (U, app, bpp)
+
+def univariate_partial_fractions(u: Expression, v1: Expression, v2: Expression, x: Expression) -> tuple[Expression]:
+    """Given a rational expression u / (v1v2) where u, v1, v2 are univariate in
+    x and v1 and v2 are coprime wrt x, returns the expanded u1/v1 + u2/v2, where 
+    both terms are proper rational expressions.
+
+    Args:
+        u (Expression): Numerator
+        v1 (Expression): LHS of denominator
+        v2 (Expression): RHS of denominator
+        x (Expression): Generalized variable
+
+    Returns:
+        tuple[Expressio] The list [u1, u2] in the decomposition u/(v1v2) = u1/v1 + u2/v2
+    """
+    d, a, b = _univariate_extended_euclidean(v1, v2, x)
+    assert d == 1, f"partial fraction factors must be coprime"
+    u1 = polynomial_divide(algebraic_expand(b*u), v1, x)[1]
+    u2 = polynomial_divide(algebraic_expand(a*u), v2, x)[1]
+    return u1, u2
 
 def polynomial_gcd(u: Expression, v: Expression, L: list[Expression]) -> Expression:
     """Given u, v that are two multivariate polynomials with variables in L and rational coefficients,

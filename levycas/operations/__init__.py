@@ -5,7 +5,8 @@ from .simplification_ops import simplify, sym_eval, simplify_power, simplify_pro
 from .trig_ops import trig_simplify, trig_substitute, trig_expand, trig_contract
 from .polynomial_ops import (
     is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial,
-    monomial_divide, polynomial_divide_recursive, polynomial_divide, polynomial_pseudo_divide, polynomial_content, polynomial_gcd
+    monomial_divide, polynomial_divide_recursive, polynomial_divide, polynomial_pseudo_divide, polynomial_content, polynomial_gcd,
+    univariate_partial_fractions
 )
 from .numerical_ops import gcd, factor_integer, is_prime, radical
 
@@ -17,5 +18,6 @@ __all__ = [
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
     'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive',
+    'univariate_partial_fractions',
     'gcd', 'factor_integer', 'is_prime', 'radical'
 ]
