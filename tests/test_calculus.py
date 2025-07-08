@@ -104,6 +104,14 @@ class TestIntegrate:
 
         assert integrate(2*x + (1 / 2)*x**2, x) == x**2 + Rational(1, 6)*x**3
 
+    def test_integration_byparts(self):
+        x, y = Variable('x'), Variable('y')
+
+        assert (
+            integrate(x*Cos(x), x)
+            == x*Sin(x) - Cos(x)
+        )
+
     def test_integrate_miscellaneous(self):
         x, y = Variable('x'), Variable('y')
 

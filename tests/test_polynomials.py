@@ -318,7 +318,7 @@ def test_partial_fractions():
     x = Variable('x')
 
 
-    # (8x + 7) / (x+2)(x-1) -> 3/(x+2) + 5/(x-1)
+    # (8x+7) / (x+2)(x-1) -> 3/(x+2) + 5/(x-1)
     u, v1, v2 = 8*x + 7, x + 2, x - 1
     u1, u2 = univariate_partial_fractions(u, v1, v2, x)
     assert (

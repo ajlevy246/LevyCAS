@@ -116,6 +116,9 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
         integrated = _integrate_rational(expr, wrt)
 
     if integrated is None:
+        integrated = _integrate_known_byparts(expr, wrt)
+
+    if integrated is None:
         expanded = algebraic_expand(expr)
         if expr != expanded:
             integrated = integrate(expanded, wrt)
@@ -266,7 +269,7 @@ def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
 
     Args:
         expr (Product): Product to separate
-        wrt (Variable): Variable to separate with respect to
+        wrt (Variable): Variable of integration
 
     Returns:
         list[Product]: The list [independent, dependent]
@@ -282,13 +285,13 @@ def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
 
     return [independent, dependent]
 
-def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
+def _integrate_rational(expr: Expression, wrt: Variable) -> Expression | None:
     """Given an expression in rational form, attemps to integrate with respect to the given variable.
     Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c)
 
     Args:
         expr (Expression): The expression to integrate
-        wrt (Variable): The variable to integrate with respect to
+        wrt (Variable): The variable of integration
 
     Returns:
         Expression | None: The integrated expression, or None if the integration fails.
@@ -329,3 +332,54 @@ def _integrate_rational(expr: Expression, wrt: Variable) -> Expression:
             #Correction from Elementary Algorithms, beta -> 1/beta
             factor = integrate(1 / denominator, wrt)
             return None if factor is None else alpha*Ln(denominator) + beta * factor
+
+def _integrate_known_byparts(expr: Expression, wrt: Variable) -> Expression | None:
+    """Given an expression of a known form that can be integrated wrt to the given 
+    variable using a integration by parts recurrence, returns the integrated formula. 
+    Otherwise, returns None
+
+    Args:
+        expr (Expression): The expression to integrate
+        wrt (Variable): The variable of integration
+
+    Returns:
+        Expression | None: The integrated expression, or None if the integration fails
+    """
+    if type(expr) is not Product:
+        return None
+
+    factors = expr.operands()
+    if len(factors) != 2:
+        return None
+    
+    op, var = factors
+    if not (isinstance(var, Power) or var == wrt):
+        return None
+    base, exp = var.base(), var.exponent()
+    if base != wrt or not isinstance(exp, Integer) or exp.is_negative():
+        return None
+    linear_op = linear_form(op.operands()[0], wrt)
+    if linear_op is None:
+        return None
+    a, b = linear_op
+
+    print(f"IBP: {var=}, {op=}")
+
+    #Integrand is of the form (x^n) * op(ax + b)
+    if isinstance(op, Exp):
+        by_parts = integrate(wrt ** (exp - 1) * op, wrt)
+        if by_parts is None:
+            return None
+        return var / a * op + exp / a * by_parts
+    
+    elif isinstance(op, Sin):
+        by_parts = integrate(wrt ** (exp - 1) * Cos(a*wrt + b), wrt)
+        if by_parts is None:
+            return None
+        return -var / a * Cos(a*wrt + b) + exp / a * by_parts
+    
+    if isinstance(op, Cos):
+        by_parts = integrate(wrt ** (exp - 1) * Sin(a*wrt + b), wrt)
+        if by_parts is None:
+            return None
+        return var / a * Sin(a*wrt + b) + exp / a * by_parts
