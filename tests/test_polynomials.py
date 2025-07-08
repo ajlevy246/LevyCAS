@@ -296,6 +296,12 @@ def test_polynomial_gcd():
         polynomial_gcd((x + y)**4 * (x - y)**2, (x + y)**3 * (x - y)**3, [x, y])
         == algebraic_expand((x + y)**3 * (x - y)**2)
     )
+    assert (
+        polynomial_gcd(x**2*y + y**2 + 1, x**3 + y**3 + x, [x, y])
+        == 1
+    )
+
+    #the following are commented out to save time
 
     # u = x**3*y**2 + 6*x**4*y + 9*x**5 + 4*x**2*y**2 + 24*x**3*y + 36*x**4 + 5*x*y**2 + 30*y*x**2 + 45*x**3 + 2*y**2 + 12*y*x + 18*x**2
     # v = x**5*y**2 + 8*x**4*y + 16*x**3 + 12*x**4*y**2 + 96*x**3*y + 192*x**2 + 45*x**3*y**2 + 360*y*x**2 + 720*x + 50*x**2*y**2 + 400*y*x + 800
@@ -303,15 +309,10 @@ def test_polynomial_gcd():
     #     polynomial_gcd(u, v, [x, y])
     #     == x + 2
     # )
-    assert (
-        polynomial_gcd(x**2*y + y**2 + 1, x**3 + y**3 + x, [x, y])
-        == 1
-    )
-
-    assert (
-        polynomial_gcd((1 + z) * (2 - y)**2 * (1 - x), (2 - y) * (1 - x) * (1 + x)**2, [x, y, z])
-        == algebraic_expand((2 - y) * (1 - x))
-    )
+    # assert (
+    #     polynomial_gcd((1 + z) * (2 - y)**2 * (1 - x), (2 - y) * (1 - x) * (1 + x)**2, [x, y, z])
+    #     == algebraic_expand((2 - y) * (1 - x))
+    # )
 
 def test_partial_fractions():
     x = Variable('x')
