@@ -412,40 +412,56 @@ def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[
         f = monomial_divide(remainder, lm)[0]
     return (quotient, remainder)
 
-def polynomial_pseudo_divide(dividend: Expression, divisor: Expression, var: Expression) -> list[Expression]:
-    """Given two general polynomial expressions with rational coefficients, performs monomial-based
-    pseudo-division and returns the result [Quotient, Remainder]
+# def polynomial_pseudo_divide(dividend: Expression, divisor: Expression, var: Expression) -> list[Expression]:
+#     """Given two general polynomial expressions with rational coefficients, performs monomial-based
+#     pseudo-division and returns the result [Quotient, Remainder]
 
-    Psuedo-division is required as a variant of the euclidean division algorithm for which all remainders
-    are polynomials with integer coefficients. 
+#     Psuedo-division is required as a variant of the euclidean division algorithm for which all remainders
+#     are polynomials with integer coefficients. 
 
-    Psuedo-division and polynomial long-division are equivalent when the leading coefficient
-    of the divisor is a unit. This means that they are equivalent for all univariate polynomials
-    with rational coefficients.
+#     Psuedo-division and polynomial long-division are equivalent when the leading coefficient
+#     of the divisor is a unit. This means that they are equivalent for all univariate polynomials
+#     with rational coefficients.
 
-    Algorithm adapted from https://pqnelson.github.io/org-notes/math/rings/polynomial.html#h-a46c3f92-c5c8-4218-b5b1-0f992b6d96fe, section 2.2
+#     Algorithm adapted from https://pqnelson.github.io/org-notes/math/rings/polynomial.html#h-a46c3f92-c5c8-4218-b5b1-0f992b6d96fe, section 2.2
     
-    Args:
-        dividend (Expression): A rational polynomial
-        denominator (Expression): A rational polynomial
-        var (Expression): A generalized variable
+#     Args:
+#         dividend (Expression): A rational polynomial
+#         denominator (Expression): A rational polynomial
+#         var (Expression): A generalized variable
 
-    Returns:
-        list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
-    """
-    c = leading_coefficient(divisor, var)
-    n = 1 + (degree(divisor, var) - degree(divisor, var))
-    q = 0
-    r = dividend
+#     Returns:
+#         list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
+#     """
+#     c = leading_coefficient(divisor, var)
+#     n = 1 + (degree(divisor, var) - degree(divisor, var))
+#     q = 0
+#     r = dividend
 
-    while r != 0 and not (degree(r, var) < degree(divisor, var)):
-        s = leading_coefficient(r, var) * var**(degree(r, var) - degree(divisor, var))
-        n -= 1
-        q = s + c * q
-        r = algebraic_expand(c * r - s * divisor)
+#     while r != 0 and not (degree(r, var) < degree(divisor, var)):
+#         s = leading_coefficient(r, var) * var**(degree(r, var) - degree(divisor, var))
+#         n -= 1
+#         q = s + c * q
+#         r = algebraic_expand(c * r - s * divisor)
 
-    factor = c ** n
-    return algebraic_expand(factor * q), algebraic_expand(factor * r)
+#     factor = c ** n
+#     return algebraic_expand(factor * q), algebraic_expand(factor * r)
+
+def polynomial_pseudo_divide(u, v, x):
+    p, s = 0, u
+    m, n = degree(s, x), degree(v, x)
+    delta = m - n + 1
+    if delta.is_negative():
+        delta = 0
+    lcv = coefficient(v, x, n)
+    sigma = 0
+    while not m < n:
+        lcs = coefficient(s, x, m)
+        p = lcv * p + lcs * x**(m - n)
+        s = algebraic_expand(lcv * s - lcs * v * x ** (m - n))
+        sigma += 1
+        m = degree(s, x)
+    return algebraic_expand(lcv ** (delta - sigma) * p), algebraic_expand(lcv ** (delta - sigma) * s)
 
 def _is_univariate(expr: Expression, var: Expression) -> bool:
     """Determines if an expression is univariate with respect 
@@ -552,11 +568,11 @@ def _polynomial_gcd_rec(u, v, L):
                 delta = degree(U, x) - degree(V, x) + 1
                 psi = -1
                 beta = (-1)**delta
-            elif i > 1:
+            else:
                 delta_p = delta
                 delta = degree(U, x) - degree(V, x) + 1
                 f = leading_coefficient(U, x)
-                psi = polynomial_divide_recursive(algebraic_expand(-f)**(delta_p), algebraic_expand(psi**(delta_p - 1)), R)[0]
+                psi = polynomial_divide_recursive(algebraic_expand(-f)**(delta_p - 1), algebraic_expand(psi**(delta_p - 2)), R)[0]
                 beta = algebraic_expand(-f * psi**(delta - 1))
             U = V
             V = polynomial_divide_recursive(r, beta, L)[0]
@@ -572,10 +588,12 @@ def _polynomial_gcd_rec(u, v, L):
 def _normalize(u, L):
     if len(L) == 0:
         return abs(u)
-    content = polynomial_content(u, L[0], L[1::]).coefficient()
-    quot, rem = polynomial_divide(u, content, L)
-    assert rem == 0, f"???"
-    return quot
+
+    if u == 0:
+        return u
+    
+    c = polynomial_content(u, L[0], L[1::]).coefficient()
+    return u / c
 
 def polynomial_content(expr: Expression, main_var: Expression, vars: list[Expression] | Expression) -> Expression:
     """Determines the polynomial content of a polynomial u in x. This is 
