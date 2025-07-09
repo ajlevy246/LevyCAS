@@ -107,9 +107,70 @@ class TestIntegrate:
     def test_integration_byparts(self):
         x, y = Variable('x'), Variable('y')
 
+        #Exponential tests
+        assert (
+            integrate(x*Exp(x), x)
+            == x*Exp(x) - Exp(x)
+        )
+        assert (
+            integrate(x**2 * Exp(x), x)
+            == x**2 * Exp(x) - 2*x*Exp(x) + 2*Exp(x)
+        )
+        assert (
+            integrate(x * Exp(2*x), x)
+            == Rational(1, 2) * x * Exp(2*x) - Rational(1, 4) * Exp(2*x)
+        )
+        assert (
+            integrate(x * Exp(x + 1), x)
+            == x * Exp(x + 1) - Exp(x + 1)
+        )
+        assert (
+            integrate(x**2 * Exp(2*x + 1), x)
+            == (1/2)*x**2*Exp(2*x+1) - (1/2)*x*Exp(2*x+1) + (1/4)*Exp(2*x+1)
+        )
+
+        #Sin tests
+        assert (
+            integrate(x*Sin(x), x)
+            == Sin(x) - x*Cos(x)
+        )
+        assert (
+            integrate(x**2 * Sin(x), x)
+            == 2*Cos(x) + 2*x*Sin(x) - x**2*Cos(x)
+        )
+        assert (
+            integrate(x * Sin(2*x), x)
+            == (1/4)*Sin(2*x) - (1/2)*x*Cos(2*x)
+        )
+        assert (
+            integrate(x * Sin(x + 1), x)
+            == Sin(x+1) - x*Cos(x + 1)
+        )
+        assert (
+            integrate(x**2 * Sin(2*x + 1), x)
+            == (1/4)*Cos(2*x+1) + (1/2)*x*Sin(2*x+1) - (1/2)*x**2*Cos(2*x+1)
+        )
+
+        #Cos tests
         assert (
             integrate(x*Cos(x), x)
-            == x*Sin(x) - Cos(x)
+            == x*Sin(x) + Cos(x)
+        )
+        assert (
+            integrate(x**2 * Cos(x), x)
+            == x**2*Sin(x) + 2*x*Cos(x) - 2*Sin(x)
+        )
+        assert (
+            integrate(x * Cos(2*x), x)
+            == (1/2)*x*Sin(2*x) + (1/4)*Cos(2*x)
+        )
+        assert (
+            integrate(x * Cos(x + 1), x)
+            == x*Sin(x+1) + Cos(x + 1)
+        )
+        assert (
+            integrate(x**2 * Cos(2*x + 1), x)
+            == (1/2)*x**2*Sin(2*x+1) + (1/2)*x*Cos(2*x+1) - (1/4)*Sin(2*x+1)
         )
 
     def test_integrate_miscellaneous(self):
@@ -122,4 +183,8 @@ class TestIntegrate:
         assert (
             integrate(Sin(2*x)**3 * Cos(2*x)**4, x)
             == trig_simplify(Cos(2*x)**5 * (5*Cos(4*x) - 9) / 140)
+        )
+        assert (
+            integrate(x*Exp(x), x)
+            == x * Exp(x) - Exp(x)
         )
