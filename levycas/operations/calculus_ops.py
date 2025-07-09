@@ -363,14 +363,12 @@ def _integrate_known_byparts(expr: Expression, wrt: Variable) -> Expression | No
         return None
     a, b = linear_op
 
-    print(f"IBP: {var=}, {op=}")
-
     #Integrand is of the form (x^n) * op(ax + b)
     if isinstance(op, Exp):
         by_parts = integrate(wrt ** (exp - 1) * op, wrt)
         if by_parts is None:
             return None
-        return var / a * op + exp / a * by_parts
+        return var / a * op - exp / a * by_parts
     
     elif isinstance(op, Sin):
         by_parts = integrate(wrt ** (exp - 1) * Cos(a*wrt + b), wrt)
@@ -382,4 +380,4 @@ def _integrate_known_byparts(expr: Expression, wrt: Variable) -> Expression | No
         by_parts = integrate(wrt ** (exp - 1) * Sin(a*wrt + b), wrt)
         if by_parts is None:
             return None
-        return var / a * Sin(a*wrt + b) + exp / a * by_parts
+        return var / a * Sin(a*wrt + b) - exp / a * by_parts
