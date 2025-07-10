@@ -127,7 +127,7 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
         simp = trig_simplify(expr)
         if expr != simp:
             integrated = integrate(simp, wrt)
-
+    
     return integrated
 
 def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
@@ -287,7 +287,8 @@ def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
 
 def _integrate_rational(expr: Expression, wrt: Variable) -> Expression | None:
     """Given an expression in rational form, attemps to integrate with respect to the given variable.
-    Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c)
+    Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c), or u / v1v2
+    where v1, v2 are relatively prime and partial fraction decomposition allows for integration.
 
     Args:
         expr (Expression): The expression to integrate
@@ -301,7 +302,21 @@ def _integrate_rational(expr: Expression, wrt: Variable) -> Expression | None:
         return None
     denom_degree = degree(denominator, wrt)
     if not int(denom_degree) <= 2:
-        return None
+        #try partial fractions; factor_sqfree as placeholder until better factorization is implemented
+        from .polynomial_ops import factor_sqfree
+        constant, *factors = factor_sqfree(denominator, wrt)
+        
+        #Partial fractions only implemented now for easy case
+        if len(factors) != 2:
+            return None
+        v1, v2 = factors
+        
+        from .polynomial_ops import univariate_partial_fractions
+        u1, u2 = univariate_partial_fractions(expr.num(), v1, v2, wrt)
+        decomposed_integral = integrate(u1 / v1 + u2 / v2, wrt)
+        if decomposed_integral is None:
+            return None
+        return (1 / constant) * decomposed_integral
 
     numerator = expr.num()
     if not is_polynomial(numerator, wrt):
