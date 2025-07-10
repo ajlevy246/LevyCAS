@@ -412,41 +412,6 @@ def polynomial_divide(dividend: Expression, divisor: Expression, ordering: list[
         f = monomial_divide(remainder, lm)[0]
     return (quotient, remainder)
 
-# def polynomial_pseudo_divide(dividend: Expression, divisor: Expression, var: Expression) -> list[Expression]:
-#     """Given two general polynomial expressions with rational coefficients, performs monomial-based
-#     pseudo-division and returns the result [Quotient, Remainder]
-
-#     Psuedo-division is required as a variant of the euclidean division algorithm for which all remainders
-#     are polynomials with integer coefficients. 
-
-#     Psuedo-division and polynomial long-division are equivalent when the leading coefficient
-#     of the divisor is a unit. This means that they are equivalent for all univariate polynomials
-#     with rational coefficients.
-
-#     Algorithm adapted from https://pqnelson.github.io/org-notes/math/rings/polynomial.html#h-a46c3f92-c5c8-4218-b5b1-0f992b6d96fe, section 2.2
-    
-#     Args:
-#         dividend (Expression): A rational polynomial
-#         denominator (Expression): A rational polynomial
-#         var (Expression): A generalized variable
-
-#     Returns:
-#         list[Expression]: The list [Q, R] where Q is the quotient and R the remainder of the division.
-#     """
-#     c = leading_coefficient(divisor, var)
-#     n = 1 + (degree(divisor, var) - degree(divisor, var))
-#     q = 0
-#     r = dividend
-
-#     while r != 0 and not (degree(r, var) < degree(divisor, var)):
-#         s = leading_coefficient(r, var) * var**(degree(r, var) - degree(divisor, var))
-#         n -= 1
-#         q = s + c * q
-#         r = algebraic_expand(c * r - s * divisor)
-
-#     factor = c ** n
-#     return algebraic_expand(factor * q), algebraic_expand(factor * r)
-
 def polynomial_pseudo_divide(u, v, x):
     p, s = 0, u
     m, n = degree(s, x), degree(v, x)
@@ -636,3 +601,28 @@ def polynomial_content(expr: Expression, main_var: Expression, vars: list[Expres
     for term in terms:
         content = polynomial_gcd(content, leading_coefficient(term, main_var), vars)
     return content
+
+def factor_sqfree(u: Expression, x: Variable) -> list[Expression]:
+    from .calculus_ops import derivative
+    if u == 0:
+        return u
+    
+    c = leading_coefficient(u, x)
+    U = algebraic_expand(u / c)
+    factors = []
+    P = 1
+    R = polynomial_gcd(U, derivative(U, x), [x])
+    F = polynomial_divide(U, R, x)[0]
+    j = 1
+    while R != 1:
+        G = polynomial_gcd(R, F, [x])
+        s = polynomial_divide(F, G, x)[0]
+        factors.append(s**j)
+        P *= s**j
+        R = polynomial_divide(R, G, x)[0]
+        F = G
+        j += 1
+    factors.append(F ** j)
+    P *= F**j
+    return [c] + factors
+    # return Product(c, P)
