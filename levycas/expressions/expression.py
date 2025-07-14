@@ -600,7 +600,7 @@ class Rational(Constant):
     def __eq__(self, other):
         if isinstance(other, Number):
             return super().__eq__(convert_primitive(other))
-        return NotImplemented
+        return super().__eq__(other)
 
     def __hash__(self):
         return super().__hash__()

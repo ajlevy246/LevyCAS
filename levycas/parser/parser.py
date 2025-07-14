@@ -1,6 +1,7 @@
 """An implementation of a Pratt Parser for simple expressions"""
 from .lexer import Token, tokenize
 from ..expressions import *
+from ..operations import simplify
 
 #Global verbose vars for testing purposes
 pv = False #parsing verbose 
@@ -9,69 +10,97 @@ lv = False #lexing verbose
 
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
+    #Elementary functions, case insensitive
+    ("ELEM_SIN",       r'(?i)sin'),          #Matches sin function
+    ("ELEM_COS",       r'(?i)cos'),          #Matches cos function
+    ("ELEM_TAN",       r'(?i)tan'),          #Matches tan function
+    ("ELEM_CSC",       r'(?i)csc'),          #Matches csc function
+    ("ELEM_SEC",       r'(?i)sec'),          #Matches sec function
+    ("ELEM_ARCTAN",    r'(?i)arctan'),       #Matches arctan function
+    ("ELEM_ARCCOS",    r'(?i)arccos'),       #Matches arccos function
+    ("ELEM_ARCSIN",    r'(?i)arcsin'),       #Matches arcsin function
+    ("ELEM_LN",        r'(?i)ln'),           #Matches natural log
+    ("ELEM_EXP",       r'(?i)exp'),          #Matches exponential
+
+    #Constants/Symbols
     ("NUMBER",    r'(\d+\.?\d*|\d*\.\d+)'),   #Matches a decimal
-    ("TRIG_SIN",       r'(?:i)sin'),           #Matches sin function, case insensitive
-    ("TRIG_COS",       r'(?:i)cos'),           #Matches cos function, case insensitive
-    ("TRIG_TAN",       r'(?:i)tan'),           #Matches tan function, case insensitive
-    ("TRIG_CSC",       r'(?:i)csc'),           #Matches csc function, case insensitive
-    ("TRIG_SEC",       r'(?:i)sec'),           #Matches sec function, case insensitive
     ("VARIABLE",  r'[a-zA-Z]'),               #Matches a single letter
-    ("EXP",       r'\^'),                     #Matches a single exponential symbol  
+
+    #Elementary operations
+    ("POW",       r'\^'),                     #Matches a single power symbol
     ("PLUS",      r'\+'),                     #Matches a plus sign
     ("MINUS",     r'-'),                      #Matches a minus sign
     ("MULT",      r'\*'),                     #Matches a multiplication sign
     ("DIV",       r'/'),                      #Matches a division sign
     ("FACT",      r'\!'),                     #Matches a factorial symbol
+
+    #Special characters
     ("LPAREN",    r'\('),                     #Matches a left paren
     ("RPAREN",    r'\)'),                     #Matches a right paren
-    ("COMMA",     r'\,'),                     #Matches a comma
     ("SPACE",     r'\s+'),                    #Matches any whitespace
     ("OTHER",     r'.'),                      #Matches any invalid characters
     ("EOL",       r'\$')                      #Matches the End-of-Line character '$'
 ]
 
-"""Token classes, matching associated Parsing classes"""
+"""Token classes, matching associated Expression classes"""
 TOKEN_CLASS = {
-    "NUMBER":   Integer,
-    "TRIG_SIN":      Sin,
-    "TRIG_COS":      Cos,
-    "TRIG_TAN":      Tan,
-    "TRIG_CSC":      Csc,
-    "TRIG_SEC":      Sec,
+    #Constants/Symbols
+    "NUMBER": Integer,
     "VARIABLE": Variable,
-    "PLUS":     Sum,
-    "MULT":     Product,
-    "DIV":      Div,
-    "EXP":      Power,
-    "FACT":     Factorial,
-    "LPAREN":   Special,
-    "RPAREN":   Special,
-    "SPACE":    Special,
-    "OTHER":    Special,
-    "EOL":      Special
+
+    #Elementary Functions
+    "ELEM_SIN": Sin,
+    "ELEM_COS": Cos,
+    "ELEM_TAN": Tan,
+    "ELEM_CSC": Csc,
+    "ELEM_SEC": Sec,
+    "ELEM_ARCTAN": Arctan,
+    "ELEM_ARCCOS": Arccos,
+    "ELEM_ARCSIN": Arcsin,
+    "ELEM_LN": Ln,
+    "ELEM_EXP": Exp,
+
+    #Elementary operations, "MINUS" parsed separately
+    "POW": Power,
+    "PLUS": Sum,
+    "MULT": Product,
+    "DIV": Div,
+    "FACT": Factorial,
+
 }
 
-"""Operator precendences, matching associated binding powers"""
+"""Operator precedence rules, matching associated binding powerss"""
 TOKEN_BP = {
-    "NUMBER":   (0, 0),
-    "TRIG_SIN": (0, 40),
-    "TRIG_COS": (0, 40),
-    "TRIG_TAN": (0, 40),
-    "TRIG_CSC": (0, 40),
-    "TRIG_SEC": (0, 40),
-    "TRIG_COT": (0, 40),
+    #Constants/Symbols
+    "NUMBER": (0, 0),
     "VARIABLE": (0, 40),
-    "PLUS":     (10, 15),
-    "MINUS":    (10, 20), 
-    "MULT":     (20, 25),
-    "DIV":      (20, 25),
-    "EXP":      (35, 30),
-    "FACT":     (40, 40),
-    "LPAREN":   (-1, -1),
-    "RPAREN":   (-1, -1),
-    "SPACE":    (-1, -1),
-    "OTHER":    (-1, -1),
-    "EOL":      (-1, -1)
+
+    #Elementary functions, case insensitive
+    "ELEM_SIN": (0, 40),
+    "ELEM_COS": (0, 40),
+    "ELEM_TAN": (0, 40),
+    "ELEM_CSC": (0, 40),
+    "ELEM_SEC": (0, 40),
+    "ELEM_ARCTAN": (0, 40),
+    "ELEM_ARCCOS": (0, 40),
+    "ELEM_ARCSIN": (0, 40),
+    "ELEM_LN": (0, 40),
+    "ELEM_EXP": (0, 40),
+
+    #Elementary operations
+    "POW": (35, 30),
+    "PLUS": (10, 15),
+    "MINUS": (10, 20),
+    "MULT": (20, 25),
+    "DIV": (20, 25),
+    "FACT": (40, 40),
+
+    #Special characters
+    "LPAREN": (-1, -1),
+    "RPAREN": (-1, -1),
+    "SPACE": (-1, -1),
+    "OTHER": (-1, -1),
+    "EOL": (-1, -1)
 }
 
 def parse(expression: str, **symbols) -> Expression:
@@ -152,40 +181,9 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
     elif curr.type == "VARIABLE":
         left = Variable(curr.value)
 
-    elif curr.type.startswith("TRIG_"):
+    elif curr.type.startswith("ELEM_"):
         right = pratt(tokens, TOKEN_BP[curr.type][1])
         left = TOKEN_CLASS[curr.type](right)
-
-    elif curr.type == "FUNCTION":
-        if pv:
-            print(f"Parsing FUNCTION token: {curr.value}")
-        left = symbols.get(curr.value, None) #Get the defined function from symbol table
-        if left is None:
-            raise ValueError("What??")
-        left = left.copy() #Copy it over
-        new_args = list()
-
-        assert tokens[-1].type == "LPAREN", "Please parenthesize function arguments"
-        tokens.pop() #Remove lparen before parsing arguments
-
-        next_arg = pratt(tokens, 0, **symbols).sym_eval(**symbols)
-        new_args.append(next_arg) #Get first argument
-        next = tokens[-1]
-        if pv:
-            print(f"After returning first argument: {next=}")
-        while next.type == "COMMA":
-            if pv:
-                print(f"Detected comma; looping: {new_args=}")
-            tokens.pop() #Parse comma
-            next_arg = pratt(tokens, 0, **symbols).sym_eval(**symbols)
-            new_args.append(next_arg)
-            next = tokens[-1]
-
-        assert next.type == "RPAREN", "Please parenthesize function arguments"
-        tokens.pop() #Parse rparen
-        if pv:
-            print(f"Adding args to function {curr.value}: {new_args}")
-        left.add_args(*new_args)
 
     elif curr.type == "LPAREN":
         left = pratt(tokens, 0, **symbols)
@@ -199,7 +197,7 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
     elif curr.type == "MINUS": #Unary minus operator is parsed into (-1) * Exp
         minus_rbp = TOKEN_BP["MINUS"][1] 
         right = pratt(tokens, minus_rbp, **symbols)
-        left = Product(Integer(-1), right)
+        left = -right
 
     else:
         raise SyntaxError(f"Expected null denotation from {curr}")
@@ -231,15 +229,26 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
 
         tokens.pop() #Consume token after precedence check
 
+        #Basic operations in/post-fix operations
         if next.type == "MINUS":
             right = pratt(tokens, rbp, **symbols)
-            left = Sum(left, Product(Integer(-1), right))
+            left -= right
+        elif next.type == "PLUS":
+            right = pratt(tokens, rbp, **symbols)
+            left += right
+        elif next.type == "POW":
+            right = pratt(tokens, rbp, **symbols)
+            left = left ** right
+        elif next.type == "DIV":
+            right = pratt(tokens, rbp, **symbols)
+            left /= right
+        elif next.type == "MULT":
+            right = pratt(tokens, rbp, **symbols)
+            left *= right
         elif next.type == "FACT":
             left = Factorial(left)
         else:
-            right = pratt(tokens, rbp, **symbols)
+            print(f"{next.type} is not a supported operation?")
 
-            #Produce resulting expression.
-            left = TOKEN_CLASS[next.type](left, right)
 
     return left
