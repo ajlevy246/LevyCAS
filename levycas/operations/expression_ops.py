@@ -6,6 +6,28 @@ from ..expressions import *
 from numbers import Number
 from typing import Callable 
 
+#TODO: Move variables() operator from polynomial_ops to here
+
+def symbols(expr: Expression) -> set[Variable]:
+    """Returns the set of variables in an expression,
+    empty set if it is constant.
+
+    Args:
+        expr (Expression): Expression to extract variables from
+
+    Returns:
+        set[Variable]: Set of variables in the expression
+    """
+    if isinstance(expr, Constant):
+        return set()
+    elif isinstance(expr, Variable):
+        return {expr,}
+    else:
+        syms = set()
+        for operand in expr.operands():
+            syms = syms.add(symbols(operand))
+        return syms
+
 def contains(expr: Expression, subs: Expression | set[Expression]) -> bool:
     """Checks whether the given expression contains any of the given
     sub-expressions as a *complete* argument.
