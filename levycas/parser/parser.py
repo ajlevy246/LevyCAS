@@ -69,23 +69,23 @@ TOKEN_CLASS = {
 
 }
 
-"""Operator precedence rules, matching associated binding powerss"""
+"""Operator precedence rules, matching associated binding powers"""
 TOKEN_BP = {
     #Constants/Symbols
     "NUMBER": (0, 0),
     "VARIABLE": (0, 40),
 
     #Elementary functions, case insensitive
-    "ELEM_SIN": (0, 40),
-    "ELEM_COS": (0, 40),
-    "ELEM_TAN": (0, 40),
-    "ELEM_CSC": (0, 40),
-    "ELEM_SEC": (0, 40),
-    "ELEM_ARCTAN": (0, 40),
-    "ELEM_ARCCOS": (0, 40),
-    "ELEM_ARCSIN": (0, 40),
-    "ELEM_LN": (0, 40),
-    "ELEM_EXP": (0, 40),
+    "ELEM_SIN": (5, 40),
+    "ELEM_COS": (5, 40),
+    "ELEM_TAN": (5, 40),
+    "ELEM_CSC": (5, 40),
+    "ELEM_SEC": (5, 40),
+    "ELEM_ARCTAN": (5, 40),
+    "ELEM_ARCCOS": (5, 40),
+    "ELEM_ARCSIN": (5, 40),
+    "ELEM_LN": (5, 40),
+    "ELEM_EXP": (5, 40),
 
     #Elementary operations
     "POW": (35, 30),
