@@ -25,7 +25,7 @@ def symbols(expr: Expression) -> set[Variable]:
     else:
         syms = set()
         for operand in expr.operands():
-            syms = syms.add(symbols(operand))
+            syms = syms.union(symbols(operand))
         return syms
 
 def contains(expr: Expression, subs: Expression | set[Expression]) -> bool:
