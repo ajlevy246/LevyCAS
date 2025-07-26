@@ -333,3 +333,21 @@ def test_partial_fractions():
         rationalize(u1 / v1 + u2 / v2)
         == u / (v1 * v2)
     )
+
+def test_rational_simplify():
+    a, b, c, x = Variable('a'), Variable('b'), Variable('c'), Variable('x')
+
+    assert (
+        rational_simplify(1/a + 1/b)
+        == (a + b) / (a*b)
+    )
+
+    assert (
+        rational_simplify((x**2 - 1) / (x - 1))
+        == x + 1
+    )
+
+    assert (
+        rational_simplify(1/(1/a + c/(a*b)) + (a*b*c + a*c**2) / ((b+c)**2))
+        == a
+    )

@@ -626,3 +626,27 @@ def factor_sqfree(u: Expression, x: Variable) -> list[Expression]:
     P *= F**j
     return [c] + factors
     # return Product(c, P)
+
+def rational_simplify(u: Expression) -> Expression:
+    """Simplifies a rational expression by euclidean division.
+
+    Examples:
+        >>> rational_simplify(1/a + 1/b)
+        (a+b) / (ab)
+
+        >>> rational_simplify((x**2 - 1) / (x - 1))
+        x + 1
+
+    Args:
+        u (Expression): A rational expression to simplify
+
+    Returns:
+        Expression: The rationalized expression
+    """
+    from .expression_ops import symbols
+    from .algebraic_ops import rationalize
+    syms = symbols(u)
+    u = rationalize(u)
+    num, denom = algebraic_expand(u.num()), algebraic_expand(u.denom())
+    quot, rem = polynomial_divide(num, denom, sorted(syms))
+    return rationalize(quot + rem / denom)
