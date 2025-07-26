@@ -12,14 +12,14 @@ from .expressions import (
 )
 
 from .operations import (
-    contains, copy, construct, map_op, substitute,
+    contains, copy, construct, map_op, substitute, symbols,
     algebraic_expand, algebraic_expand_main, rationalize, linear_form, quadratic_form,
     Deriv, derivative, integrate,
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
     trig_simplify, trig_substitute, trig_contract, trig_expand,
     is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_pseudo_divide, polynomial_content, univariate_partial_fractions,
     polynomial_gcd, polynomial_divide_recursive,
-    gcd, factor_integer, is_prime, radical
+    gcd, factor_integer, is_prime, radical, rational_simplify
 )
 
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
     'trig_substitute', 'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot', 'Arctan', 'Arccos', 'Arcsin',
     'Variable', 'Function', 'Elementary',
     'Exp', 'Ln',
-    'contains', 'copy', 'construct', 'map_op', 'substitute',
+    'contains', 'copy', 'construct', 'map_op', 'substitute', 'symbols',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
     'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive',
@@ -38,5 +38,5 @@ __all__ = [
     'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
     'Deriv', 'derivative', 'integrate', 
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
-    'gcd', 'factor_integer', 'is_prime', 'radical'
+    'gcd', 'factor_integer', 'is_prime', 'radical', 'rational_simplify'
 ]
