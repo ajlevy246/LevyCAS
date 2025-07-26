@@ -29,13 +29,3 @@ def test_parse():
         parse("3 + 4 * 2 / (1 - 5) ^ 2 ^ 3")
         == Rational(24577, 8192)
     )
-
-    #Case sensitivity tests
-    assert (
-        parse("Cos(x)")
-        == parse("COS(x)")
-        == parse("cOs(x)")
-        == parse("cosx")
-        == parse("cOSx")
-        == Cos(x)
-    )

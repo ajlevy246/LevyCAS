@@ -11,16 +11,16 @@ lv = False #lexing verbose
 """Token specifications, matching regex strings"""
 TOKEN_SPEC: list[tuple[str]] = [
     #Elementary functions, case insensitive
-    ("ELEM_SIN",       r'(?i)sin'),          #Matches sin function
-    ("ELEM_COS",       r'(?i)cos'),          #Matches cos function
-    ("ELEM_TAN",       r'(?i)tan'),          #Matches tan function
-    ("ELEM_CSC",       r'(?i)csc'),          #Matches csc function
-    ("ELEM_SEC",       r'(?i)sec'),          #Matches sec function
-    ("ELEM_ARCTAN",    r'(?i)arctan'),       #Matches arctan function
-    ("ELEM_ARCCOS",    r'(?i)arccos'),       #Matches arccos function
-    ("ELEM_ARCSIN",    r'(?i)arcsin'),       #Matches arcsin function
-    ("ELEM_LN",        r'(?i)ln'),           #Matches natural log
-    ("ELEM_EXP",       r'(?i)exp'),          #Matches exponential
+    ("ELEM_SIN",       r'sin'),          #Matches sin function
+    ("ELEM_COS",       r'cos'),          #Matches cos function
+    ("ELEM_TAN",       r'tan'),          #Matches tan function
+    ("ELEM_CSC",       r'csc'),          #Matches csc function
+    ("ELEM_SEC",       r'sec'),          #Matches sec function
+    ("ELEM_ARCTAN",    r'arctan'),       #Matches arctan function
+    ("ELEM_ARCCOS",    r'arccos'),       #Matches arccos function
+    ("ELEM_ARCSIN",    r'arcsin'),       #Matches arcsin function
+    ("ELEM_LN",        r'ln'),           #Matches natural log
+    ("ELEM_EXP",       r'exp'),          #Matches exponential
 
     #Constants/Symbols
     ("NUMBER",    r'(\d+\.?\d*|\d*\.\d+)'),   #Matches a decimal
