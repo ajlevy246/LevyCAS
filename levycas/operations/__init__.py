@@ -1,23 +1,23 @@
 from .algebraic_ops import algebraic_expand, algebraic_expand_main, rationalize, linear_form, quadratic_form
 from .calculus_ops import Deriv, derivative, integrate
-from .expression_ops import contains, copy, construct, map_op, substitute
+from .expression_ops import contains, copy, construct, map_op, substitute, symbols
 from .simplification_ops import simplify, sym_eval, simplify_power, simplify_product, simplify_sum, simplify_div, simplify_factorial
 from .trig_ops import trig_simplify, trig_substitute, trig_expand, trig_contract
 from .polynomial_ops import (
     is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial,
     monomial_divide, polynomial_divide_recursive, polynomial_divide, polynomial_pseudo_divide, polynomial_content, polynomial_gcd,
-    univariate_partial_fractions
+    univariate_partial_fractions, rational_simplify
 )
 from .numerical_ops import gcd, factor_integer, is_prime, radical
 
 __all__ = [
-    'contains', 'copy', 'construct', 'map_op', 'substitute',
+    'contains', 'copy', 'construct', 'map_op', 'substitute', 'symbols',
     'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
     'Deriv', 'derivative', 'integrate',
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
     'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive',
-    'univariate_partial_fractions',
+    'univariate_partial_fractions', 'rational_simplify',
     'gcd', 'factor_integer', 'is_prime', 'radical'
 ]
