@@ -5,7 +5,7 @@ from ..operations import simplify
 
 #Global verbose vars for testing purposes
 pv = False #parsing verbose 
-lv = False #lexing verbose
+lv = True #lexing verbose
 
 
 """Token specifications, matching regex strings"""
@@ -139,7 +139,7 @@ def expand(tokens: list[Token], **symbols) -> list[Token]:
         #Implicit Multiplication is expanded
         next = tokens[i + 1] if i + 1 < len(tokens) else None
         if next:
-            if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and (next.type in ("VARIABLE", "LPAREN", "FUNCTION") or next.type.startswith("TRIG_")):
+            if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and (next.type in ("VARIABLE", "LPAREN", "FUNCTION") or next.type.startswith("ELEM_")):
                 expanded.append(Token("MULT", "*", curr.pos + curr.len))
     return expanded
 
@@ -154,7 +154,7 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
         Expression.Expression: The root of the subtree parsed by this iteration
     """
     if lv:
-        print(f"Tokens: {tokens[-1]}")
+        print(f"Tokens: {tokens[::-1]}")
 
     curr = tokens.pop()
     if pv: 
