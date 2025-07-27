@@ -12,7 +12,7 @@ from .expressions import (
 )
 
 from .operations import (
-    contains, copy, construct, map_op, substitute, symbols,
+    contains, copy, construct, map_op, substitute, symbols, get_symbols,
     algebraic_expand, algebraic_expand_main, rationalize, linear_form, quadratic_form,
     Deriv, derivative, integrate,
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
@@ -30,7 +30,7 @@ __all__ = [
     'trig_substitute', 'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot', 'Arctan', 'Arccos', 'Arcsin',
     'Variable', 'Function', 'Elementary',
     'Exp', 'Ln',
-    'contains', 'copy', 'construct', 'map_op', 'substitute', 'symbols',
+    'contains', 'copy', 'construct', 'map_op', 'substitute', 'symbols', 'get_symbols',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
     'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive',

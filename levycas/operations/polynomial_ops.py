@@ -643,9 +643,9 @@ def rational_simplify(u: Expression) -> Expression:
     Returns:
         Expression: The rationalized expression
     """
-    from .expression_ops import symbols
+    from .expression_ops import get_symbols
     from .algebraic_ops import rationalize
-    syms = symbols(u)
+    syms = get_symbols(u)
     u = rationalize(u)
     num, denom = algebraic_expand(u.num()), algebraic_expand(u.denom())
     quot, rem = polynomial_divide(num, denom, sorted(syms))

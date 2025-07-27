@@ -8,7 +8,27 @@ from typing import Callable
 
 #TODO: Move variables() operator from polynomial_ops to here
 
-def symbols(expr: Expression) -> set[Variable]:
+def symbols(syms: str | list[str]) -> tuple[Variable]:
+    """Utility for creating Variable objects, a la sympy's "symbols()"
+
+    Examples:
+        >>> x, y, z = symbols('x x x')
+        >>> x == y == z:
+        True
+
+        >>> symbols(['a', 'b'])
+        (a, b)
+    
+    Args:
+        syms (str | list[str]): A list of variable names in either list format or as a space-delimited string.
+
+    Returns:
+        tuple[Variable]: A tuple of variable objects with the given names.
+    """
+    syms = syms.split() if isinstance(syms, str) else syms
+    return tuple(Variable(sym) for sym in syms)
+    
+def get_symbols(expr: Expression) -> set[Variable]:
     """Returns the set of variables in an expression,
     empty set if it is constant.
 
@@ -25,7 +45,7 @@ def symbols(expr: Expression) -> set[Variable]:
     else:
         syms = set()
         for operand in expr.operands():
-            syms = syms.union(symbols(operand))
+            syms = syms.union(get_symbols(operand))
         return syms
 
 def contains(expr: Expression, subs: Expression | set[Expression]) -> bool:
