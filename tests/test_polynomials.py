@@ -4,7 +4,7 @@ import pytest
 from levycas import *
 
 def test_monomial():
-    x, y = Variable('x'), Variable('y')
+    x, y = symbols('x y')
     a = Variable('a')
 
     assert is_monomial(a*x**2*y**2, {x, y})
@@ -14,7 +14,7 @@ def test_monomial():
     assert not is_monomial(a**2 + x, {a})
 
 def test_polynomial():
-    x, y = Variable('x'), Variable('y')
+    x, y = symbols('x y')
     a = Variable('a')
 
     assert is_polynomial(x**2 + y**2, {x, y})
@@ -24,40 +24,37 @@ def test_polynomial():
     assert not is_polynomial((x + 1) * (x + 3), x)
 
 def test_variables():
-    x, y = Variable('x'), Variable('y')
-    a, b, c = Variable('a'), Variable('b'), Variable('c')
+    x, y = symbols('x y')
+    a, b, c = symbols("a b c")
 
     assert variables(x**3 + 3*x**2*y+3*x*y**2 + y**3) == {x, y}
     assert variables(a*Sin(x)**2 + 2*b*Sin(x) + 3*c) == {a, b, c, Sin(x)}
     assert variables(1) == set()
 
 def test_coefficient():
-    x, y = Variable('x'), Variable('y')
-    a, b, c = Variable('a'), Variable('b'), Variable('c')
+    x, y = symbols('x y')
+    a, b, c = symbols(" a b c")
 
     assert (
         coefficient(a*x**2 + b*x + c, x, 2)
         == a
     )
-
     assert (
         coefficient(3*x*y**2 + 5*x**2*y + 7*x + 9, x, 1)
         == 3*y**2 + 7
     )
-
     assert (
         coefficient(3*x*y**2 + 5*x**2*y + 7*x + 9, x, 3)
         == 0
     ) 
-
     assert (
         coefficient(3*Sin(x)*x**2 + 2*Ln(x)*x + 4, x, 2)
         is None
     )
 
 def test_leading_coefficient():
-    x, y = Variable('x'), Variable('y')
-    a, b, c = Variable('a'), Variable('b'), Variable('c')
+    x, y = symbols('x y')
+    a, b, c = symbols(" a b  c")
 
     assert (
         leading_coefficient(a*x + b*x + y, x)
@@ -75,8 +72,8 @@ def test_leading_coefficient():
     )
 
 def test_degree():
-    x, y = Variable('x'), Variable('y')
-    a, b, c = Variable('a'), Variable('b'), Variable('c')
+    x, y = symbols('x y')
+    a, b, c = symbols(" a b c")
 
     assert (
         degree(3*x**2 + 4*x + 4, x)
@@ -104,8 +101,8 @@ def test_degree():
     )
 
 def test_lex_ordering():
-    x, y, z = Variable('x'), Variable('y'), Variable('z')
-    a, b, c = Variable('a'), Variable('b'), Variable('c')
+    x, y, z = symbols('x y z')
+    a, b, c = symbols('a b c')
 
     alphabetical = [a, b, c, x, y, z]
     reverse_alphabetical = alphabetical[::-1]
@@ -135,7 +132,7 @@ def test_lex_ordering():
     assert not lex_lt(3*x*y, 2*x*y, reverse_alphabetical)
 
 def test_leading_monomial():
-    x, y = Variable('x'), Variable('y')
+    x, y = symbols('x y')
     lm = lambda y: leading_monomial(y, [x, y])
     less = lambda x, y: lex_lt(x, y, [x, y])
 
@@ -162,7 +159,7 @@ def test_leading_monomial():
     )
 
 def test_polynomial_division():
-    x, y = Variable('x'), Variable('y')
+    x, y = symbols('x y')
     ordering = [x, y]
 
     dividend = 2*x**2*y + 3*x**2 + 4*x*y + 5*x + 6*y + 7
@@ -204,7 +201,7 @@ def test_polynomial_division():
     )
 
 def test_polynomial_gcd():
-    x, y, z = Variable('x'), Variable('y'), Variable('z')
+    x, y, z = symbols("x y z")
 
     #univariate tests - basic
     assert (
@@ -317,7 +314,6 @@ def test_polynomial_gcd():
 def test_partial_fractions():
     x = Variable('x')
 
-
     # (8x+7) / (x+2)(x-1) -> 3/(x+2) + 5/(x-1)
     u, v1, v2 = 8*x + 7, x + 2, x - 1
     u1, u2 = univariate_partial_fractions(u, v1, v2, x)
@@ -335,18 +331,16 @@ def test_partial_fractions():
     )
 
 def test_rational_simplify():
-    a, b, c, x = Variable('a'), Variable('b'), Variable('c'), Variable('x')
+    a, b, c, x = symbols('a b c x')
 
     assert (
         rational_simplify(1/a + 1/b)
         == (a + b) / (a*b)
     )
-
     assert (
         rational_simplify((x**2 - 1) / (x - 1))
         == x + 1
     )
-
     assert (
         rational_simplify(1/(1/a + c/(a*b)) + (a*b*c + a*c**2) / ((b+c)**2))
         == a

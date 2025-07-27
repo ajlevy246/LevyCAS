@@ -2,6 +2,7 @@
 
 import pytest
 from levycas.expressions import *
+from levycas import symbols
 
 def test_constant_ordering():
     assert Integer(2) < Rational(5, 2)
@@ -26,7 +27,7 @@ def test_symbol_ordering():
     assert not Variable('A') < Variable('9')
 
 def test_sum_and_product_ordering():
-    a, b, c, d = Variable('a'), Variable('b'), Variable('c'), Variable('d')
+    a, b, c, d = symbols('a b c d')
 
     assert Sum(a, b) < Sum(a, c)
     assert not Sum(a, c) < Sum(a, b)
@@ -35,7 +36,7 @@ def test_sum_and_product_ordering():
     assert not Sum(b, c, d) < Sum(a, c, d)
 
 def test_elementary_orderings():
-    x, y, z = Variable("x"), Variable("y"), Variable("z")
+    x, y, z = symbols('x y z')
 
     assert Cos(x) < Sin(x)
     assert not Sin(x) < Cos(x)

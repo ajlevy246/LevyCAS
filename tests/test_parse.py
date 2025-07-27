@@ -2,7 +2,7 @@ import pytest
 from levycas import *
 
 def test_parse():
-    x, y, z = Variable('x'), Variable('y'), Variable('z')
+    x, y, z = symbols('x y z')
 
     #Basic order of operations tests
     assert (

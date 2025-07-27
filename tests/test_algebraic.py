@@ -7,7 +7,7 @@ class TestLinearForm:
     """Tests for the linear_form() operator"""
 
     def test_linear_fail(self):
-        x, y = Variable('x'), Variable('y')
+        x, y = symbols('x y')
         
         assert (
             None
@@ -34,7 +34,7 @@ class TestQuadraticForm:
     """Tests for the quadratic_form() operator"""
 
     def test_quadratic_fail(self):
-        x, y = Variable('x'), Variable('y')
+        x, y = symbols('x y')
 
         assert (
             None

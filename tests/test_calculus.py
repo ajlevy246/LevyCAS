@@ -28,18 +28,18 @@ class TestIntegrate:
     """Tests for the integrate operator"""
 
     def test_integrate_constant(self):
-        x, y = Variable('x'), Variable('y')
+        x, y = symbols('x y')
 
         assert integrate(2 * y, x) == 2*y*x
         assert integrate(Sin(Integer(1)), x) == Sin(Integer(1))*x
         assert integrate(Cos(Sin(Rational(-1, 2))), x) == Cos(Sin(Rational(-1, 2))) * x
 
     def test_integrate_match(self):
-        x, y = Variable("x"), Variable("y")
+        x, y = symbols('x y')
         pass
 
     def test_integrate_substitute(self):
-        x, y = Variable("x"), Variable("y")
+        x, y = symbols('x y')
         
         #Elementary function substitution
         assert (
@@ -100,12 +100,12 @@ class TestIntegrate:
         )
 
     def test_integrate_linear(self):
-        x, y = Variable("x"), Variable("y")
+        x, y = symbols('x y')
 
         assert integrate(2*x + (1 / 2)*x**2, x) == x**2 + Rational(1, 6)*x**3
 
     def test_integration_byparts(self):
-        x, y = Variable('x'), Variable('y')
+        x, y = symbols('x y')
 
         #Exponential tests
         assert (
@@ -174,7 +174,7 @@ class TestIntegrate:
         )
 
     def test_integrate_miscellaneous(self):
-        x, y = Variable('x'), Variable('y')
+        x, y = symbols('x y')
 
         assert (
             integrate(Cos(x) / (Sin(x)**2 + 3*Sin(x) + 4), x)

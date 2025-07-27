@@ -4,7 +4,7 @@ from levycas import *
 class TestSimplification:
     """Tests for automatic simplification of expressions"""
     def test_sum(self):
-        x, y, z = Variable('x'), Variable('y'), Variable('z')
+        x, y, z = symbols("x y z")
 
         assert (
             1 + x + y + z
@@ -29,7 +29,7 @@ class TestSimplification:
         )
 
     def test_product(self):
-        x, y, z = Variable('x'), Variable('y'), Variable('z')
+        x, y, z = symbols("x y z")
 
         assert (
             x * y * z * x * y * z
@@ -53,7 +53,7 @@ class TestSimplification:
         )
 
     def test_power(self):
-        a, b, c = Variable('a'), Variable("b"), Variable("c")
+        a, b, c = symbols("a b c ")
 
         assert (
             a**2 / a**5
@@ -85,7 +85,7 @@ class TestSimplification:
         )
 
     def test_rationals(self):
-        x, y, z = Variable('x'), Variable('y'), Variable('z')
+        x, y, z = symbols("x y z")
 
         a = Rational(1, 5)
 
@@ -112,8 +112,8 @@ class TestSimplification:
         )
 
     def test_basics(self):
-        x, y, z = Variable('x'), Variable('y'), Variable('z')
-        a, b, c = Variable('a'), Variable('b'), Variable('c')
+        x, y, z = symbols("x y z")
+        a, b, c = symbols("a b c")
         
         assert x / x == 1
         assert (x / y)*(y / x) == 1

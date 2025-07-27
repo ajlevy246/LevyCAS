@@ -1,11 +1,11 @@
 import pytest
 
 from levycas.expressions import *
-from levycas import trig_simplify, trig_contract, trig_expand
+from levycas import trig_simplify, trig_contract, trig_expand, symbols
 
 def test_trig_asimplify():
     """Tests for substitution and automatic simplification of trig operations"""
-    x, y = Variable('x'), Variable('y')
+    x, y = symbols('x y')
 
     assert 1 - Cos(0) == 0
     assert Cos(-x) == Cos(x)
@@ -15,7 +15,7 @@ def test_trig_asimplify():
 
 def test_trig_expand():
     """Tests for the trig_expand() operator"""
-    x, y = Variable('x'), Variable('y')
+    x, y = symbols('x y')
 
     assert (
         trig_expand(Sin(x + y)) 
@@ -145,7 +145,7 @@ def test_trig_identities():
 
 def test_trig_contract():
     """Tests for the trig_contract() operator"""
-    x, y = Variable('x'), Variable('y')
+    x, y = symbols("x y")
 
     assert (
         trig_contract((Sin(x) + Cos(y)) * Cos(y))
