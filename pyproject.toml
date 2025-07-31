@@ -2,9 +2,19 @@
 name = "LevyCAS"
 version = "1.0"
 authors = [
-    {name = "Alex Levy", email = "ajlevy246@vt.edu"},
+    {name = "Alex Levy", email = "ajlevy246@gmail.edu"},
 ]
-description = "Implementation of a Pratt Parser for simple expressions"
+description = "A computer algebra system written in python, including a Pratt Parser for parsing math in natural language."
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICENSE.txt"]
+
+[project.urls]
+Homepage = "https://github.com/ajlevy246/LevyCAS"
 
 [build-system]
 requires = ["setuptools"]
