@@ -1,8 +1,8 @@
 [project]
-name = "LevyCAS"
-version = "1.0"
+name = "levycas"
+version = "0.0.1"
 authors = [
-    {name = "Alex Levy", email = "ajlevy246@gmail.edu"},
+    {name = "Alex Levy", email = "ajlevy246@gmail.com"},
 ]
 description = "A computer algebra system written in python, including a Pratt Parser for parsing math in natural language."
 readme = "README.md"
@@ -21,4 +21,4 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["levycas"]
+where = ["src"]
