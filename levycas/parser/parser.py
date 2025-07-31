@@ -5,7 +5,7 @@ from ..operations import simplify
 
 #Global verbose vars for testing purposes
 pv = False #parsing verbose 
-lv = True #lexing verbose
+lv = False #lexing verbose
 
 
 """Token specifications, matching regex strings"""
