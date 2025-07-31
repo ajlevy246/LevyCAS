@@ -82,38 +82,38 @@ def render_numerical_operation(selection):
 def render_polynomial_operation(selection):
     gr.Textbox(selection)
 
-if __name__ == "__main__":
-    with gr.Blocks() as cas_demo:
-        menu_selection = gr.State()
+with gr.Blocks() as demo:
+    menu_selection = gr.State()
+    with gr.Row():
+        for opt in MENU_OPTIONS.keys():
+            btn = gr.Button(opt)
+            btn.click(change_selection, btn, menu_selection)
+
+    operation_selection = gr.State()
+
+    @gr.render(inputs=menu_selection)
+    def sub_menu(selection):
+        if selection is None:
+            return
+        
         with gr.Row():
-            for opt in MENU_OPTIONS.keys():
+            for opt in MENU_OPTIONS[selection]:
                 btn = gr.Button(opt)
-                btn.click(change_selection, btn, menu_selection)
+                btn.click(change_selection, btn, operation_selection)
 
-        operation_selection = gr.State()
+    @gr.render(inputs=[menu_selection, operation_selection])
+    def render_operation(menu, operation):
+        if menu is None or operation is None:
+            return
+        
+        if menu == "Calculus":
+            render_calculus_operation(operation)
+        elif menu == "Numerical":
+            render_numerical_operation(operation)
+        elif menu == "Polynomial":
+            render_polynomial_operation(operation)
+        else:
+            gr.Textbox("Operation not recognized")
 
-        @gr.render(inputs=menu_selection)
-        def sub_menu(selection):
-            if selection is None:
-                return
-            
-            with gr.Row():
-                for opt in MENU_OPTIONS[selection]:
-                    btn = gr.Button(opt)
-                    btn.click(change_selection, btn, operation_selection)
-
-        @gr.render(inputs=[menu_selection, operation_selection])
-        def render_operation(menu, operation):
-            if menu is None or operation is None:
-                return
-            
-            if menu == "Calculus":
-                render_calculus_operation(operation)
-            elif menu == "Numerical":
-                render_numerical_operation(operation)
-            elif menu == "Polynomial":
-                render_polynomial_operation(operation)
-            else:
-               gr.Textbox("Operation not recognized")
-
-    cas_demo.launch()
+if __name__ == "__main__":
+    demo.launch()
