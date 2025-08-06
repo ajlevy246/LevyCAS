@@ -94,11 +94,11 @@ class Expression:
     def __eq__(self, other):
         """Check if two expressions are syntactically equal. For this to make sense, 
         both expressions should be ASAE (Automatically-Simplified Arithmetic Expressions)."""
-
-        return str(self) == str(other)
+        other = other if isinstance(other, str) else repr(other)
+        return repr(self) == other
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(repr(self))
 
     def __gt__(self, other):
         return not (self < other)
@@ -163,11 +163,23 @@ class Sum(Expression):
     """A Sum is the sum of two terms"""
     def __init__(self, *terms):
         self.terms = list(terms)
-        
+
     def __repr__(self):
-        term_repr = [str(term) for term in self.terms[::-1]]
+        term_repr = [repr(term) for term in self.terms[::-1]]
         return "(" + " + ".join(term_repr) + ")"
     
+    def __str__(self):
+        num_terms = len(self.terms)
+        
+        string = str(self.terms[0])
+        for i in range(num_terms - 1):
+            next = self.terms[i + 1]
+            if next.coefficient().is_negative():
+                string += f" - {str(-next)}"
+            else:
+                string += f" + {str(next)}"
+        return string
+
     def __lt__(self, other):
         """Total ordering for Sums: O-3"""
         if isinstance(other, Sum):
@@ -188,7 +200,7 @@ class Sum(Expression):
             return self < Sum(other)
         
         return NotImplemented
-    
+
     def __add__(self, other):
         #Overrides parent method to denest the addition of two sums
         #example: x + y + z should be Sum(x, y, z), not Sum(Sum(x, y), z)
@@ -198,7 +210,7 @@ class Sum(Expression):
             return simplify_sum(Sum(*new_terms))
 
         return super().__add__(other)
-        
+
     def operands(self):
         return self.terms
 
@@ -210,12 +222,28 @@ class Product(Expression):
     def __repr__(self):
         if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
             if self.factors[0] == -1:
-                return "-" + str(self.factors[1])
+                return "-" + repr(self.factors[1])
             return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
         
-        factor_repr = [str(factor) for factor in self.factors]
-        return "(" + " \u00B7 ".join(factor_repr) + ")" #\u00b7 -> \cdot
-    
+        factor_repr = [repr(factor) for factor in self.factors]
+        return "(" + " \u00B7 ".join(factor_repr) + ")" #\u00b7 -> (•)
+
+    def __str__(self):
+        string = ""
+        first = self.factors[0]
+        if isinstance(first, Constant) and first.is_negative():
+            string += f"-{first!s}"
+        else:
+            string += f"{first!s}"
+            
+        for i in range(1, len(self.factors)):
+            curr = self.factors[i]
+            if isinstance(curr, (Constant, Variable, Elementary)):
+                string += str(curr)
+            else:
+                string += f"({curr!s})"
+        return string
+
     def __lt__(self, other):
         """Total ordering for Products: O-3"""
         if isinstance(other, Product):
@@ -281,6 +309,37 @@ class Power(Expression):
     def __repr__(self):
         return f"({self.left} ^ {self.right})"
     
+    def __str__(self):
+        INT_EXP_MAP = {
+            '1': '\u00b9',
+            '2': '\u00b2',
+            '3': '\u00b3',
+            '4': '\u2074',
+            '5': '\u2075',
+            '6': '\u2076',
+            '7': '\u2077',
+            '8': '\u2078',
+            '9': '\u2079',
+        }
+        base, exponent = self.left, self.right
+        if isinstance(base, Variable) and isinstance(exponent, Integer):
+            exp = INT_EXP_MAP[str(exponent)]
+            return f"{base!s}{exp}"
+        else:
+            string = ""
+            if isinstance(base, (Constant, Variable, Elementary)):
+                string += str(base)
+            else:
+                string += f"({base!s})"
+            string += "^"
+            if isinstance(exponent, (Constant, Variable, Elementary)):
+                string += str(exponent)
+            else:
+                string += f"({exponent!s})"
+            
+            return string
+
+
     def __lt__(self, other):       
         if isinstance(other, Expression) and not isinstance(other, Product):
             if self.base() == other.base():
@@ -400,7 +459,7 @@ class Elementary(Expression):
         return NotImplemented
 
     def __repr__(self):
-        args_repr = "(" + ", ".join([str(arg) for arg in self.args]) + ")"
+        args_repr = "(" + ", ".join([repr(arg) for arg in self.args]) + ")"
         return type(self).__name__ + args_repr
 
 class Function(Expression):
@@ -436,7 +495,7 @@ class Function(Expression):
 
     def __repr__(self):
         if self.args:
-            args_repr = [str(arg) for arg in self.args]
+            args_repr = [repr(arg) for arg in self.args]
             return f"{self.name}({', '.join(args_repr)})"
         if self.definition:
             return f"{self.definition}"
@@ -674,7 +733,7 @@ class Integer(Constant):
 
     def __repr__(self):
         """Returns the value of the integer"""
-        return str(self.value)
+        return repr(self.value)
 
     def __hash__(self):
         return hash(self.eval())
