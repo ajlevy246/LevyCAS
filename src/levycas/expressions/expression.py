@@ -240,6 +240,12 @@ class Product(Expression):
             curr = self.factors[i]
             if isinstance(curr, (Constant, Variable, Elementary)):
                 string += str(curr)
+            elif isinstance(curr, Power):
+                child_rep = str(curr)
+                if len(child_rep) > 2:
+                    string += "(" + child_rep + ")"
+                else:
+                    string += child_rep
             else:
                 string += f"({curr!s})"
         return string
@@ -338,7 +344,6 @@ class Power(Expression):
                 string += f"({exponent!s})"
             
             return string
-
 
     def __lt__(self, other):       
         if isinstance(other, Expression) and not isinstance(other, Product):
@@ -461,6 +466,11 @@ class Elementary(Expression):
     def __repr__(self):
         args_repr = "(" + ", ".join([repr(arg) for arg in self.args]) + ")"
         return type(self).__name__ + args_repr
+        
+    def __str__(self):
+        args_repr = "(" + ", ".join([str(arg) for arg in self.args]) + ")"
+        return type(self).__name__ + args_repr
+        
 
 class Function(Expression):
     def __init__(self, name):
