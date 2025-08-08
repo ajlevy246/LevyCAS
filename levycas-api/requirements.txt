@@ -1,0 +1,3 @@
+--extra-index-url https://test.pypi.org/simple/
+levycas==0.0.2
+gradio>=5.38.2
