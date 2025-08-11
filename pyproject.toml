@@ -14,7 +14,7 @@ license = "MIT"
 license-files = ["LICENSE.txt"]
 
 [project.urls]
-Homepage = "https://github.com/ajlevy246/LevyCAS"
+homepage = "https://github.com/ajlevy246/LevyCAS"
 
 [build-system]
 requires = ["setuptools"]
