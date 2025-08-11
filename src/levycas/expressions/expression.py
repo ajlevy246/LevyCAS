@@ -471,7 +471,6 @@ class Elementary(Expression):
         args_repr = "(" + ", ".join([str(arg) for arg in self.args]) + ")"
         return type(self).__name__ + args_repr
         
-
 class Function(Expression):
     def __init__(self, name):
         self.name = name
@@ -664,7 +663,7 @@ class Rational(Constant):
         pass
 
     def __repr__(self):
-        return f"({self.left} / {self.right})"
+        return f"({self.left}/{self.right})"
 
     def __eq__(self, other):
         if isinstance(other, Number):
