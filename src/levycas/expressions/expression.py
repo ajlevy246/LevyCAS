@@ -320,7 +320,7 @@ class Power(Expression):
             '1': '\u00b9',
             '2': '\u00b2',
             '3': '\u00b3',
-            '4': '\u2074',
+            '4': '\u2074', 
             '5': '\u2075',
             '6': '\u2076',
             '7': '\u2077',
@@ -328,7 +328,7 @@ class Power(Expression):
             '9': '\u2079',
         }
         base, exponent = self.left, self.right
-        if isinstance(base, Variable) and isinstance(exponent, Integer):
+        if isinstance(base, Variable) and isinstance(exponent, Integer) and exponent < 10:
             exp = INT_EXP_MAP[str(exponent)]
             return f"{base!s}{exp}"
         else:
