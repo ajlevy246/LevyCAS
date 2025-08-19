@@ -2,7 +2,7 @@ import gradio as gr
 from levycas import *
 
 with gr.Blocks() as api:
-    def derivate(expr: str, wrt: str) -> str:
+    def deriv(expr: str, wrt: str) -> str:
         """Take the derivative of an expression.
 
         Args:
@@ -13,10 +13,9 @@ with gr.Blocks() as api:
             str: derivative
         """
         expr, wrt = parse(expr), parse(wrt)
-        return str(derivate(expr, wrt))
+        return str(derivative(expr, wrt))
 
-
-    def integrate(expr: str, wrt: str) -> str:
+    def integ(expr: str, wrt: str) -> str:
         """Take the integral of an expression.
 
         Args:
@@ -56,9 +55,8 @@ with gr.Blocks() as api:
         poly = parse(poly)
         return str(rationalize(poly))
 
-    gr.api(derivate, api_name="calculus/derivative")
-    gr.api(integrate, api_name="calculus/integrate")
+    gr.api(deriv, api_name="calculus/derivative")
+    gr.api(integ, api_name="calculus/integrate")
     gr.api(poly_rationalize, api_name="polynomials/rationalize")
 
-
-api.launch()
+api.launch(show_error=True)
