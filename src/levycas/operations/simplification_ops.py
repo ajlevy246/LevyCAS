@@ -108,7 +108,7 @@ def simplify_product(expr: Product) -> Expression:
         elif isinstance(factors[1], Constant):
             return simplify_product(Product(factors[1], factors[0]))
 
-    flattened = flatten_factors(factors)
+    flattened = flatten_factors(factors) 
     num_flattened = len(flattened)
     if num_flattened == 0:
         return Integer(1)
@@ -182,8 +182,8 @@ def flatten_factors(factors: list[Expression]) -> list[Expression]:
     if num_factors < 2:
         return factors
     
-    u_1 = factors[0]
-    u_2 = factors[1]
+    u_1 = convert_primitive(factors[0])
+    u_2 = convert_primitive(factors[1])
     u_1_prod = isinstance(u_1, Product)
     u_2_prod = isinstance(u_2, Product)
     
@@ -282,8 +282,8 @@ def flatten_terms(terms: list[Expression]) -> list[Expression]:
     if num_terms < 2:
         return terms
     
-    u_1 = terms[0]
-    u_2 = terms[1]
+    u_1 = convert_primitive(terms[0])
+    u_2 = convert_primitive(terms[1])
     u_1_sum = isinstance(u_1, Sum)
     u_2_sum = isinstance(u_2, Sum)
 
