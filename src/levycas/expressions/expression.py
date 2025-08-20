@@ -231,18 +231,18 @@ class Product(Expression):
     def __str__(self):
         string = ""
         first = self.factors[0]
-        if isinstance(first, Constant) and first.is_negative():
-            string += f"-{first!s}"
-        else:
-            string += f"{first!s}"
+        if isinstance(first, Constant):
+            if first.is_negative():
+                return "-" + str(-self)
+            else:
+                string += f"{first!s}"
             
-        for i in range(1, len(self.factors)):
-            curr = self.factors[i]
+        for curr in self.factors[-1:0:-1]:
             if isinstance(curr, (Constant, Variable, Elementary)):
                 string += str(curr)
             elif isinstance(curr, Power):
                 child_rep = str(curr)
-                if len(child_rep) > 2:
+                if "^" in child_rep:
                     string += "(" + child_rep + ")"
                 else:
                     string += child_rep
@@ -317,6 +317,7 @@ class Power(Expression):
     
     def __str__(self):
         INT_EXP_MAP = {
+            '-': '\u207b',
             '1': '\u00b9',
             '2': '\u00b2',
             '3': '\u00b3',
@@ -328,22 +329,22 @@ class Power(Expression):
             '9': '\u2079',
         }
         base, exponent = self.left, self.right
-        if isinstance(base, Variable) and isinstance(exponent, Integer) and exponent < 10:
-            exp = INT_EXP_MAP[str(exponent)]
-            return f"{base!s}{exp}"
+        if isinstance(base, Variable) and isinstance(exponent, Integer) and abs(exponent) < 10:
+            exp_repr = "".join([INT_EXP_MAP[char] for char in str(exponent)])
+            return f"{base!s}{exp_repr}"
+        
+        string = ""
+        if isinstance(base, (Constant, Variable, Elementary)):
+            string += str(base)
         else:
-            string = ""
-            if isinstance(base, (Constant, Variable, Elementary)):
-                string += str(base)
-            else:
-                string += f"({base!s})"
-            string += "^"
-            if isinstance(exponent, (Constant, Variable, Elementary)):
-                string += str(exponent)
-            else:
-                string += f"({exponent!s})"
-            
-            return string
+            string += f"({base!s})"
+        string += "^"
+        if isinstance(exponent, (Constant, Variable, Elementary)):
+            string += str(exponent)
+        else:
+            string += f"({exponent!s})"
+        
+        return string
 
     def __lt__(self, other):       
         if isinstance(other, Expression) and not isinstance(other, Product):
@@ -819,7 +820,9 @@ class Integer(Constant):
             #No simplification could be performed
             return Power(self, other)
 
+        # Returns a direct Product instance -> no simplification needed.
         result = out_int * out_rad * (sqr_int ** Rational(sqr_gcd, eq))
+        # result = Product(out_int * out_rad, sqr_int ** Rational(sqr_gcd, eq))
         if self.is_negative():
             result *= (-1) ** other
         return result
