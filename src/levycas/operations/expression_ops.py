@@ -26,6 +26,8 @@ def symbols(syms: str | list[str]) -> tuple[Variable]:
         tuple[Variable]: A tuple of variable objects with the given names.
     """
     syms = syms.split() if isinstance(syms, str) else syms
+    if len(syms) == 1:
+        return Variable(syms[0])
     return tuple(Variable(sym) for sym in syms)
     
 def get_symbols(expr: Expression) -> set[Variable]:
