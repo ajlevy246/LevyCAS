@@ -92,3 +92,10 @@ def test_radical():
         radical(1000000)
         == 10
     )
+
+def test_issues():
+    """Tests for various issues needing debugging"""
+    assert (
+        Integer(8) ** Rational(1, 2)
+        == 2 * 2 ** Rational(1, 2)
+    )
