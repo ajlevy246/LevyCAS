@@ -2,48 +2,6 @@
 from math import lcm, comb, factorial
 from numbers import Number
 
-#TODO: Change the simplify operation to return a new expression, instead of altering in place??
-#perhaps make it a static function under Expression
-
-#TODO: Rethink function implementation! Not too late!!
-#Do this before implementing derivative operator on page 182 of Elementary Algorithms
-#also, implement natural logarithm first! TEST DERIVATIVE IMPLEMENTATION 
-#Example: (x ** 2).derivative(y) -> fails
-#Implement derivative operator to simplify automatically?
-
-#TODO: Deal with **symbols dictionary. It should ideally be global
-#to avoid conflicts with the simplify function
-
-#TODO: Deal with redefinition of functions.
-# Recursion works (correctly raises error), but now we should store functions
-# in the symbol table differently, or copy them over differently
-# no need to copy the definition over, if the sym_eval will just 
-# get the global definition first 
-
-#TODO: Make note of the following behavior:
-#1: f(x) = x
-#2: x = 2
-#3: f(x) -> 2, but intended would be: f(x) -> x
-#No way to avoid overwriting parameters? Except manually when parsing.
-#Causes the following error:
-#1: f(x, y) = x + y
-#2: f(0, x) -> 0 (incorrect), the names of the param args shouldn't matter.
-#Possible solution, change the internal representations of the parameters
-#in a function definition so that they don't matter?
-#NOTE: More complicated, consider:
-#1: f(x) = x
-#2: g(x) = f(x)
-#3: g(1) -> Should return 1
-
-#TODO: Deal with errors in the following:
-#1: f(x) = x
-#2: g(y) = y
-#3: simplify f(x) + g(y) -> Error??
-
-#TODO: Parse error? 
-#1: g(x, y) = g(0, 0) + g(0, 1)
-#"None is not a valid function definition"
-
 """Undefined flyweight; default value for expressions that can not be evaluated
 """
 UNDEFINED = "UNDEFINED" 
