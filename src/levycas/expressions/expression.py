@@ -191,11 +191,13 @@ class Product(Expression):
         first = self.factors[0]
         # Reverse the list so that variables are printed before elementary functions, 
         # but rational coefficients are always printed first
-        if isinstance(first, Constant) and first.is_negative():
-            remaining_spliced = self.factors[-1:0:-1]
-            return "-" + str(-self)
-        else:
-            remaining_spliced = self.factors[::-1] 
+        remaining_spliced = self.factors[::-1]
+        if isinstance(first, Constant):
+            if first.is_negative():
+                return "-" + str(-self)
+            else:
+                string += str(first)
+                remaining_spliced = self.factors[-1:0:-1]
             
         for curr in remaining_spliced:
             if isinstance(curr, (Constant, Variable, Elementary)):
