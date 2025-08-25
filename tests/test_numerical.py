@@ -99,3 +99,7 @@ def test_issues():
         Integer(8) ** Rational(1, 2)
         == 2 * 2 ** Rational(1, 2)
     )
+    assert (
+        2 * Integer(4)**Rational(1, 2)
+        == 4
+    )
