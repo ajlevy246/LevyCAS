@@ -291,6 +291,11 @@ class Power(Expression):
             '9': '\u2079',
         }
         base, exponent = self.left, self.right
+        # NOTE: Sqrt appears only here. That is:
+        # it is not a recognized function
+        if exponent == Rational(1, 2):
+            return f"Sqrt({base!s})"
+
         if isinstance(base, Variable) and isinstance(exponent, Integer) and abs(exponent) < 10:
             exp_repr = "".join([INT_EXP_MAP[char] for char in str(exponent)])
             return f"{base!s}{exp_repr}"
@@ -783,8 +788,8 @@ class Integer(Constant):
             return Power(self, other)
 
         # Returns a direct Product instance -> no simplification needed.
-        result = out_int * out_rad * (sqr_int ** Rational(sqr_gcd, eq))
-        # result = Product(out_int * out_rad, sqr_int ** Rational(sqr_gcd, eq))
+        # result = out_int * out_rad * (sqr_int ** Rational(sqr_gcd, eq))
+        result = Product(out_int * out_rad, sqr_int ** Rational(sqr_gcd, eq))
         if self.is_negative():
             result *= (-1) ** other
         return result

@@ -49,6 +49,9 @@ def simplify_power(expr: Power) -> Expression:
     Returns:
         Expression: The simplified expression or UNDEFINED
     """
+    if not isinstance(expr, Power):
+        return expr
+
     v = expr.base()
     w = expr.exponent()
 
@@ -93,6 +96,9 @@ def simplify_product(expr: Product) -> Expression:
     Returns:
         Expression: The simplified expression or UNDEFINED
     """
+    if not isinstance(expr, Product):
+        return expr
+    
     factors = expr.operands()
     if 0 in factors:
         return Integer(0)
@@ -127,6 +133,8 @@ def simplify_sum(expr: Sum) -> Expression:
     Returns:
         Expression: The simplified sum
     """
+    if not isinstance(expr, Sum):
+        return expr
     terms = expr.operands()
     if UNDEFINED in terms:
         return UNDEFINED
