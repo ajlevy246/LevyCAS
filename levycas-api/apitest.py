@@ -1,8 +1,10 @@
 import gradio as gr
-from levycas import *
+import levycas as cas
 
 with gr.Blocks() as api:
-    def deriv(expr: str, wrt: str) -> str:
+
+    # Calculus Operations
+    def derivative(expr: str, wrt: str) -> str:
         """Take the derivative of an expression.
 
         Args:
@@ -12,10 +14,10 @@ with gr.Blocks() as api:
         Returns:
             str: derivative
         """
-        expr, wrt = parse(expr), parse(wrt)
-        return str(derivative(expr, wrt))
+        expr, wrt = cas.parse(expr), cas.parse(wrt)
+        return str(cas.derivative(expr, wrt))
 
-    def integ(expr: str, wrt: str) -> str:
+    def integrate(expr: str, wrt: str) -> str:
         """Take the integral of an expression.
 
         Args:
@@ -25,38 +27,88 @@ with gr.Blocks() as api:
         Returns:
             str: integral
         """
-        expr, wrt = parse(expr), parse(wrt)
-        return str(integrate(expr, wrt))
+        expr, wrt = cas.parse(expr), cas.parse(wrt)
+        return str(cas.integrate(expr, wrt))
 
-
-    def poly_gcd(poly_1: str, poly_2: str) -> str:
-        """Calculate the greatest common divisor of two polynomials
-
+    # Numerical Operations
+    def is_prime(expr: str) -> str:
+        """Check if an integer is prime
+        
         Args:
-            poly_1 (str): first polynomial
-            poly_2 (str): second polynomial
+            expr (str): number
 
         Returns:
-            str: gcd(poly_1, poly_2)
+            str: primality of the number
         """
-        poly_1, poly_2 = parse(poly_1), parse(poly_2)
-        syms = get_symbols(poly_1).union(get_symbols(poly_2))
-        return str(polynomial_gcd(poly_1, poly_2, list(syms)))
-
-    def poly_rationalize(poly: str) -> str:
-        """Rationalize a polynomial
+        expr = cas.parse(expr)
+        return str(cas.is_prime(expr))
+    
+    def factor(expr: str) -> str:
+        """Compute the prime factors of a number
 
         Args:
-            poly (str): polynomial
+            expr (str): integer
 
         Returns:
-            str: rationalized polynomial
+            str: prime factorization
         """
-        poly = parse(poly)
-        return str(rationalize(poly))
+        expr = cas.parse(expr)
+        factors_dict = cas.factor_integer(expr)
+        factors = [str(cas.Power(factor, factors_dict[factor])) for factor in factors_dict]
+        return " * ".join(factors)
+        
+    # Simplification Operations
+    def auto(expr: str) -> str:
+        """Parse an expression. Allows the user to 
+        see how the CAS is interpreting their input.
 
-    gr.api(deriv, api_name="calculus/derivative")
-    gr.api(integ, api_name="calculus/integrate")
-    gr.api(poly_rationalize, api_name="polynomials/rationalize")
+        Args:
+            expr (str): expression
+
+        Returns:
+            str: parsed expression
+        """
+        return str(cas.parse(expr))
+    
+    def trig(expr: str) -> str:
+        """Run an expression through the
+        trig_simplify routine. 
+
+        Args:
+            expr (str): expression
+
+        Returns:
+            str: trig-simplified expression
+        """
+        expr = cas.parse(expr)
+        return str(cas.trig_simplify(expr))
+    
+    def rationalize(expr: str) -> str:
+        """Rationalize an expression.
+
+        Args:
+            expr (str): expression
+
+        Returns:
+            str: rationalized form
+        """
+        expr = cas.parse(expr)
+        return str(cas.rationalize(expr))
+
+    # Polynomial operations - API endpoints not yet implemented
+
+    gr.api(derivative, api_name="calculus/derivative")
+    gr.api(integrate, api_name="calculus/integrate")
+
+    gr.api(is_prime, api_name="num/prime")
+    gr.api(factor, api_name="num/factor")
+
+    gr.api(auto, api_name="simp/auto")
+    gr.api(trig, api_name="simp/trig")
+    gr.api(rationalize, api_name="simp/rationalize")
+
+    # gr.api(gcd, api_name="poly/gcd")
+    # gr.api(sqf, api_name="poly/sqf")
+
 
 api.launch(show_error=True)
