@@ -296,7 +296,7 @@ class Power(Expression):
         if exponent == Rational(1, 2):
             return f"Sqrt({base!s})"
 
-        if isinstance(base, Variable) and isinstance(exponent, Integer) and abs(exponent) < 10:
+        if isinstance(base, (Variable, Integer)) and isinstance(exponent, Integer) and abs(exponent) < 10:
             exp_repr = "".join([INT_EXP_MAP[char] for char in str(exponent)])
             return f"{base!s}{exp_repr}"
         
