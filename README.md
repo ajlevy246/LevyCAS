@@ -1,8 +1,13 @@
-LevyCAS!!
+# Welcome to LevyCAS!
 
-This project is using the Setuptools backend.
+LevyCAS is a simple but robust computer algebra system that is designed around the processing of natural language expressions.
 
-I'm using a venv environment to help me develop this project.
+# Installation:
+LevyCAS is uploaded as a Python package on the TestPyPi index. Install with pip:
+
+```bash
+python3 -m pip install --index-url https://test.pypi.org/simple/ levycas
+```
 
 # Examples:
 
