@@ -107,7 +107,7 @@ def parse(expression: str, **symbols) -> Expression:
     """Parse an input expression into a LevyCAS Expression tree. 
 
     Args:
-        expression (str): A mathematical expression string
+        expression (str): A mathematical expression
 
     Returns:
         Expression.Expression: The root of the AST representing the input expression.
@@ -151,7 +151,7 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
         bp (int): Right binding power of the preceding operator
 
     Returns:
-        Expression.Expression: The root of the subtree parsed by this iteration
+        Expression: The root of the subtree parsed by this iteration
     """
     if lv:
         print(f"Tokens: {tokens[::-1]}")
@@ -190,7 +190,7 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
         next = tokens.pop()
         if next.type != "RPAREN" and next.type != "COMMA":
             raise SyntaxError(f"Expected closing parenthesis from {next}")
-        
+
     elif curr.type == "PLUS":
         left = pratt(tokens, 0, **symbols) #Ignore unary plus operator
 
@@ -229,7 +229,7 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
 
         tokens.pop() #Consume token after precedence check
 
-        #Basic operations in/post-fix operations
+        #Basic operations (in/post-fix)
         if next.type == "MINUS":
             right = pratt(tokens, rbp, **symbols)
             left -= right
@@ -249,6 +249,5 @@ def pratt(tokens: list[Token], bp: int, **symbols) -> Expression:
             left = Factorial(left)
         else:
             print(f"{next.type} is not a supported operation?")
-
 
     return left
