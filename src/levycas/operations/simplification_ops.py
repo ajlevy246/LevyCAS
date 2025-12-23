@@ -1,5 +1,5 @@
 """Methods acting on an expression's AST. 
-These operations perform simplification procedures, as defined in Chapter 3 of Mathematical Methods.
+These operations perform simplification procedures, to transform binary ASTs into a normal form.
 """
 
 from ..expressions import *
