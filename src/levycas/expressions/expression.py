@@ -11,25 +11,23 @@ MIN_ERROR = 10 ** -30
 
 #============ OPERATIONS ===============
 
-class CAS_ENV:
-    """An environment class that specifies a symbol and function table"""
-    def __init__(self):
+# class CAS_ENV:
+#     """An environment class that specifies a symbol and function table"""
+#     def __init__(self):
 
-        #A dictionary of symbols and their definitions.
-        self.symbols = dict()
+#         #A dictionary of symbols and their definitions.
+#         self.symbols = dict()
 
 class Expression:
-    """An Expression is a general mathematical object.
-    In this case, it is used to represent binary operations
-    """
+    """Expression is the base class for all mathematical operations in LevyCAS."""
+
     def __init__(self, *args):
         assert len(args) == 2
         self.left = args[0]
         self.right = args[1]
 
-    """The following four methods allow us to treat arbitrary expressions as powers/products/rationals. 
-    This is useful for automatic simplification and total ordering of expressions.
-    """
+    #The following four methods allow us to treat arbitrary expressions as powers/products/rationals. 
+    #This is useful for automatic simplification and total ordering of expressions.
     def base(self):
         return self
 
@@ -48,10 +46,13 @@ class Expression:
     def denom(self):
         return Integer(1)
 
-    """The following dunder methods allow us to treat python statements as AST's"""
+    #The following dunder methods allow us to treat python statements as ASTs
     def __eq__(self, other):
-        """Check if two expressions are syntactically equal. For this to make sense, 
-        both expressions should be ASAE (Automatically-Simplified Arithmetic Expressions)."""
+        """Check if two expressions are syntactically equal. 
+        
+        For this to make sense, both expressions should be ASAE 
+        (Automatically-Simplified Arithmetic Expressions).
+        """
         other = other if isinstance(other, str) else repr(other)
         return repr(self) == other
 
@@ -90,7 +91,7 @@ class Expression:
         other = convert_primitive(other)
         return simplify_power(Power(self, other)) if isinstance(other, Expression) else NotImplemented
 
-    """Right hand dunder methods for treating ints as Integers"""
+    # Right hand dunder methods for treating primitives as Constants
     def __radd__(self, other):
         other = convert_primitive(other)
         return (other + self) if isinstance(other, Expression) else NotImplemented
@@ -118,7 +119,8 @@ class Expression:
         return (other % self) if isinstance(other, Expression) else NotImplemented
 
 class Sum(Expression):
-    """A Sum is the sum of two terms"""
+    """Sums represent the sum of two or more terms."""
+
     def __init__(self, *terms):
         self.terms = list(terms)
 
@@ -173,7 +175,8 @@ class Sum(Expression):
         return self.terms
 
 class Product(Expression):
-    """A Product is the product of two factors"""
+    """Products represent a product of two or more factors"""
+
     def __init__(self, *factors):
         self.factors = list(factors)
 
@@ -259,7 +262,10 @@ class Product(Expression):
 
 class Div(Expression):
     """A Div represents the quotient of two terms. 
-    If both terms are integers, it is simplified to a rational number."""
+
+    Divs are not created directly in the parser,
+    and are automatically simplified as a/b -> a*b^-1.
+    """
     def __repr__(self):
         return f"({self.left} / {self.right})"
 
@@ -292,7 +298,7 @@ class Power(Expression):
         }
         base, exponent = self.left, self.right
         # NOTE: Sqrt appears only here. That is:
-        # it is not a recognized function
+        # it is not yet a recognized function.
         if exponent == Rational(1, 2):
             return f"Sqrt({base!s})"
 
@@ -343,6 +349,7 @@ class Power(Expression):
 
 class Factorial(Expression):
     """A Factorial represents the factorial of a number"""
+
     def __init__(self, value: Expression):
         """Create a new Factorial object"""
         self.value = value
@@ -369,19 +376,14 @@ class Factorial(Expression):
     def operands(self):
         return [self.value]
 
-class Special(Expression):
-    """Special represents special cases"""
-
-    def __init__(self):
-        raise NotImplementedError("Special cases not yet implemented")
-    
-    def __repr__(self):
-        raise NotImplementedError("Special cases not yet implemented") 
-
 #=============== SYMBOLS ===============
 
 class Variable(Expression):
-    """A Variable represents a variable"""
+    """A Variable represents a symbolic value. 
+    
+    Several algebraic and simplification routines allow for programmatic 
+    substitution of these values with constants or other expressions.
+    """
 
     def __init__(self, name: str):
         """Create a new Variable object"""
@@ -401,8 +403,10 @@ class Variable(Expression):
         return [self.name]
 
 class Elementary(Expression):
-    """Core elementary functions include the exponential functions, logarithm and exponential, trigonometric and 
-    inverse trigonometric functions, and hyperbolic/inverse hyperbolic functions."""
+    """Elementary is the base class for all named elementary function implementations in LevyCAS.
+
+    e.g. Log, Exp, Cos, Sin, et cetera. Implementations of these functions can be found in exp.py and trig.py.
+    """
 
     def __init__(self, *args):
         self.args = args
@@ -440,6 +444,10 @@ class Elementary(Expression):
         return type(self).__name__ + args_repr
         
 class Function(Expression):
+    """Placeholder for a future implementation of user-defined functions.
+    
+    f(x) = x**2 + y, e.g.
+    """
     def __init__(self, name):
         self.name = name
         self.args = None
@@ -514,7 +522,9 @@ class Function(Expression):
 #=============== CONSTANTS ===============
 
 class Constant(Expression):
-    """A Constant represents a constant value"""
+    """Constants serve as the base class for Rationals and Integers.
+    
+    Expressions consisting of only Constant atoms are rational expression."""
 
     def coefficient(self):
         return self
@@ -589,15 +599,11 @@ class Constant(Expression):
         return (self - other * (self // other))
 
 class Rational(Constant):
-    """A rational expression is a constant; a fraction of two integers"""
+    """Rationals represent fractions in LevyCAS. 
+    These are automatically reduced to lowest terms when instantiated."""
 
     def __new__(cls, *args):
-        """To faciliatate automatic simplification of Rational expression,
-        the __new__ method is overwritten.
-        
-        First, a new Rational instance is created. Then, the _factory method is called,
-        which returns a simplified Rational object.
-        """
+        """Automatic simplification of rational expressions"""
         if len(args) == 1:
             args = [args[0], 1]
 
@@ -702,7 +708,8 @@ class Rational(Constant):
         return self.right
 
 class Integer(Constant):
-    """An Integer represents a decimal integer"""
+    """Integers are boxed ints. The wrapper facilitates simplification and 
+    algebraic routines that require type checking."""
 
     def __init__(self, value: int):
         """Creates a new Integer object"""

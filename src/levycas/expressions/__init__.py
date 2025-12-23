@@ -1,6 +1,6 @@
 from .expression import (
-    UNDEFINED, CAS_ENV, Expression, Sum, Product, Div, Power, 
-    Factorial, Special, Constant, Integer,
+    UNDEFINED, Expression, Sum, Product, Div, Power, 
+    Factorial, Constant, Integer,
     Rational, Variable, Function, Elementary,
     convert_primitive
 )
@@ -9,7 +9,7 @@ from .exp import Exp, Ln
 
 __all__ = [
     'Constant', 'Integer', 'Rational', 'convert_primitive',
-    'UNDEFINED', 'CAS_ENV', 'Expression', 'Sum', 'Product', 'Div', 'Power', 'Factorial', 'Special',
+    'UNDEFINED', 'Expression', 'Sum', 'Product', 'Div', 'Power', 'Factorial',
     'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot', 'Arctan', 'Arccos', 'Arcsin',
     'Variable', 'Function', 'Elementary',
     'Exp', "Ln"

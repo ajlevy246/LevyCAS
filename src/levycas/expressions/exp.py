@@ -6,6 +6,7 @@ class Exp(Elementary):
 
 class Ln(Elementary):
     """Ln represents the natural logarithm"""
+    
     def __new__(cls, *args):
         """To facilitate automatic simplifcation of logarithmic expressions,
         the __new__ method is overwritten.
