@@ -5,16 +5,16 @@ LevyCAS is a simple but robust computer algebra system that is designed around t
 <img src="./assets/tui.png" width=500 alt="Sitting on a matte plane are dimly lit spheres and glass prisms.">
 
 # Installation:
-LevyCAS is uploaded as a Python package on the TestPyPi index. Install with pip:
+LevyCAS is uploaded as a Python package on the TestPyPi index. The base package with no extras has no dependencies. Install with pip:
 
 ```bash
 python3 -m pip install --index-url https://test.pypi.org/simple/ levycas
 ```
 
-To use the textual user interface, install with the `tui` extra, which adds the `levycas` command to the local PATH:
+To use the textual user interface, install with the `tui` extra, which adds the `levycas` command to the local PATH. This extra depends on the [`Textual`](https://textual.textualize.io/) package.
 
 ```bash
-python3 -m pip install --index-url https://test.pypy.org/simple/ levycas[tui]
+python3 -m pip install --extra-index-url https://test.pypi.org/simple/ levycas[tui]
 ```
 
 # Examples:
