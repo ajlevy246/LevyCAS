@@ -13,8 +13,16 @@ classifiers = [
 license = "MIT"
 license-files = ["LICENSE.txt"]
 
+[project.optional-dependencies]
+tui = [
+    "textual",
+]
+
 [project.urls]
 homepage = "https://github.com/ajlevy246/LevyCAS"
+
+[project.scripts]
+levycas = "levycas.cli.main:main"
 
 [build-system]
 requires = ["setuptools"]

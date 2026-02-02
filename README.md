@@ -1,12 +1,20 @@
 # Welcome to LevyCAS!
 
-LevyCAS is a simple but robust computer algebra system that is designed around the processing of natural language expressions.
+LevyCAS is a simple but robust computer algebra system that is designed around the processing of natural language expressions. LevyCAS comes equipped with a variety of  calculus and simplification operations acting on arbitrary algebraic expressions.
+
+<img src="./assets/tui.png" width=500 alt="Sitting on a matte plane are dimly lit spheres and glass prisms.">
 
 # Installation:
 LevyCAS is uploaded as a Python package on the TestPyPi index. Install with pip:
 
 ```bash
 python3 -m pip install --index-url https://test.pypi.org/simple/ levycas
+```
+
+To use the textual user interface, install with the `tui` extra, which adds the `levycas` command to the local PATH:
+
+```bash
+python3 -m pip install --index-url https://test.pypy.org/simple/ levycas[tui]
 ```
 
 # Examples:

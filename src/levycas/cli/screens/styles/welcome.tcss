@@ -1,0 +1,22 @@
+Header {
+    background: $accent;
+}
+
+#welcome-title {
+    content-align: center top;
+    width: 100%;    
+    margin: 7 0;
+    background: $panel;
+    border: tall $accent;
+}
+
+Horizontal {
+    align: center middle;
+}
+
+Button {
+    background: $surface;
+    border: tall $border;
+    margin: 0 5;
+    height: 3;
+}
