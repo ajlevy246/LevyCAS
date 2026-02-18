@@ -32,45 +32,6 @@ The parser constructs an AST as it iterates over each token. The AST consists of
 that each contain a 'run' method.
 """
 
-
-"""
-========== GRAMMAR ==========
-
-<script> := <control_block> <script> | <statement> <script> | ε
-
-~~~~~ control logic ~~~~~
-<control_block> := <for_loop> | <while_loop>
-<for_loop> := FOR <iterator_assignment> LBRACKET <script> RBRACKET
-<while_loop> := WHILE <iterator_condition> LBRACKET <script> RBRACKET
-<iterator_assignment> := LPAREN SYMBOL COLON INTEGER RPAREN
-<iterator_cond> := LPAREN SYMBOL CONDITION INTEGER RPAREN
-
-~~~~~ expressions ~~~~~
-<statement> := <declaration> SEMICOLON | <expression> SEMICOLON | <assignment> SEMICOLON
-<declaration> := <function_declaration> | <variable_declaration>
-<expression> := <command> <expression> | FLOAT <expression> | SYMBOL <expression> | SYMBOL <expression> | ε
-<command> := COMMAND <arguments_list>
-<assignment> := SYMBOL <arguments_list> EQUALS <expression> | SYMBOL EQUALS <expression>
-<function_declaration> := FUNC SYMBOL <arguments_list> EQUALS <expression>
-<variable_declaration> := VAR SYMBOL EQUALS <expression>
-
-~~~~~ literals ~~~~~
-COMMAND := "\\derivate" | "\\integrate" | "\\eval" | "sin" | "cos" | "tan" | "exp"
-INTEGER := \d+
-FLOAT := (\d+\.?\d*|\d*\.\d+)
-FUNC := "func"
-VAR := "var"
-SYMBOL := [a-z]
-EQUALS := "="
-SEMICOLON := ";"
-COLON := ":"
-LPAREN := "("
-RPAREN := ")"
-SYMBOL := "+-/*()^"
-SPACE := "\s+"
-OTHER := "."
-"""
-
 from enum import Enum
 from .execution import (
     Script,
@@ -218,9 +179,13 @@ def parse_for_loop():
     iterator, count = parse_iterator_assignment()
     next_token = tokens.pop()
     if next_token.type != TokenType.LBRACKET:
-        raise SyntaxError("Expected an opening brace '{' for the body of an if statement.")
+        raise SyntaxError("Expected an opening brace '{' for the body of a for loop.")
     
     body = parse_script()
+
+    next_token = tokens.pop()
+    if next_token.type != TokenType.RBRACKET:
+        raise SyntaxError("Expected a closing brace '}' for the body of a for loop.")
     return ForLoop(
         iterator=iterator,
         count=int(count),
