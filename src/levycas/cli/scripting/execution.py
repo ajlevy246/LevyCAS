@@ -63,15 +63,14 @@ class Environment:
         if ref_type == self.VARIABLE:
             if arguments is not None:
                 raise ReferenceError(f"Could not evaluate variable {name} with arguments {arguments}")
-            return reference[1]
+            var_definition = reference[1]
+            return var_definition if var_definition is not None else Variable(name) 
         
         elif ref_type == self.FUNCTION:
             parameters = reference[1]
             if (arguments is None) or (len(parameters) != len(arguments)):
                 raise ReferenceError(f"Function {name} expected {len(parameters)} argument(s) but got {len(arguments) if arguments is not None else 0}")
             func_definition = reference[2]
-            #TODO: Ensure that overwriting the result (while evaluating)
-            #doesn't affect the stored definition of the symbol.
             #TODO: Test with recursive definitions.
             #   - failing: `f(x) = x; print f(xy);`... why? 
             #   - after testing, this is a problem with sym_eval
