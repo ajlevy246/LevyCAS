@@ -52,7 +52,7 @@ class ScriptingScreen(Screen):
                     yield self.save_button
                     yield self.load_button
                     yield self.clear_button
-                    
+
 
                 # Scripting Description
                 yield Static(
@@ -61,7 +61,7 @@ Welcome to LevyCAS Scripting! Write scripts \
 in the text area to the right and press the green \
 Run button to see output. Save or Load a script with the \
 orange and yellow buttons. Clear the input text area with the red Clear button.""",
-                    id='desc'    
+                    id='desc'
                 )
 
             # User Input
@@ -73,7 +73,7 @@ orange and yellow buttons. Clear the input text area with the red Clear button."
         with Horizontal(id="welcome-container"):
             yield Button("Return Home", name='switch-screen', id='welcome')
             yield self.example_button
-            
+
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "run-script":
@@ -88,11 +88,11 @@ orange and yellow buttons. Clear the input text area with the red Clear button."
             self.script_input.clear()
             self.script_input.text = """\
 f(x, y) = cos(x) + ysin(y);\n
-print \integrate(f(x, y),y);
-print \derivate(f(x, y),x);\n
+print \\integrate(f(x, y),y);
+print \\derivate(f(x, y),x);\n
 for (i : 3) {
     print f(i, 0);
-}            
+}
 """
 
     @work(thread=True)
@@ -100,13 +100,13 @@ for (i : 3) {
         """Parse and run an input string."""
         # TODO: Reference below
         self.app.call_from_thread(self.script_output.clear)
-        
+
         tokens = lex_script(script)
         #NOTE: Uncomment below lines for lexing debugging.
         # for token in tokens:
         #     self.app.call_from_thread(self.script_output.write_line, str(token))
         run_script(script, self.script_output)
-        
+
 
         self.app.call_from_thread(self.toggle_run_button)
 
