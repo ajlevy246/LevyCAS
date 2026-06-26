@@ -21,9 +21,10 @@ class Ln(Elementary):
         if arg == 1:
             return Integer(0)
 
-        coefficient = arg.coefficient()
-        if coefficient == 0:
-            raise ValueError("Argument of the natural log must be positive")
+        if isinstance(arg, Constant):
+            coefficient = arg.coefficient()
+            if coefficient <= 0:
+                raise ValueError("Argument of the natural log must be positive")
         
         if type(arg) == Product:
             sum = 0
