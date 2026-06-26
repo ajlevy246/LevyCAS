@@ -1,8 +1,8 @@
-Header {
+WelcomeScreen Header {
     background: $accent;
 }
 
-#welcome-title {
+WelcomeScreen #welcome-title {
     content-align: center top;
     width: 100%;    
     margin: 7 0;
@@ -10,11 +10,11 @@ Header {
     border: tall $accent;
 }
 
-Horizontal {
+WelcomeScreen Horizontal {
     align: center middle;
 }
 
-Button {
+WelcomeScreen Button {
     background: $surface;
     border: tall $border;
     margin: 0 5;

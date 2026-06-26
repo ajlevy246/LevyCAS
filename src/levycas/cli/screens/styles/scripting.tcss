@@ -1,26 +1,26 @@
-Header {
+ScriptingScreen Header {
     background: $accent;
 }
 
-#main-container {
+ScriptingScreen #main-container {
     min-height: 85%;
     margin-top: 1;
 }
 
-#menu-desc-container {
+ScriptingScreen #menu-desc-container {
     padding-top: 1;
     width: 25%;
     margin-left: 1;
 }
 
-#screen-title {
+ScriptingScreen #screen-title {
     border: hkey $border;
     text-style: bold;
     text-align: center;
     margin-right: 2;
 }
 
-#cas-menu {
+ScriptingScreen #cas-menu {
     align: left top;
     border: double $border;
     height: 100%;
@@ -30,41 +30,41 @@ Header {
     hatch: right $background-darken-2;
 }
 
-#cas-menu Button {
+ScriptingScreen #cas-menu Button {
     margin: 1;
     min-width: 9;
     width: 75%;
     max-width: 18;
 }
 
-#run-script {
+ScriptingScreen #run-script {
     background: $success;
 }
-#save-script {
+ScriptingScreen #save-script {
     background: $warning-darken-1;
 
 }
-#load-script {
+ScriptingScreen #load-script {
     background: $warning;
 }
-#clear-script {
+ScriptingScreen #clear-script {
     background: $error;   
 }
 
-TextArea {
+ScriptingScreen TextArea {
     margin-right: 1;
     background: $panel;
     border: tall $border;  
     padding: 1;  
 }
-Log {
+ScriptingScreen Log {
     margin-right: 1;
     background: $surface;
     border: tall $border;
     padding: 1;
 }
 
-#welcome-container {
+ScriptingScreen #welcome-container {
     margin-top: 1;
     content-align: center middle;
 }
