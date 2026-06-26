@@ -2,14 +2,13 @@ from textual import work
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.widgets import Header, Footer, Static, Button, TextArea, Log
+from textual.widgets import Header, Static, Button, TextArea, Log
 
-from .. import run_script, lex_script
+from levycas.cli.scripting import run_script, lex_script
 
 from time import sleep
 
 class ScriptingScreen(Screen):
-    """Root textual app"""
     TITLE = "LevyCAS - Scripting"
     CSS_PATH = "styles/scripting.tcss"
 
@@ -56,12 +55,12 @@ class ScriptingScreen(Screen):
 
                 # Scripting Description
                 yield Static(
-                    content = """\
-Welcome to LevyCAS Scripting! Write scripts \
-in the text area to the right and press the green \
-Run button to see output. Save or Load a script with the \
-orange and yellow buttons. Clear the input text area with the red Clear button.""",
-                    id='desc'
+                    "Welcome to LevyCAS Scripting! "
+                    "Write scripts in the text area to the right and press the green "
+                    "Run button to see output. Save or Load a script with the orange "
+                    "and yellow buttons. Clear the input text area with the red Clear "
+                    "button.",
+                    id='desc',
                 )
 
             # User Input
@@ -86,14 +85,14 @@ orange and yellow buttons. Clear the input text area with the red Clear button."
 
         elif event.button.id == "load-example":
             self.script_input.clear()
-            self.script_input.text = """\
-f(x, y) = cos(x) + ysin(y);\n
-print \\integrate(f(x, y),y);
-print \\derivate(f(x, y),x);\n
-for (i : 3) {
-    print f(i, 0);
-}
-"""
+            self.script_input.text = (
+                "f(x, y) = cos(x) + ysin(y);\n\n"
+                "print \\integrate(f(x,y), y);\n"
+                "print  \\derivate(f(x,y), x);\n"
+                "for (i : 3) {                \n"
+                "   print f(i, 0);            \n"
+                "}                            \n"
+            )
 
     @work(thread=True)
     def run(self, script: str) -> None:
