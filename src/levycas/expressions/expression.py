@@ -536,6 +536,9 @@ class Constant(Expression):
         
         return self.eval() < other
 
+    def __le__(self, other):
+        return repr(self) == repr(other) or self < other
+
     def __add__(self, other):
         other = convert_primitive(other)
         if not isinstance(other, Constant):
