@@ -15,7 +15,10 @@ class ScriptingScreen(Screen):
     def __init__(self) -> None:
         super().__init__()
 
-        self.script_input = TextArea()
+        self.script_input = TextArea(
+            show_line_numbers=True,
+            tab_behavior="indent"
+        )
         self.script_input.border_title = "script input"
         self.script_input.border_subtitle = "scripting"
 
@@ -52,7 +55,6 @@ class ScriptingScreen(Screen):
                     yield self.load_button
                     yield self.clear_button
 
-
                 # Scripting Description
                 yield Static(
                     "Welcome to LevyCAS Scripting! "
@@ -72,7 +74,6 @@ class ScriptingScreen(Screen):
         with Horizontal(id="welcome-container"):
             yield Button("Return Home", name='switch-screen', id='welcome')
             yield self.example_button
-
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "run-script":
@@ -97,15 +98,13 @@ class ScriptingScreen(Screen):
     @work(thread=True)
     def run(self, script: str) -> None:
         """Parse and run an input string."""
-        # TODO: Reference below
         self.app.call_from_thread(self.script_output.clear)
 
         tokens = lex_script(script)
-        #NOTE: Uncomment below lines for lexing debugging.
+        #NOTE: Uncomment below lines to see the parsed tokens.
         # for token in tokens:
         #     self.app.call_from_thread(self.script_output.write_line, str(token))
         run_script(script, self.script_output)
-
 
         self.app.call_from_thread(self.toggle_run_button)
 
