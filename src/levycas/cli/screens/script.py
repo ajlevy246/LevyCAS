@@ -59,21 +59,19 @@ class ScriptingScreen(Screen):
                 yield Static(
                     "Welcome to LevyCAS Scripting! "
                     "Write scripts in the text area to the right and press the green "
-                    "Run button to see output. Save or Load a script with the orange "
-                    "and yellow buttons. Clear the input text area with the red Clear "
-                    "button.",
+                    "Run button to see output.",
                     id='desc',
                 )
 
-            # User Input
-            with Horizontal(id="script-inout-container"):
-                yield self.script_input
-                yield self.script_output
+            # User Input & Buttons
+            with Vertical(id="script-inout-and-menu-container"):
+                with Horizontal(id="script-inout-container"):
+                    yield self.script_input
+                    yield self.script_output
+                with Horizontal(id="welcome-container"):
+                    yield Button("Return Home", name='switch-screen', id='welcome')
+                    yield self.example_button
 
-        # Home Button
-        with Horizontal(id="welcome-container"):
-            yield Button("Return Home", name='switch-screen', id='welcome')
-            yield self.example_button
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "run-script":

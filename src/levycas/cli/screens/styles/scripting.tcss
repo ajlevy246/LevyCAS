@@ -27,7 +27,7 @@ ScriptingScreen {
         height: 100%;
         max-height: 20;
         min-width: 10;
-        margin: 2 3 3 0;
+        margin: 2 3 1 0;
         hatch: right $background-darken-2;
 
         Button {
@@ -35,45 +35,58 @@ ScriptingScreen {
             min-width: 9;
             width: 75%;
             max-width: 18;
+            border: tall $border;
+            height: 3;
+        }
+
+        #run-script {
+            background: $success;
+        }
+        #save-script {
+            background: $warning-darken-1;
+    
+        }
+        #load-script {
+            background: $warning;
+        }
+        #clear-script {
+            background: $error;   
         }
     }
 
-    #run-script {
-        background: $success;
-    }
-    #save-script {
-        background: $warning-darken-1;
 
-    }
-    #load-script {
-        background: $warning;
-    }
-    #clear-script {
-        background: $error;   
-    }
+    #script-inout-and-menu-container {
 
-    TextArea {
-        margin-right: 1;
-        background: $panel;
-        border: tall $border;  
-        padding: 1;  
-    }
-    Log {
-        margin-right: 1;
-        background: $surface;
-        border: tall $border;
-        padding: 1;
-    }
+        #script-inout-container {
+            height: 85%;
 
-    #welcome-container {
-        margin-top: 1;
-        align: center middle;
-    }
+            TextArea {
+                margin-right: 1;
+                background: $panel;
+                border: tall $border;  
+                padding: 1;  
+            }
+            Log {
+                margin-right: 1;
+                background: $surface;
+                border: tall $border;
+                padding: 1;
+            }
+        }
+    
+        #welcome-container {
+            padding: 0;
+            margin: 1 0;
+            align: center middle;
+            min-height: 4;
 
-    Button {
-        background: $surface;
-        border: tall $border;
-        margin: 0 5;
-        height: 3;
+            Button {
+                background: $surface;
+                border: tall $border;
+                margin: 0 3;
+                height: 3;
+            }
+        }
+    
     }
 }
