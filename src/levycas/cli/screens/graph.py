@@ -217,21 +217,21 @@ class CasPlot(PlotWidget):
         """
         legend = self.query_one_optional("#legend", Static)
         if not legend: return
+        
         legend_lines = []
         for idx, expr in enumerate(self.expressions):
-            if expr is None: continue
-            marker = "▀▄▀▄" # "\u2580\u2584"*2
+            if expr is None: continue  
             style = PLOT_COLORS[idx]
-            text = Text(marker)
+            text = Text("▀▄▀▄") # "\u2580\u2584"*2
             text.stylize(style)
             text.append(f" {expr}")
             legend_lines.append(text.markup)
         if not legend_lines:
-            legend.display = False
-            return
+            legend.display = False; return
+            
         legend.display = True
         legend.update(Text.from_markup("\n\n".join(legend_lines)))
-        self._legend_relative_offset = Offset(0,-len(legend_lines)-5)
+        self._legend_relative_offset = Offset(1,-(len(legend_lines)+5))
         self._position_legend()
 
     @staticmethod
@@ -239,7 +239,7 @@ class CasPlot(PlotWidget):
         expr: Expression, 
         x_min: float,
         x_max: float,
-        density: int = 500,
+        density: int,
     ) -> list[tuple[float, float]]:
         """Compute (x, y) points across the canvas for a given expression."""
         data = []
