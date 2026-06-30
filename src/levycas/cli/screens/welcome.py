@@ -13,4 +13,5 @@ class WelcomeScreen(Screen):
         yield Static("Welcome to LevyCAS!", id="welcome-title")
         with Horizontal():
             yield Button(label="Scripting", name="switch-screen", id="scripting")
+            yield Button(label="Graphing", name='switch-screen', id="graphing")
             yield Button(label="Demo", name="switch-screen", id="demo")

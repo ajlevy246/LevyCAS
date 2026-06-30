@@ -1,22 +1,24 @@
-WelcomeScreen Header {
-    background: $accent;
-}
+WelcomeScreen {
+    Header {
+        background: $accent;
+    }
 
-WelcomeScreen #welcome-title {
-    content-align: center top;
-    width: 100%;    
-    margin: 7 0;
-    background: $panel;
-    border: tall $accent;
-}
+    #welcome-title {
+        content-align: center top;
+        width: 100%;    
+        margin: 7 0;
+        background: $panel;
+        border: tall $accent;
+    }
 
-WelcomeScreen Horizontal {
-    align: center middle;
-}
+    Horizontal {
+        align: center middle;
+    }
 
-WelcomeScreen Button {
-    background: $surface;
-    border: tall $border;
-    margin: 0 5;
-    height: 3;
+    Button {
+        background: $surface;
+        border: tall $border;
+        margin: 0 5;
+        height: 3;
+    }
 }
