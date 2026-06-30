@@ -3,7 +3,7 @@ These operations perform simplification procedures, to transform binary ASTs int
 """
 
 from ..expressions import *
-from ..operations import construct
+from ..operations import construct, get_symbols
 
 def simplify(expr: Expression) -> Expression:
     """Given an algebraic expression expr, performs simplification procedures as
@@ -374,13 +374,14 @@ def merge_terms(first_terms: list[Expression], second_terms: list[Expression]) -
                 assert h == [q, p], f"{h=}\n {p=}\n {q=}"
                 return [q] + merge_terms(first_terms, rest_q)
 
-def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expression:
+def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expression, Expression]) -> Expression:
     """Given a symbol table "symbols" and an expression "expr", evaluates the expression by replacing all symbols
     with their definitions in the table, and then simplifying. If the expression contains only constants or if
     all symbols have definitions in the table, sym_eval will return a constant.
 
     Args:
         expr (Expression): The expression to evaluate.
+        approximate (bool, optional): Expand rational functions (e.g. cos, sin, factorial)
         symbols (dict[Expression, Expression]): The symbol table containing variable definitions.
 
     Returns:
@@ -397,7 +398,7 @@ def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expre
             return sym_eval(definition, **symbols)
 
     operation = type(expr)
-    evaluated_operands = [sym_eval(operand, **symbols) for operand in expr.operands()]
+    evaluated_operands = [sym_eval(operand, approximate, **symbols) for operand in expr.operands()]
 
     if operation == Sum:
         return simplify(sum(evaluated_operands))
@@ -416,10 +417,28 @@ def sym_eval(expr: Expression, **symbols: dict[Expression, Expression]) -> Expre
     
     elif operation == Factorial:
         operand = evaluated_operands[0]
-        if isinstance(operand, Integer):
+        if isinstance(operand, Integer) and approximate:
             from math import factorial
             return Integer(factorial(int(operand)))
         return Factorial(operand)
+
+    elif operation == Sin:
+        operand = convert_primitive(evaluated_operands[0])
+        if isinstance(operand, Constant) and approximate:
+            from math import sin
+            return convert_primitive(sin(operand))
+        return Sin(operand)
+        
+    elif operation == Cos:
+        print(f"Simplifying cos")
+        operand = convert_primitive(evaluated_operands[0])
+        print(f"Operand: {operand}, type: {type(operand)}")
+        print(f"{approximate=}")
+        if isinstance(operand, Constant) and approximate:
+            print("And here!")
+            from math import cos
+            return convert_primitive(cos(operand))
+        return Cos(operand)
 
     else:
         return simplify(construct(evaluated_operands, operation))
