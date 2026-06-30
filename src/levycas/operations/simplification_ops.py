@@ -420,7 +420,6 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
         if approximate:
             if isinstance(base, Constant) and isinstance(exp, Constant):
                 return convert_primitive(float(base) ** float(exp))
-        assert isinstance(base, Constant) and isinstance(exp, Constant), f'{type(base)=}, {type(exp)=}'
         return simplify(base ** exp)
     
     elif operation == Factorial:
