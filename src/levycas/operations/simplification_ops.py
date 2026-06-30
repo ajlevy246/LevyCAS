@@ -398,7 +398,7 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
             return sym_eval(definition, **symbols)
 
     operation = type(expr)
-    evaluated_operands = [sym_eval(operand, approximate, **symbols) for operand in expr.operands()]
+    evaluated_operands = [convert_primitive(sym_eval(operand, approximate, **symbols)) for operand in expr.operands()]
 
     if operation == Sum:
         return simplify(sum(evaluated_operands))
@@ -413,7 +413,15 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
         return simplify(evaluated_operands[0] / evaluated_operands[1])
 
     elif operation == Power:
-        return simplify(evaluated_operands[0] ** evaluated_operands[1])
+        """Since `simplify` will not automatically reduce potentially imaginary rational powers,
+        we special case here.
+        """
+        base, exp = evaluated_operands[0], evaluated_operands[1]
+        if approximate:
+            if isinstance(base, Constant) and isinstance(exp, Constant):
+                return convert_primitive(float(base) ** float(exp))
+        assert isinstance(base, Constant) and isinstance(exp, Constant), f'{type(base)=}, {type(exp)=}'
+        return simplify(base ** exp)
     
     elif operation == Factorial:
         operand = evaluated_operands[0]
@@ -424,21 +432,24 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
 
     elif operation == Sin:
         operand = convert_primitive(evaluated_operands[0])
-        if isinstance(operand, Constant) and approximate:
+        if approximate and isinstance(operand, Constant):
             from math import sin
             return convert_primitive(sin(operand))
         return Sin(operand)
         
     elif operation == Cos:
-        print(f"Simplifying cos")
         operand = convert_primitive(evaluated_operands[0])
-        print(f"Operand: {operand}, type: {type(operand)}")
-        print(f"{approximate=}")
-        if isinstance(operand, Constant) and approximate:
-            print("And here!")
+        if approximate and isinstance(operand, Constant):
             from math import cos
             return convert_primitive(cos(operand))
         return Cos(operand)
+    
+    elif operation == Ln:
+        operand = convert_primitive(evaluated_operands[0])
+        if approximate and isinstance(operand, Constant):
+            from math import log
+            return convert_primitive(log(operand))
+        return Ln(operand)
 
     else:
         return simplify(construct(evaluated_operands, operation))
