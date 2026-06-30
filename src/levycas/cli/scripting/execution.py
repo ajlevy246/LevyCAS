@@ -1,6 +1,7 @@
 from levycas.parser import parse
 from levycas.expressions import Variable, Integer
 from levycas.operations import sym_eval, derivative, integrate
+from levycas.cli.scripting.errors import ExecutionError, ReferenceError
 
 from enum import Enum
 
@@ -10,11 +11,6 @@ Mappings are from levycas.Variable -> a tuple of (type, args [optional], definit
 Note that since levycas.Variables are hashed by their names:
     - env['x'] == env[Variable('x')]
 """
-class ReferenceError(KeyError):
-    pass
-
-class ExecutionError(SystemError):
-    pass
 
 class Environment:
     """Captures state information for an active script"""
