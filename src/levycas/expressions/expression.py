@@ -837,53 +837,14 @@ class Integer(Constant):
 #============== METHODS =================
 
 def convert_primitive(num: Number | str) -> Constant:
-    """Parse a native number into a LevyCAS object.
+    """Parse a native number into a LevyCAS Constant (in lowest terms).
     
     Takes advantage of the quick Fraction constructor from `fractions`.
     """
     if num is UNDEFINED or isinstance(num, Expression): return num
+    if isinstance(num, int): return Integer(num)
     try:
         as_frac = Fraction(num).limit_denominator()
         return Rational(as_frac.numerator, as_frac.denominator)
     except:
         raise ValueError(f"Could not convert {num} ({type(num)=}) to a LevyCAS Rational")
-
-# def convert_primitive(num: Number) -> Constant:
-#     """Converts a python number to a levycas Constant in lowest terms.
-
-#     Args:
-#         num (Number): A primitive number
-
-#     Returns:
-#         Constant: The boxed number
-#     """
-#     if num is UNDEFINED:
-#         return UNDEFINED
-
-#     if isinstance(num, Expression):
-#         return num
-
-#     if isinstance(num, int):
-#         return Integer(num)
-    
-#     if isinstance(num, float):
-#         num = str(num)
-
-#     try:
-#         number = num.split(".")
-#         if len(number) == 1:
-#             return Integer(int(num))
-#         else:
-#             assert len(number) == 2, f"Failed to parse number {num}"
-#             whole, partial = number
-#             if "e" in partial:
-#                 partial, exp = partial.split("e")
-#                 print(f"{exp=}") #-05
-#             denominator = 10 ** len(partial)
-#             numerator = int(whole + partial)
-#             if denominator == 1:
-#                 return Integer(numerator)
-#             else:
-#                 return Rational(numerator, denominator)
-#     except:
-#         raise ValueError(f"Could not convert {num} to Rational.")
