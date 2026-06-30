@@ -11,7 +11,7 @@ from textual.containers import Horizontal, Vertical, HorizontalScroll, VerticalS
 from textual.widgets import Header, Footer, Input, Static, Button, TextArea
 from textual.theme import Theme
 
-from .screens import WelcomeScreen, DemoScreen, ScriptingScreen
+from .screens import WelcomeScreen, DemoScreen, ScriptingScreen, GraphingScreen
 
 levycas_theme = Theme(
     name="levycas",
@@ -35,6 +35,7 @@ class LevyCasApp(App):
         'welcome': WelcomeScreen,
         'demo': DemoScreen,
         'scripting': ScriptingScreen,
+        'graphing': GraphingScreen
     }
 
     def on_mount(self) -> None:
@@ -43,6 +44,7 @@ class LevyCasApp(App):
         self.push_screen("welcome")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle a switch-screen request"""
         if event.button.name == "switch-screen":
             self.switch_screen(event.button.id)
 
