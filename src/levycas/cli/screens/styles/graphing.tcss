@@ -1,59 +1,119 @@
 GraphingScreen {
+
+    Tooltip {
+        background: $warning;
+    }
+
     Header {
         background: $accent;
     }
-
+    
     #main-container {
         min-height: 85%;
         margin-top: 1;
     }
-
+    
     #menu-desc-container {
         padding-top: 1;
         width: 25%;
         margin-left: 1;
+
+        #screen-title {
+            border: hkey $border;
+            text-style: bold;
+            text-align: center;
+            margin-right: 2;
+        }
+
+        #screen-description {
+            margin-bottom: 1;
+        }
+        
+        #expression-input-menu {
+            align: left top;
+            border: double $border;
+            height: 100%;
+            max-height: 70%;
+            min-width: 10;
+            margin: 2 3 1 0;
+            hatch: right $background-darken-2;
+
+            ExpressionInput {
+                height: auto;
+                width: auto;
+                margin: 0;
+                hatch: right $background-darken-2;
+
+                .expression-input-container {
+                    hatch: right $background-darken-2;
+                    height: 5;
+                    padding-top: 1;
+                }
+                
+                .expression-input {
+                    # border: tall black;
+                    min-width: 9;
+                    max-width: 83%;
+                    height: 3;
+                    margin: 0;
+                }
+                    
+                .expression-delete {
+                    border: none;
+                    background: $error;
+                    height: 1;
+                    max-width: 3;
+                    text-style: bold;
+                    text-align: center;
+                }
+            }
+            
+            #add-expression-container {
+                hatch: right $background-darken-2;
+                dock: bottom;
+
+                #add-expression {
+                    border: tall black;
+                    background: $success-darken-1;
+                    min-height: 1;
+                    max-width: 10;
+                    text-style: bold;
+                    text-align: center;
+                }
+            }
+        }
     }
 
-    #screen-title {
-        border: hkey $border;
-        text-style: bold;
-        text-align: center;
-        margin-right: 2;
-    }
+    #plot-and-menu-container {
+        margin: 0;
+        
+        CasPlot {
+            width: 100%;
+            height: 85%;
+            background: $panel;
+            border: tall $border;  
+            padding: 0;
+            padding-right: 2;
 
-    #expression-input-menu {
-        align: left top;
-        border: double $border;
-        # height: 100%;
-        min-width: 10;
-        margin: 2 3 3 0;
-        hatch: right $background-darken-2;
-    }
+            #legend {
+                border: double black;
+                background: $panel;
+                min-height: 4;
+                padding: 1;
+            }
+        }
 
-    .expression-input {
-        margin: 1;
-        min-width: 9;
-        width: 75%;
-        max-height: 3;
-    }
+        #welcome-container {
+            padding-top: 1;
+            align: center middle;
 
-    #welcome-container {
-        margin-top: 1;
-        align: center middle;
-    }
-
-    Button {
-        background: $surface;
-        border: tall $border;
-        margin: 0 5;
-        height: 3;
-    }
-
-    PlotWidget {
-        width: 74%;
-        height: 100%;
-        background: $panel;
-        border: tall $border;  
-        padding: 1;  
+            Button {
+                background: $surface;
+                border: tall $border;
+                margin: 0 5;
+                height: 3;
+            }
+        }
+    
     }
 }
