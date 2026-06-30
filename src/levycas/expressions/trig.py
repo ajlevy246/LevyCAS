@@ -1,8 +1,10 @@
 from .expression import *
+import math
 
 class Trig(Elementary):
     """Trig functions represent the trigonometric functions"""
-    pass
+    def eval(self):
+        raise NotImplementedError(f"Eval for {type(self)} not yet implemented.")
 
 class Sin(Trig):
     def __new__(cls, *args):
@@ -20,6 +22,7 @@ class Sin(Trig):
             return -Sin(-arg)
 
         return super().__new__(cls)
+
 
 class Cos(Trig):
     def __new__(cls, *args):
@@ -39,8 +42,8 @@ class Cos(Trig):
             new_instance.args = [-arg]
         
         return new_instance
-
-    def __init__(self, *args):
+    
+    def __init__(self, *args): 
         pass
 
 class Tan(Trig):
