@@ -1,5 +1,7 @@
 # Welcome to LevyCAS!
 
+[![codecov](https://codecov.io/gh/ajlevy246/LevyCAS/graph/badge.svg?token=MlatPlQxJ6)](https://codecov.io/gh/ajlevy246/LevyCAS)
+
 **LevyCAS** is a lightweight symbolic computer algebra system (CAS) written in Python. It focuses on parsing natural mathematical expressions into symbolic objects and performing symbolic manipulation, calculus, simplification, and number-theoretic computations.
 
 LevyCAS began as an educational project, exploring symbolic computation, expression trees, Pratt parsing, grammars, and terminal UIs. It's designed to combine the best of existing computational tools that I regularly use: Desmos, sympy, and Matlab. 
