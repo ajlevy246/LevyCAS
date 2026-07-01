@@ -1,23 +1,59 @@
 # Welcome to LevyCAS!
 
-LevyCAS is a simple but robust computer algebra system that is designed around the processing of natural language expressions. LevyCAS comes equipped with a variety of  calculus and simplification operations acting on arbitrary algebraic expressions.
+**LevyCAS** is a lightweight symbolic computer algebra system (CAS) written in Python. It focuses on parsing natural mathematical expressions into symbolic objects and performing symbolic manipulation, calculus, simplification, and number-theoretic computations.
+
+asdfasdf
+
+
 
 <img src="./assets/graph.png" width=1000 alt="A screenshot of the LevyCAS graphing textual user interface. Expressions are entered on the left hand side, and an interactive graph is plotted on the right.">
 
+## Features
+- Parse natural mathematical expressions
+- Symbolic differentiation
+- Symbolic integration
+- Expression simplification
+- Integer factorization and number-theoretic operations
+- Rationalization and partial fractions
+- Interactive Textual-based graphing & scripting interface
+- Python core w/ no required dependencies 
 
 <br/>
 
-# Installation:
-LevyCAS is uploaded as a Python package on the TestPyPi index [here](https://test.pypi.org/project/levycas/). The base package has no dependencies. Install with pip:
+# Installation & Quick Start:
+
+While the base package has no dependencies, it is designed for Python3.10+
+
+### Core package
+LevyCAS is uploaded as a Python package on the TestPyPi index [here](https://test.pypi.org/project/levycas/). Install with pip:
 
 ```bash
 python3 -m pip install --index-url https://test.pypi.org/simple/ levycas
 ```
 
+Then, get started by launching python and running:
+```python
+from levycas import symbols, parse, derivative, integrate
+
+x, y = symbols("x y")
+expr = parse("sin(x)cos(y)")
+print(expr)
+
+print(derivative(expr, x))
+print(integrate(expr, x))
+```
+
+### Command-Line TUI
 To use the textual user interface, install with the `tui` extra. This extra depends on the [`Textual`](https://textual.textualize.io/) library, as well as the `textual-plot` package.
 
 ```bash
 python3 -m pip install --extra-index-url https://test.pypi.org/simple/ levycas[tui]
+```
+
+Launch the TUI directly in your terminal:
+
+```bash
+[user@locahost]$ levycas
 ```
 
 <br/>
@@ -30,18 +66,20 @@ By default, installing the `tui` extra adds the `levycas` script to PATH. Launch
 
 <br/>
 
-# Package & Repo
+# Project Structure
 
-The base package consists of a set of core expression objects in [`expressions/`](./src/levycas/expressions/__init__.py), along with routines acting on them in [`operations/`](./src/levycas/operations/__init__.py). The base package consists of a set of core expression objects, along with a set of routines acting on them. In addition, I'm quite proud of the native Pratt parser, capable of turning easy-to-write strings into symbolic expressions. 
+The base package consists of a set of core expression objects, along with a set of routines acting on them.
+
+In addition, LevyCAS includes a native Pratt parser capable of interpreting natural mathematical syntax such as `sin(x)cosx`, `1/2x`, and `3ln(x^2)` into symbolic expression trees.
 
 ### [`src/levycas/`](./src/levycas/__init__.py)
-- [`expressions/`](./src/levycas/expressions/__init__.py): Here, you'll find the base classes that all symbolic expressions are made of. Each is expression is represented as a tree consisting of these objects. The implementation of these objects heavily relies on the magic of Python's operator overloading and inheritence.
+- [`expressions/`](./src/levycas/expressions/__init__.py): Defines the symbolic expression tree classes used through LevyCAS. These classes make extensive use of Python's operator overloading and inheritance to provide a simple interface.
 
 - [`operations/`](./src/levycas/operations/__init__.py): The routines consist of both the fundamental simplification operations (`simplify`, `sym_eval`), as well as useful symbolic computations like `derivative` and `integrate`. 
 
 - [`parser/`](./src/levycas/parser/__init__.py): All of the Pratt parsing logic is contained here. Lexing converts and input string into tokens, and the parsing logic converts it to native objects.
 
-- [`cli/`](./src/levycas/cli/__init__.py): All of the logic for the textual user interface is contained here. This submodule does not expose any external routines, but the scripts here may interesting to those building simple Textual apps themselves.
+- [`cli/`](./src/levycas/cli/__init__.py): All of the logic for the textual user interface is contained here. This submodule does not expose any external routines, but the scripts here may be interesting to those building simple Textual apps themselves.
 
 <br/>
 
