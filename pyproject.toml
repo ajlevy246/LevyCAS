@@ -16,7 +16,13 @@ license-files = ["LICENSE.txt"]
 [project.optional-dependencies]
 tui = [
     "textual",
-    "textual_plot",
+    "textual-plot",
+]
+dev = [
+    "textual",
+    "textual-plot",
+    "textual-dev",
+    "pytest-cov",
 ]
 
 [project.urls]
