@@ -23,7 +23,7 @@ from .expressions import (
 from .operations import (
     contains, copy, construct, map_op, substitute, symbols, get_symbols,
     algebraic_expand, algebraic_expand_main, rationalize, linear_form, quadratic_form,
-    Deriv, derivative, integrate,
+    Deriv, derivative, integrate, limit,
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
     trig_simplify, trig_substitute, trig_contract, trig_expand,
     is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_pseudo_divide, polynomial_content, univariate_partial_fractions,
@@ -52,7 +52,7 @@ __all__ = [
     'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
 
     # Symbolic Calculus Module
-    'Deriv', 'derivative', 'integrate', 
+    'Deriv', 'derivative', 'integrate', 'limit',
 
     # Simplification (Core) Module
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',

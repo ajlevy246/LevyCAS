@@ -6,6 +6,12 @@ from .algebraic_ops import algebraic_expand, linear_form, quadratic_form
 from .polynomial_ops import is_polynomial, polynomial_divide, degree
 from .trig_ops import trig_simplify
 
+from typing import Literal
+from numbers import Number
+
+"""Max recursive depth for relevant routines (e.g. limit)"""
+_MAX_DEPTH = 10
+
 class Deriv(Elementary):
     """Anonymous derivative class"""
     pass
@@ -396,3 +402,32 @@ def _integrate_known_byparts(expr: Expression, wrt: Variable) -> Expression | No
         if by_parts is None:
             return None
         return var / a * Sin(a*wrt + b) - exp / a * by_parts
+
+def limit(expr: Expression, x: Variable, point: Constant | Number) -> Expression | Literal['UNDEFINED']:
+    """Compute the limit of an expression at a point."""
+    point = convert_primitive(point)
+
+    lim = trig_simplify(substitute(expr, x, point))
+    if lim is not UNDEFINED: return lim
+
+    num, denom = expr.num(), expr.denom()
+    num_val   = trig_simplify(substitute(expr.num(), x, point))
+    denom_val = trig_simplify(substitute(expr.denom(), x, point))
+    if denom_val == 0 and num_val == 0:
+        return _lhopital(num, denom, x, point)
+    return UNDEFINED # TODO: Update when signed inifinites are implemented.
+    
+def _lhopital(num: Expression, denom: Expression, x: Variable, point: Constant, depth: int = 0) -> Expression | Literal['UNDEFINED']:
+    if depth > _MAX_DEPTH:
+        return UNDEFINED
+    
+    num_val = trig_simplify(substitute(num, x, point))
+    denom_val = trig_simplify(substitute(denom, x, point))
+    if num_val == 0 and denom_val == 0:
+        return _lhopital(
+            derivative(num, x), derivative(denom, x),
+            x, point, depth+1,   
+        )
+    if denom_val != 0:
+        return num_val / denom_val
+    return UNDEFINED
