@@ -18,6 +18,7 @@ def trig_simplify(expr: Expression) -> Expression:
     Returns:
         Expression: The simplified expression
     """
+    if expr is UNDEFINED: return UNDEFINED
     if isinstance(expr, Constant):
         return expr
     
