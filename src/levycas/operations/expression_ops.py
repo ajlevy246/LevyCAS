@@ -4,7 +4,7 @@
 from ..expressions import *
 
 from numbers import Number
-from typing import Callable 
+from typing import Callable, Literal
 
 #TODO: Move variables() operator from polynomial_ops to here
 
@@ -139,7 +139,7 @@ def map_op(expr: Expression, op: Callable) -> Expression:
     else:
         return op(operation(*mapped_operators))
 
-def construct(operands: list[Expression], op: type[Expression]) -> Expression:
+def construct(operands: list[Expression], op: type[Expression]) -> Expression | Literal['UNDEFINED']:
     """Given a list of operands and an operation, 
     returns the constructed operation.
 
@@ -160,6 +160,8 @@ def construct(operands: list[Expression], op: type[Expression]) -> Expression:
     Returns:
         Expression: The resulting expression
     """
+    if UNDEFINED in operands: return UNDEFINED
+    
     if op == Sum:
         return sum(operands)
 
@@ -171,6 +173,8 @@ def construct(operands: list[Expression], op: type[Expression]) -> Expression:
 
     elif op == Power:
         assert len(operands) == 2, f"Cannot construct a power from more/less than two arguments"
+        print(f"{operands[0]=}, {type(operands[0])}")
+        print(f"{operands[1]=}, {type(operands[1])}")
         return operands[0] ** operands[1]
     
     else:
