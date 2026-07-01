@@ -363,6 +363,8 @@ def polynomial_divide_recursive(u: Expression, v: Expression, L: list[Expression
         q += c * x ** (m - n)
         r = algebraic_expand(r - c * v * x **(m -n))
         m = degree(r, x)
+        print(m)
+        if m is UNDEFINED: break # TODO: Update this when degree(0) changes.
     return (algebraic_expand(q), r)
 
 def monomial_divide(dividend: Expression, divisor: Expression) -> Expression:
@@ -426,6 +428,7 @@ def polynomial_pseudo_divide(u, v, x):
         s = algebraic_expand(lcv * s - lcs * v * x ** (m - n))
         sigma += 1
         m = degree(s, x)
+        if m is UNDEFINED: break # TODO: Update this when degree(0) changes
     return algebraic_expand(lcv ** (delta - sigma) * p), algebraic_expand(lcv ** (delta - sigma) * s)
 
 def _is_univariate(expr: Expression, var: Expression) -> bool:
