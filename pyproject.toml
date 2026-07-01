@@ -16,6 +16,7 @@ license-files = ["LICENSE.txt"]
 [project.optional-dependencies]
 tui = [
     "textual",
+    "textual_plot",
 ]
 
 [project.urls]
