@@ -173,8 +173,6 @@ def construct(operands: list[Expression], op: type[Expression]) -> Expression | 
 
     elif op == Power:
         assert len(operands) == 2, f"Cannot construct a power from more/less than two arguments"
-        print(f"{operands[0]=}, {type(operands[0])}")
-        print(f"{operands[1]=}, {type(operands[1])}")
         return operands[0] ** operands[1]
     
     else:
