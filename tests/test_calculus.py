@@ -241,3 +241,36 @@ class TestIntegrate:
             integrate(x*Exp(x), x)
             == x * Exp(x) - Exp(x)
         )
+
+class TestLimit:
+    """Tests for the limit routine."""
+
+    def test_limit_simple(self):
+        x = Variable('x')
+        assert limit(Sin(x) / x, x, 0) == 1
+        assert limit((x**2 - 1) / (x - 1), x, 1) == 2
+        assert limit((1 - Cos(x)) / x**2, x, 0) == 1/2
+
+    def test_limit_direct_substitution(self):
+        x = Variable('x')
+        assert limit(x**2 + 3*x, x, Integer(2)) == 10
+
+    def test_limit_removable_discontinuity(self):
+        x = Variable('x')
+        assert limit((x**2 - 1) / (x - 1), x, Integer(1)) == 2
+
+    def test_limit_lhopital_single(self):
+        x = Variable('x')
+        assert limit(Sin(x) / x, x, Integer(0)) == 1
+
+    def test_limit_lhopital_repeated(self):
+        x = Variable('x')
+        assert limit((1 - Cos(x)) / x**2, x, Integer(0)) == Rational(1, 2)
+
+    def test_limit_genuine_asymptote(self):
+        x = Variable('x')
+        assert limit(1 / x, x, Integer(0)) is UNDEFINED  # or +/- infinity, pending design below
+
+    def test_limit_no_indeterminacy_needed(self):
+        x = Variable('x')
+        assert limit(Cos(x), x, Integer(0)) == 1
