@@ -24,6 +24,30 @@ class TestDerivative:
         assert derivative(Csc(x), x) == -Cot(x) * Csc(x)
         assert derivative(Cot(x), x) == -Csc(x)**2
 
+    def test_derivative_chain_rule(self):
+        x = Variable('x')
+        assert derivative(Sin(x**2), x) == 2*x*Cos(x**2)
+        assert derivative(Exp(Sin(x)), x) == Cos(x) * Exp(Sin(x))
+        assert derivative(Ln(x**2 + 1), x) == 2*x / (x**2 + 1)
+
+    def test_derivative_product_rule(self):
+        x = Variable('x')
+        assert derivative(x * Sin(x), x) == Sin(x) + x*Cos(x)
+
+    def test_derivative_power_rule(self):
+        x = Variable('x')
+        assert derivative(x**3, x) == 3*x**2
+        assert derivative(x**(1/2), x) == (1/2) * x**(-1/2)
+
+    def test_derivative_multivariate(self):
+        x, y = symbols("x y")
+        assert derivative(Sin(y), x) == 0
+        assert derivative(x, x) == 1
+
+    def test_derivative_second_order(self):
+        x = Variable('x')
+        assert derivative(derivative(Sin(x), x), x) == -Sin(x)
+
 class TestIntegrate:
     """Tests for the integrate operator"""
 
@@ -38,10 +62,9 @@ class TestIntegrate:
         x, y = symbols('x y')
         pass
 
-    def test_integrate_substitute(self):
+    def test_integrate__elementary_substitute(self):
         x, y = symbols('x y')
         
-        #Elementary function substitution
         assert (
             integrate(Sin(x) * Cos(x), x)
             == - (1 / 2) * Cos(x) ** 2
@@ -63,7 +86,8 @@ class TestIntegrate:
             == (1 / 4) * Ln(x)**4
         )
 
-        #Algebraic substitution
+    def test_intergrate_algebraic_substitute(self):
+        x, y = symbols("x y")
         assert (
             integrate((3*x + 1)**4, x)
             == Rational(1, 15) * (3*x + 1)**5
@@ -77,23 +101,23 @@ class TestIntegrate:
             == Ln(Ln(x))
         )
 
-        #Rational expressions
+    def test_integrate_rational_expressions(self):
+        x, y = symbols("x y")
         assert (
             integrate((2*x) / (x**2 + 1), x)
             == Ln(x**2 + 1)
         )
-
         assert (
             integrate(x / (x**2 + 1)**2, x)
             == -(1 / 2) / (1 + x**2)
         )
 
-        #Trig substitution
+    def test_integrate_trig_sub(self):
+        x, y = symbols('x y')
         assert (
             integrate(Cos(x)**2 * Sin(x), x)
             == -Rational(1, 3) * Cos(x)**3
         )
-
         assert (
             integrate(Sec(x)**2 * Tan(x), x)
             == Sec(x)**2 / 2
@@ -172,6 +196,35 @@ class TestIntegrate:
             integrate(x**2 * Cos(2*x + 1), x)
             == (1/2)*x**2*Sin(2*x+1) + (1/2)*x*Cos(2*x+1) - (1/4)*Sin(2*x+1)
         )
+
+    def test_integrate_power_rule(self):
+        x = Variable('x')
+        assert integrate(1 / x, x) == Ln(x)
+        assert integrate(x**3, x) == (1/4) * x**4
+
+    def test_integrate_sum_rule(self):
+        x = Variable('x')
+        assert integrate(2*x + 3, x) == x**2 + 3*x
+
+    def test_integrate_trig_identity(self):
+        x = Variable('x')
+        assert (
+            trig_simplify(integrate(Sin(x)**2 + Cos(x)**2, x) )
+            == integrate(trig_simplify(Sin(x)**2 + Cos(x)**2), x)
+            == x
+        )
+
+    # TODO: Failing test case - hyperbolic integral issue?
+    # def test_integrate_partial_fractions_rational(self):
+    #     x = Variable('x')
+    #     assert (
+    #         integrate(1 / ((x + 1) * (x + 2)), x)
+    #         == Ln(x + 1) - Ln(x + 2)
+    #     )
+
+    def test_integrate_fail(self):
+        x = Variable('x')
+        assert integrate(Exp(x**2), x) is None
 
     def test_integrate_miscellaneous(self):
         x, y = symbols('x y')
