@@ -87,28 +87,34 @@ class Expression:
 
     # Right hand dunder methods for treating primitives as Constants
     def __radd__(self, other):
+        if other is UNDEFINED: return UNDEFINED
         other = convert_primitive(other)
         return (other + self) if isinstance(other, Expression) else NotImplemented
 
     def __rsub__(self, other):
+        if other is UNDEFINED: return UNDEFINED
         other = convert_primitive(other)
         return (other - self) if isinstance(other, Expression) else NotImplemented
 
     def __rmul__(self, other):
+        if other is UNDEFINED: return UNDEFINED
         other = convert_primitive(other)
         return (other * self) if isinstance(other, Expression) else NotImplemented
 
     def __rtruediv__(self, other):
+        if other is UNDEFINED: return UNDEFINED
         if self == 0:
             raise ZeroDivisionError
         other = convert_primitive(other)
         return (other * self ** -1) if isinstance(other, Expression) else NotImplemented
 
     def __rpow__(self, other):
+        if other is UNDEFINED: return UNDEFINED
         other = convert_primitive(other)
         return (other ** self) if isinstance(other, Expression) else NotImplemented
     
     def __rmod__(self, other):
+        if other is UNDEFINED: return UNDEFINED
         other = convert_primitive(other)
         return (other % self) if isinstance(other, Expression) else NotImplemented
 
