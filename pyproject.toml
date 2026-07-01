@@ -31,3 +31,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.coverage.run]
+source = ["levycas"]
+
+[tool.coverage.report]
+omit = [
+    "src/levycas/cli/*",
+]
+show_missing = true
+skip_covered = true
