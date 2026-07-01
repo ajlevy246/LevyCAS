@@ -2,7 +2,7 @@
 
 LevyCAS is a simple but robust computer algebra system that is designed around the processing of natural language expressions. LevyCAS comes equipped with a variety of  calculus and simplification operations acting on arbitrary algebraic expressions.
 
-<img src="./assets/tui.png" width=500 alt="A screenshot of the LevyCAS scripting textual user interface. A script is entered on the left hand side, while output is printed on the right.">
+<img src="./assets/script.png" width=500 alt="A screenshot of the LevyCAS scripting textual user interface. A script is entered on the left hand side, while output is printed on the right.">
 
 <img src="./assets/graph.png" width=500 alt="A screenshot of the LevyCAS graphing textual user interface. Expressions are entered on the left hand side, and an interactive graph is plotted on the right.">
 
