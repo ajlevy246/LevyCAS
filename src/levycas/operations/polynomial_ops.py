@@ -223,9 +223,9 @@ def degree(expr: Expression, vars: Expression | set[Expression]) -> Integer | No
         Integer: The degree of x in u, or None if the operation fails
     """
     #By convention, the degree of the zero-polynomial is -oo. Here, 
-    #I'll default to -1 until -oo is implemented.
+    #I'll default to UNDEFINED until -oo is implemented.
     if expr == 0:
-        return -1
+        return UNDEFINED
     vars = {vars} if not isinstance(vars, set) else vars
     if isinstance(expr, Sum):
         deg = Integer(0)
