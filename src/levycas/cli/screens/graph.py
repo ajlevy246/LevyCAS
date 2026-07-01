@@ -11,6 +11,7 @@ from textual.geometry import Offset
 from textual_hires_canvas import Canvas, HiResMode
 from textual_plot.plot_widget import PlotWidget, LegendLocation
 from rich.text import Text
+from textual.color import Color
 
 from levycas import Expression, Variable, sym_eval, parse, get_symbols, trig_simplify
 
@@ -20,7 +21,7 @@ from dataclasses import dataclass
 MAX_PLOTS        = 4
 DEFAULT_X_BOUNDS = (-13.0, 13.0)
 DEFAULT_Y_BOUNDS = (-10.0, 10.0)
-PLOT_COLORS      = ("blue", "green", "purple", "red")
+PLOT_COLORS      = ("black", "green", "purple", "red")
 DEFAULT_RES_MODE = HiResMode.BRAILLE
 EPS              = 1e-6  # max difference to consider two floats equal
 SIMPLIFY_EXPRESSIONS = True # Simplify expressions fully; may hide removable discontinuities
@@ -126,11 +127,16 @@ class CasPlot(PlotWidget):
         super().__init__(invert_mouse_wheel=True)
         # Keep track of each expression requesting a plot.
         self.expressions: list[Expression|None] = [None] * MAX_PLOTS
+        # Keep track of the number of plots visible for nice legend positioning.
+        self.num_legend_markers: int = 0
 
     def on_mount(self) -> None:
         super().on_mount()
         self.show_legend(LegendLocation.BOTTOMLEFT)
         self._update_legend()
+        legend = self.query_one_optional("#legend", Static)
+        legend.offset = Offset(1, 5)
+        # if not legend: return
 
     def _render_plot(self) -> None:
         """Renders axis lines before drawing plots, then canvas box & ticks."""
@@ -231,9 +237,12 @@ class CasPlot(PlotWidget):
             
         legend.display = True
         legend.update(Text.from_markup("\n\n".join(legend_lines)))
-        self._legend_relative_offset = Offset(1,-(len(legend_lines)+5))
-        self._position_legend()
-
+        
+        # Move the display up one line for each additional plot.
+        new_num_visible = len(legend_lines)
+        legend.offset += Offset(0, -(new_num_visible - self.num_legend_markers)) 
+        self.num_legend_markers = new_num_visible
+        
     @staticmethod
     def compute_data(
         expr: Expression, 
