@@ -57,7 +57,12 @@ class ExpressionInput(Widget):
     class Clear(Message):
         """Request to clear a plot."""
         idx: int # index of expression to clear
-    
+
+    @dataclass
+    class Add(Message):
+        """Request to add a new input expression."""
+        pass
+
     def __init__(self, idx: int) -> None:
         self.idx = idx
         sample = self.SAMPLES[idx]
@@ -116,6 +121,11 @@ class ExpressionInput(Widget):
             
         except (SyntaxError, AssertionError) as e:
             self.input.tooltip = f"Failed to parse: {e}"
+
+    def key_enter(self) -> None:
+        """Request a new input field when enter is pressed."""
+        self.post_message(self.Add())
+
 
 class CasPlot(PlotWidget):
     """Extension of `textual-plot`'s PlotWidget.
@@ -238,6 +248,7 @@ class CasPlot(PlotWidget):
         legend.display = True
         legend.update(Text.from_markup("\n\n".join(legend_lines)))
         
+        #TODO: Fix graph Legend positioning; hide when screen is too small; add hide/show option.
         # Move the display up one line for each additional plot.
         new_num_visible = len(legend_lines)
         legend.offset += Offset(0, -(new_num_visible - self.num_legend_markers)) 
@@ -363,8 +374,12 @@ class GraphingScreen(Screen):
         if not self.add_expr_container.display:
             self.add_expr_container.display = True
 
+    @on(ExpressionInput.Add)
     def add_input(self) -> None:
-        """Add an expression input field to the display."""
+        """Add an expression input field to the display.
+        
+        Focuses new widget.
+        """
         # Display new input field after the visible ones.
         for input in self.inputs:
             if not input.display:
@@ -373,6 +388,7 @@ class GraphingScreen(Screen):
                     before=self.add_expr_container,
                 )
                 input.display = True
+                input.query_one("Input").focus(scroll_visible=True)
                 break
 
         # Remove add button if max fields are already visible
