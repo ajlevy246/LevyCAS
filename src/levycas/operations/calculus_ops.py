@@ -165,17 +165,18 @@ def _integrate_match(expr: Expression, wrt: Variable) -> Expression | None:
             return base ** wrt / Ln(base)
 
     """Table of known integrals, especially containing elementary functions. Uses anonymous variable x"""
+    X = Variable("x")
     INTEGRAL_TABLE = {
-        Variable('x')  : (1 / 2) * Variable('x') ** 2,                 #x -> (1/2)x^2
-        1 / Variable('x') : Ln(Variable('x')),                         #1 / x -> Ln(x)
-        Cos(Variable('x')) : Sin(Variable('x')),                       #Cos(x) -> Sin(x)
-        Sin(Variable('x')) : -Cos(Variable('x')),                      #Sin(x) -> -Cos(x)
-        Exp(Variable('x')) : Exp(Variable('x')),                       #Exp(x) -> Exp(x)
-        Sec(Variable('x'))**2 : Tan(Variable('x')),                    #Sec(x)^2 -> Tan(x)
-        -Csc(Variable('x'))**2 : Cot(Variable('x')),                   #-Csc(x)^2 -> Cot(x)
-        -Csc(Variable('x')) * Cot(Variable('x')) : Csc(Variable('x')), #-Csc(x)*Cot(x) -> Csc(x)
-        Sec(Variable('x')) * Tan(Variable('x')) : Sec(Variable('x')),  #Sec(x)Tan(x) -> Sec(x)
-        Ln(Variable('x')) : Variable('x') * Ln(Variable('x')) - Variable('x') #Ln(x) -> xLn(x) - x
+        X              : (1/2)*X**2,    #x -> (1/2)x^2
+        1/X            : Ln(X),         #1 / x -> Ln(x)
+        Exp(X)         : Exp(X),        #Exp(x) -> Exp(x)
+        Ln(X)          : X * Ln(X) - X, #Ln(x) -> xLn(x) - x
+        Cos(X)         : Sin(X),        #Cos(x) -> Sin(x)
+        Sin(X)         : -Cos(X),       #Sin(x) -> -Cos(x)
+        Sec(X)**2      : Tan(X),        #Sec(x)^2 -> Tan(x)
+        Sec(X)*Tan(X)  : Sec(X),        #Sec(x)Tan(x) -> Sec(x)
+        -Csc(X)**2     : Cot(X),        #-Csc(x)^2 -> Cot(x)
+        -Csc(X)*Cot(X) : Csc(X),        #-Csc(x)Cot(x) -> Csc(x)
     }
 
     substitution = {str(wrt) : Variable('x')}
