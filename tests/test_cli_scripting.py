@@ -1,8 +1,14 @@
 import pytest
 
 from levycas.cli.main import LevyCasApp
-from levycas.cli.scripting.scripting import lex_script, run_script, ScriptToken as Token, TokenType as tk
+import levycas.cli.scripting.scripting as scripting
+from levycas.cli.scripting.scripting import (
+            lex_script, parse_script,
+            ScriptToken as Token,
+            TokenType as tk,
+        )
 from levycas.cli.scripting.errors import ExecutionError, ReferenceError
+from levycas.cli.scripting.execution import *
 
 class TestScriptingScreen:
     async def test_screen_load(self):
@@ -11,7 +17,7 @@ class TestScriptingScreen:
             await pilot.click()
             assert True
 
-class TestScripting:
+class TestScriptingParsing:
     def test_lexer(self):
         def tok_eq(expected, actual):
             val = expected.type == actual.type and expected.literal == actual.literal
@@ -30,7 +36,7 @@ class TestScripting:
         ]
         assert all(tok_eq(expected, actual) for expected, actual in zip(tokens, lexed, strict=True))
 
-        stmt = "4.55sinxsixn\derivate(for : cos)"
+        stmt = "4.55sinxsixn\\derivate(for : cos)"
         lexed = lex_script(stmt)
         tokens = [
             Token("4.55", tk.FLOAT), Token("sin", tk.OPERATION),
@@ -55,7 +61,30 @@ class TestScripting:
         assert all(tok_eq(expected, actual) for expected, actual in zip(tokens, lexed, strict=True))
 
     def test_simple_statements(self):
-        ...
+        stmt = "f(x) = 4x + 3; for (i : 3) {print(f(x));}"
+        scripting.tokens = lex_script(stmt)[::-1]
+
+        script = parse_script()
+        parsed_statements = script.statements
+
+        assert len(parsed_statements) == 2
+        func, loop = parsed_statements
+
+        assert (
+            isinstance(func, AssignmentStatement)
+            and func.name == "f"
+            and func.parameters == ['x']
+        )
+        definition = func.definition
+        assert isinstance(definition, ExpressionStatement) and len(definition.children) == 4
+        reference = definition.children.pop(1)
+        assert (
+            definition.children == ['4', '+', '3']
+            and isinstance(reference, ReferenceStatement)
+            and reference.name == "x"
+            and reference.arguments is None
+        )
+
 
     def test_for_loops(self):
         ...
@@ -68,3 +97,6 @@ class TestScripting:
 
     def test_substitutions(self):
         ...
+
+class TestScriptingExecution:
+    ...
