@@ -1,3 +1,4 @@
+"""Tests for LevyCAS's calculus operations: derivatives, integrals, and limits"""
 import pytest
 
 from levycas import *
