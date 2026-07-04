@@ -281,7 +281,10 @@ class Div(Expression):
 class Power(Expression):
     """A Power represents exponentiation"""
     def __repr__(self):
-        return f"({self.left} ^ {self.right})"
+        base_str = str(self.left)
+        if isinstance(self.left, Sum):
+            base_str = f"({base_str})"
+        return f"({base_str} ^ {self.right})"
     
     def __str__(self):
         INT_EXP_MAP = {
