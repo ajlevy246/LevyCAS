@@ -3,7 +3,7 @@ import pytest
 from levycas.cli.main import LevyCasApp
 import levycas.cli.scripting.scripting as scripting
 from levycas.cli.scripting.scripting import (
-            lex_script, parse_script,
+            lex_script, parse_script, run_script,
             ScriptToken as Token,
             TokenType as tk,
         )
@@ -102,10 +102,10 @@ class TestScriptingParsing:
                                     ')',
                                 ])
                             ),
-                            Script(statements=[]),
+                            Script(statements=[]), # TODO: Why is a blank script parsed here?
                         ])
                     ),
-                    Script(statements=[]),
+                    Script(statements=[]), #TODO: Why is a blank script parsed here?
                 ])
             ])
 
@@ -123,4 +123,23 @@ class TestScriptingParsing:
         ...
 
 class TestScriptingExecution:
-    ...
+    
+    class Log:
+        def __init__(self, output_record: list[str]):
+            self.record = output_record
+
+        def write_line(self, output: str):
+            self.record.append(output)
+    
+    def test_simple_statements(self):
+        stmt = "f(x) = 4x + 3; for (i : 3) {print(f(i));}"
+        output_record = []
+        log = self.Log(output_record)
+        run_script(stmt, log)
+        assert output_record == ['7', '11', '15']
+
+        stmt = "f(x, y) = xcos(y) + ysin(x); g(x) = \\derivate(f(x, 0), x); print(g(x));"
+        output_record = []
+        log = self.Log(output_record)
+        run_script(stmt, log)
+        assert output_record == ['1']
