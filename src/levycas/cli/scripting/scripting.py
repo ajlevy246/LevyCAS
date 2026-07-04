@@ -46,7 +46,7 @@ from .execution import (
 )
 import re
 
-"""Token Types (Enum'd for readability)"""
+"""Recognized Token Types"""
 class TokenType(Enum):
     COMMAND = "COMMAND"
     FLOAT = "FLOAT"
