@@ -398,12 +398,19 @@ def _integrate_known_byparts(expr: Expression, wrt: Variable) -> Expression | No
             return None
         return -var / a * Cos(a*wrt + b) + exp / a * by_parts
     
-    if isinstance(op, Cos):
+    elif isinstance(op, Cos):
         by_parts = integrate(wrt ** (exp - 1) * Sin(a*wrt + b), wrt)
         if by_parts is None:
             return None
         return var / a * Sin(a*wrt + b) - exp / a * by_parts
 
+    elif isinstance(op, Ln):
+        by_parts = integrate((wrt**(exp+1))/(a*wrt+b), wrt)
+        if by_parts is None:
+            return None
+        return (wrt**(exp+1)) / (exp+1) * Ln(a*wrt+b) - a/(exp+1) * by_parts
+ 
+ 
 def limit(expr: Expression, x: Variable, point: Constant | Number) -> Expression | Literal['UNDEFINED']:
     """Compute the limit of an expression at a point."""
     point = convert_primitive(point)

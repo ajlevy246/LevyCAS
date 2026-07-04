@@ -87,7 +87,7 @@ class TestIntegrate:
             == (1 / 4) * Ln(x)**4
         )
 
-    def test_intergrate_algebraic_substitute(self):
+    def test_integrate_algebraic_substitute(self):
         x, y = symbols("x y")
         assert (
             integrate((3*x + 1)**4, x)
@@ -196,6 +196,28 @@ class TestIntegrate:
         assert (
             integrate(x**2 * Cos(2*x + 1), x)
             == (1/2)*x**2*Sin(2*x+1) + (1/2)*x*Cos(2*x+1) - (1/4)*Sin(2*x+1)
+        )
+
+        # Ln tests
+        assert (
+            integrate(Ln(x), x)
+            == x*Ln(x) - x
+        )
+        assert (
+            integrate(x*Ln(x), x)
+            == x**2 / 2 * Ln(x) - x**2 / 4
+        )
+        assert (
+            integrate(x**2 * Ln(x), x)
+            == x**3 / 3 * Ln(x) - x**3 / 9
+        )
+        assert (
+            integrate(x*Ln(2*x+3), x) 
+            == -(9/8)*Ln(3+2*x) + (3/4)*x - (1/4)*x**2 + (1/2)*x**2*Ln(3+2*x)
+        )
+        assert (
+            integrate(x**3*Ln(x+1), x)
+            == -(1/4)*Ln(1+x) + (1/4)*x - (1/8)*x**2 + (1/12)*x**3 - (1/16)*x**4 + (1/4)*x**4*Ln(x+1)
         )
 
     def test_integrate_power_rule(self):
