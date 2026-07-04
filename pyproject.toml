@@ -4,7 +4,7 @@ version = "0.0.8"
 authors = [
     {name = "Alex Levy", email = "ajlevy246@gmail.com"},
 ]
-description = "A computer algebra system written in python, including a Pratt Parser for parsing math in natural language."
+description = "A computer algebra system written in python, with an interact text-based user interface, complete with scripting, graphing, and a package interface."
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
