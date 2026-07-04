@@ -1,3 +1,4 @@
+"""All Pratt parsing logic is contained here, including lexing routines."""
 from .lexer import Token, tokenize
 from .parser import TOKEN_SPEC, TOKEN_CLASS, TOKEN_BP, parse, expand, pratt
 

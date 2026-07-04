@@ -1,3 +1,4 @@
+"""Routines acting on LevyCAS expression trees, including simplification and calculus routines."""
 from .algebraic_ops import algebraic_expand, algebraic_expand_main, rationalize, linear_form, quadratic_form
 from .calculus_ops import Deriv, derivative, integrate, limit
 from .expression_ops import contains, copy, construct, map_op, substitute, symbols, get_symbols

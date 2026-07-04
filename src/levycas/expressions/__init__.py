@@ -1,3 +1,4 @@
+"""The expressions module contains the core LevyCAS classes making up an expression tree."""
 from .expression import (
     UNDEFINED, Expression, Sum, Product, Div, Power, 
     Factorial, Constant, Integer,
