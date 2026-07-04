@@ -42,7 +42,7 @@ class TestScriptingParsing:
             Token("4.55", tk.FLOAT), Token("sin", tk.OPERATION),
             Token("x", tk.SYMBOL), Token("s", tk.SYMBOL),
             Token("i", tk.SYMBOL), Token("x", tk.SYMBOL),
-            Token("n", tk.SYMBOL), Token("\derivate", tk.COMMAND),
+            Token("n", tk.SYMBOL), Token("\\derivate", tk.COMMAND),
             Token("(", tk.LPAREN), Token("for", tk.FOR),
             Token(":", tk.COLON),  Token("cos", tk.OPERATION),
             Token(")", tk.RPAREN),
@@ -65,25 +65,49 @@ class TestScriptingParsing:
         scripting.tokens = lex_script(stmt)[::-1]
 
         script = parse_script()
-        parsed_statements = script.statements
-
-        assert len(parsed_statements) == 2
-        func, loop = parsed_statements
-
-        assert (
-            isinstance(func, AssignmentStatement)
-            and func.name == "f"
-            and func.parameters == ['x']
-        )
-        definition = func.definition
-        assert isinstance(definition, ExpressionStatement) and len(definition.children) == 4
-        reference = definition.children.pop(1)
-        assert (
-            definition.children == ['4', '+', '3']
-            and isinstance(reference, ReferenceStatement)
-            and reference.name == "x"
-            and reference.arguments is None
-        )
+        assert scripting.tokens == []
+        assert script == \
+            Script(statements=[
+                AssignmentStatement(
+                    name='f', 
+                    parameters=['x'], 
+                    definition=ExpressionStatement(
+                        children=[
+                            '4', 
+                            ReferenceStatement(name='x', arguments=None),
+                            '+',
+                            '3'
+                        ]
+                    )
+                ),
+                Script(statements=[
+                    ForLoop(
+                        iterator='i',
+                        count=3,
+                        body=Script(statements=[
+                            PrintStatement(
+                                expression=ExpressionStatement(children=[
+                                    '(',
+                                    ReferenceStatement(
+                                        name='f',
+                                        arguments=[
+                                            ExpressionStatement(children=[
+                                                ReferenceStatement(
+                                                    name='x',
+                                                    arguments=None
+                                                )
+                                            ])
+                                        ]
+                                    ),
+                                    ')',
+                                ])
+                            ),
+                            Script(statements=[]),
+                        ])
+                    ),
+                    Script(statements=[]),
+                ])
+            ])
 
 
     def test_for_loops(self):
