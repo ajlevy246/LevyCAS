@@ -1,9 +1,12 @@
+"""AST Classes and methods for LevyCAS scripting."""
+
+from dataclasses import dataclass, field
+
 from levycas.parser import parse
 from levycas.expressions import Variable, Integer
 from levycas.operations import sym_eval, derivative, integrate
 from levycas.cli.scripting.errors import ExecutionError, ReferenceError
 
-from enum import Enum
 
 """Global state is a stored as a dictionary 'env'.
 
@@ -73,8 +76,7 @@ class Environment:
             #   - example: x = Variable('x'); sym_eval(x, x=parse('xy'))
             local_args_mapping = dict(zip(parameters, arguments))
             return sym_eval(func_definition, **local_args_mapping)
-            
-            
+                
 def execute(script, output_log):
     """Executes a parsed script AST by intiializing global state and log reference."""
     global log
@@ -85,10 +87,10 @@ def execute(script, output_log):
 
     script.run()
 
+@dataclass
 class Script:
     """Basic Scripts contain one or more statements/conditionals to be executed."""
-    def __init__(self):
-        self.statements = list()
+    statements: list = field(default_factory=list)
 
     def add_executable(self, statement):
         self.statements.append(statement)
@@ -100,12 +102,12 @@ class Script:
             else:
                 log.write_line("Empty statement...")
 
+@dataclass
 class ForLoop:
     """For-loop implementation."""
-    def __init__(self, iterator: str, count: int, body: Script):
-        self.iterator = iterator
-        self.count = count
-        self.body = body
+    iterator: str
+    count: int
+    body: Script
 
     def run(self):
         """Runs a for loop, count starts from 1.
@@ -125,14 +127,14 @@ class WhileLoop:
     def run(self):
         ...
 
+@dataclass
 class ExpressionStatement:
     """Expression implementation.
 
     Expressions consist of tokens and commands that can be     
     turned into LevyCAS Expression objects directly.
     """
-    def __init__(self):
-        self.children = list()
+    children: list = field(default_factory=list)
 
     def run(self):
         """Children may be a single character, a ReferenceStatement, or a CommandStatement.
@@ -177,12 +179,12 @@ class ExpressionStatement:
         else:
             self.children.append(new_child)
 
+@dataclass
 class CommandStatement:
     """Commands implementation."""
-    def __init__(self, cmd_type: str, arguments):
-        self.cmd_type = cmd_type
-        self.arguments = arguments
-
+    cmd_type: str
+    arguments: list
+    
     def run(self):
         if self.cmd_type == "\\derivate":
             if len(self.arguments) != 2:
@@ -211,24 +213,24 @@ class CommandStatement:
         else:
             raise SyntaxError(f"Command: {self.cmd_type} not yet implemented.")
 
+@dataclass
 class AssignmentStatement:
     """Variable or function assignment.
     
     Includes both declarations and updates.
     """
-    def __init__(self, name: str, parameters: list[str], definition):
-        self.name = name
-        self.parameters = parameters
-        self.definition = definition
+    name: str
+    parameters: list[str]
+    definition: ExpressionStatement
 
     def run(self):
         env.add_or_update(self.name, self.parameters, self.definition.run())
 
+@dataclass
 class ReferenceStatement:
     """Variable or function reference."""
-    def __init__(self, name, arguments):
-        self.name = name
-        self.arguments = arguments
+    name: str
+    arguments: list[ExpressionStatement]
 
     def run(self):
         if self.arguments is None: #Variable reference
@@ -241,11 +243,11 @@ class ReferenceStatement:
             arguments = [arg.run() for arg in self.arguments]
             return env.evaluate_at(self.name, arguments)
 
+@dataclass
 class PrintStatement:
     """Print statement implementation."""
-    def __init__(self, expression):
-        self.expr = expression
+    expression: ExpressionStatement
         
     def run(self):
-        result = self.expr.run()
+        result = self.expression.run()
         log.write_line(str(result))
