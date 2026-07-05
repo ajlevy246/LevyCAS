@@ -1,3 +1,4 @@
+"""Tests for trigonometric function implementations."""
 import pytest
 
 from levycas.expressions import *
