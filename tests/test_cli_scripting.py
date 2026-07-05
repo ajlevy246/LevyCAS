@@ -142,3 +142,22 @@ class TestScriptingExecution:
         log = self.Log(output_record)
         run_script(stmt, log)
         assert output_record == ['1']
+
+    def test_commands(self):
+        stmt = (
+            "f(x, y) = xsin(x^2) + 2ycos(y);"
+            "print \derivate(f(x, y), x);"
+            "print \integrate(f(x, y), x);"
+            "print \derivate(f(x, y), y);"
+            "print \integrate(f(x, y), y);"
+        )
+        output_record = []
+        log = self.Log(output_record)
+        run_script(stmt, log)
+        assert output_record == [
+            'Sin(x²) + 2x²Cos(x²)',
+            '-(1/2)Cos(x²) + 2yxCos(y)',
+            '2Cos(y) - 2ySin(y)',
+            '2Cos(y) + 2ySin(y) + yxSin(x²)',
+        ]
+            
