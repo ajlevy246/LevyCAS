@@ -1,5 +1,5 @@
 import pytest
-from levycas.cli.main import LevyCasApp
+from levycas.cli.__main__ import LevyCasApp
 
 class TestGraphing:
     async def test_screen_load(self):

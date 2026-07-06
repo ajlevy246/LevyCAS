@@ -1,6 +1,6 @@
 import pytest
 
-from levycas.cli.main import LevyCasApp
+from levycas.cli.__main__ import LevyCasApp
 import levycas.cli.scripting.scripting as scripting
 from levycas.cli.scripting.scripting import (
             lex_script, parse_script, run_script,
