@@ -33,7 +33,6 @@ class LevyCasApp(App):
     TITLE = "LevyCAS - Computer Algebra System"
     SCREENS = {
         'welcome': WelcomeScreen,
-        'demo': DemoScreen,
         'scripting': ScriptingScreen,
         'graphing': GraphingScreen
     }
