@@ -11,7 +11,7 @@ from textual.containers import Horizontal, Vertical, HorizontalScroll, VerticalS
 from textual.widgets import Header, Footer, Input, Static, Button, TextArea
 from textual.theme import Theme
 
-from .screens import WelcomeScreen, DemoScreen, ScriptingScreen, GraphingScreen
+from .screens import WelcomeScreen, ScriptingScreen, GraphingScreen
 
 levycas_theme = Theme(
     name="levycas",
