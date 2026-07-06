@@ -38,10 +38,17 @@ class LevyCasApp(App):
         'graphing': GraphingScreen
     }
 
+    def __init__(self, graphing: bool=False, exprs: list[str]=None) -> None:
+        self.launch_graphing = graphing
+        self.exprs = exprs if exprs is not None else []
+        super().__init__()
+
     def on_mount(self) -> None:
         self.register_theme(levycas_theme)
         self.theme = 'levycas'
         self.push_screen("welcome")
+        if self.launch_graphing: 
+            self.push_screen(GraphingScreen(self.exprs))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle a switch-screen request"""

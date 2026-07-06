@@ -30,7 +30,7 @@ dev = [
 homepage = "https://github.com/ajlevy246/LevyCAS"
 
 [project.scripts]
-levycas = "levycas.cli.main:main"
+levycas = "levycas.__main__:main"
 
 [build-system]
 requires = ["setuptools"]
