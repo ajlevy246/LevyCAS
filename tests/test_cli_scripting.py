@@ -16,6 +16,22 @@ class TestScriptingScreen:
         async with cas.run_test() as pilot:
             await pilot.click("#scripting")
 
+    async def test_script_example(self):
+        cas = LevyCasApp()
+        async with cas.run_test() as pilot:
+            await pilot.click("#scripting")
+            await pilot.click("#load-example")
+            await pilot.click("#run-script")
+            output_log = cas.screen.script_output
+            print(output_log.lines)
+            assert output_log.lines == [
+                "Sin(y) + yCos(x) - yCos(y)",
+                "-Sin(x)",
+                "Cos(1)",
+                "Cos(2)",
+                "Cos(3)",
+            ]
+
 class TestScriptingParsing:
     def test_lexer(self):
         def tok_eq(expected, actual):
@@ -146,10 +162,10 @@ class TestScriptingExecution:
     def test_commands(self):
         stmt = (
             "f(x, y) = xsin(x^2) + 2ycos(y);"
-            "print \derivate(f(x, y), x);"
-            "print \integrate(f(x, y), x);"
-            "print \derivate(f(x, y), y);"
-            "print \integrate(f(x, y), y);"
+            "print \\derivate(f(x, y), x);"
+            "print \\integrate(f(x, y), x);"
+            "print \\derivate(f(x, y), y);"
+            "print \\integrate(f(x, y), y);"
         )
         output_record = []
         log = self.Log(output_record)

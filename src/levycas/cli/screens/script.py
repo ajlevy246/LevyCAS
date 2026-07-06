@@ -72,7 +72,6 @@ class ScriptingScreen(Screen):
                     yield Button("Return Home", name='switch-screen', id='welcome')
                     yield self.example_button
 
-
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "run-script":
             self.run_button.disabled = True
