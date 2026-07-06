@@ -126,7 +126,6 @@ class ExpressionInput(Widget):
         """Request a new input field when enter is pressed."""
         self.post_message(self.Add())
 
-
 class CasPlot(PlotWidget):
     """Extension of `textual-plot`'s PlotWidget.
     
@@ -279,8 +278,9 @@ class GraphingScreen(Screen):
     TITLE = "LevyCAS - Graphing"
     CSS_PATH = "styles/graphing.tcss"
 
-    def __init__(self) -> None:
+    def __init__(self, exprs: list[str] = None) -> None:
         super().__init__()
+        self.initial_exprs = exprs if exprs is not None else []
 
         # Initialize child widgets
         self.expression_inputs_container = VerticalScroll(id="expression-input-menu")
@@ -317,6 +317,11 @@ class GraphingScreen(Screen):
         # Initialize plot.
         self.plot.set_xlimits(*DEFAULT_X_BOUNDS)
         self.plot.set_ylimits(*DEFAULT_Y_BOUNDS)
+
+        # Add initial expressions
+        for idx, expr in enumerate(self.initial_exprs):
+            self.inputs[idx].input.value = expr
+            self.add_input()
 
     def compose(self) -> ComposeResult:
         """Screen layout and widgets"""
