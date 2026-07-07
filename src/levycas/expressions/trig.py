@@ -11,7 +11,6 @@ class Sin(Trig):
         """To facilitate automatic simplifcation of trigonometric expressions,
         the __new__ method is overwritten.
         """
-
         assert len(args) == 1, f"Sin expects a single argument"
         arg = convert_primitive(args[0])
 
@@ -21,15 +20,15 @@ class Sin(Trig):
         elif coefficient.is_negative():
             return -Sin(-arg)
 
-        return super().__new__(cls)
-
+        new_instance = super().__new__(cls)
+        new_instance.args = [arg]
+        return new_instance
 
 class Cos(Trig):
     def __new__(cls, *args):
         """To facilitate automatic simplifcation of trigonometric expressions,
         the __new__ method is overwritten.
         """
-
         assert len(args) == 1, f"Cos expects a single argument"
         arg = convert_primitive(args[0])
         coefficient = arg.coefficient()
