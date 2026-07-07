@@ -3,6 +3,8 @@ from math import lcm, comb, factorial
 from fractions import Fraction
 from numbers import Number
 
+from functools import cache
+
 """Undefined flyweight; default value for expressions that can not be evaluated
 """
 UNDEFINED = "UNDEFINED" 
@@ -412,7 +414,7 @@ class Elementary(Expression):
     """
 
     def __init__(self, *args):
-        self.args = args
+        self.args = [convert_primitive(arg) for arg in args]
 
     def operands(self):
         return self.args
@@ -845,6 +847,7 @@ class Integer(Constant):
 
 #============== METHODS =================
 
+@cache
 def convert_primitive(num: Number | str) -> Constant:
     """Parse a native number into a LevyCAS Constant (in lowest terms).
     
