@@ -23,7 +23,6 @@ class TestScriptingScreen:
             await pilot.click("#load-example")
             await pilot.click("#run-script")
             output_log = cas.screen.script_output
-            print(output_log.lines)
             assert output_log.lines == [
                 "Sin(y) + yCos(x) - yCos(y)",
                 "-Sin(x)",
@@ -36,8 +35,6 @@ class TestScriptingParsing:
     def test_lexer(self):
         def tok_eq(expected, actual):
             val = expected.type == actual.type and expected.literal == actual.literal
-            if not val:
-                print(expected, actual)
             return val
         
         stmt = "f(x) = 4x + 3.5;"
