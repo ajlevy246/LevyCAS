@@ -28,7 +28,7 @@ from .operations import (
     trig_simplify, trig_substitute, trig_contract, trig_expand,
     is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_pseudo_divide, polynomial_content, univariate_partial_fractions,
     polynomial_gcd, polynomial_divide_recursive,
-    gcd, factor_integer, is_prime, radical, rational_simplify
+    gcd, factor_integer, is_prime, radical, rational_simplify, factor_sqfree,
 )
 
 __all__ = [
@@ -58,5 +58,5 @@ __all__ = [
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
 
     # Numerical Methods
-    'gcd', 'factor_integer', 'is_prime', 'radical', 'rational_simplify'
+    'gcd', 'factor_integer', 'is_prime', 'radical', 'rational_simplify', 'factor_sqfree',
 ]

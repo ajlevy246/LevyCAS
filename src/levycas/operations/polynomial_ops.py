@@ -363,7 +363,6 @@ def polynomial_divide_recursive(u: Expression, v: Expression, L: list[Expression
         q += c * x ** (m - n)
         r = algebraic_expand(r - c * v * x **(m -n))
         m = degree(r, x)
-        print(m)
         if m is UNDEFINED: break # TODO: Update this when degree(0) changes.
     return (algebraic_expand(q), r)
 
@@ -607,28 +606,57 @@ def polynomial_content(expr: Expression, main_var: Expression, vars: list[Expres
 
 def factor_sqfree(u: Expression, x: Variable) -> list[Expression]:
     from .calculus_ops import derivative
+
     if u == 0:
-        return u
-    
+        return [Integer(0)]
+    u = algebraic_expand(u)
+
     c = leading_coefficient(u, x)
     U = algebraic_expand(u / c)
-    factors = []
-    P = 1
+
     R = polynomial_gcd(U, derivative(U, x), [x])
-    F = polynomial_divide(U, R, x)[0]
+    F = polynomial_divide(U, R, [x])[0]
+
+    factors = []
     j = 1
     while R != 1:
         G = polynomial_gcd(R, F, [x])
-        s = polynomial_divide(F, G, x)[0]
-        factors.append(s**j)
-        P *= s**j
-        R = polynomial_divide(R, G, x)[0]
+        s = polynomial_divide(F, G, [x])[0]
+        if s != 1:
+            factors.append(s**j)
+        R = polynomial_divide(R, G, [x])[0]
         F = G
         j += 1
-    factors.append(F ** j)
-    P *= F**j
+
+    if F != 1:
+        factors.append(F**j)
+
     return [c] + factors
-    # return Product(c, P)
+
+# def factor_sqfree(u: Expression, x: Variable) -> list[Expression]:
+#     from .calculus_ops import derivative
+#     if u == 0:
+#         return u
+#     u = algebraic_expand(u)
+    
+#     c = leading_coefficient(u, x)
+#     U = algebraic_expand(u / c)
+#     factors = []
+#     P = 1
+#     R = polynomial_gcd(U, derivative(U, x), [x])
+#     F = polynomial_divide(U, R, x)[0]
+#     j = 1
+#     while R != 1:
+#         G = polynomial_gcd(R, F, [x])
+#         s = polynomial_divide(F, G, x)[0]
+#         factors.append(s**j)
+#         P *= s**j
+#         R = polynomial_divide(R, G, x)[0]
+#         F = G
+#         j += 1
+#     factors.append(F ** j)
+#     P *= F**j
+#     return [c] + factors
 
 def rational_simplify(u: Expression) -> Expression:
     """Simplifies a rational expression by euclidean division.
