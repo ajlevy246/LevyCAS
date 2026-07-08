@@ -358,3 +358,33 @@ def test_rational_simplify():
         rational_simplify(1/(1/a + c/(a*b)) + (a*b*c + a*c**2) / ((b+c)**2))
         == a
     )
+
+def test_sq_free_factor():
+    def check_sqfree(expr, x):
+        result = factor_sqfree(expr, x)
+        c, *factors = result
+        rebuilt = algebraic_expand(c*Product(*factors)) if factors else c
+        assert algebraic_expand(rebuilt - expr) == 0, f"Mismatch: {rebuilt} != {expr}"
+        return result
+    
+    x = Variable('x')
+    
+    check_sqfree((x - 1) * (x + 2), x)
+    check_sqfree((x - 1)**2 * (x + 3), x)
+
+    result = check_sqfree((x - 1)**3 * (x + 2), x)
+    assert len(result) == 3
+
+    result = check_sqfree((x-1)*(x+2)**4, x)
+    assert len(result) == 3
+
+    result = check_sqfree((x-1)**2 * (x+2)**2, x)
+    assert len(result) == 2
+
+    result = check_sqfree(-2 * (x - 1) * (x + 1)**2, x)
+    assert result[0] == -2
+
+    c, *factors = factor_sqfree(Integer(0), x)
+    assert c == 0
+
+    check_sqfree((x-1)**2 * (x+2)**2 * (x-3)**5, x)
