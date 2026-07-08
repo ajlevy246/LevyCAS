@@ -16,7 +16,7 @@ from .expressions import (
     Constant, Integer, Rational, convert_primitive,
     UNDEFINED, Expression, Sum, Product, Div, Power, Factorial,
     Trig, Sin, Cos, Tan, Csc, Sec, Cot, Arctan, Arccos, Arcsin,
-    Variable, Function, Elementary,
+    Variable, Elementary,
     Exp, Ln
 )
 
@@ -40,7 +40,7 @@ __all__ = [
     'Constant', 'Integer', 'Rational', 'convert_primitive',
     'UNDEFINED', 'Expression', 'Sum', 'Product', 'Div', 'Power', 'Factorial',
     'trig_substitute', 'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot', 'Arctan', 'Arccos', 'Arcsin',
-    'Variable', 'Function', 'Elementary',
+    'Variable', 'Elementary',
     'Exp', 'Ln',
 
     # Algebraic Manipulation Module

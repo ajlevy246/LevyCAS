@@ -127,19 +127,12 @@ def expand(tokens: list[Token], **symbols) -> list[Token]:
     expanded = list()
     for i in range(len(tokens)):
         curr = tokens[i]
-
-        #Symbols previously defined as functions are replaced
-        if curr.type == "VARIABLE":
-            sym = symbols.get(curr.value, Variable(-1))
-            if isinstance(sym, Function):
-                curr.type = "FUNCTION"
-
         expanded.append(curr)
 
         #Implicit Multiplication is expanded
         next = tokens[i + 1] if i + 1 < len(tokens) else None
         if next:
-            if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and (next.type in ("VARIABLE", "LPAREN", "FUNCTION") or next.type.startswith("ELEM_")):
+            if curr.type in ("VARIABLE", "NUMBER", "RPAREN", "DECIMAL") and (next.type in ("VARIABLE", "LPAREN") or next.type.startswith("ELEM_")):
                 expanded.append(Token("MULT", "*", curr.pos + curr.len))
     return expanded
 
