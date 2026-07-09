@@ -4,9 +4,9 @@ import pytest
 from levycas.expressions import *
 from levycas.operations.factorization_ops import *
 
-def test_distinct_degree_factorization():
-    x = Variable("x")
+x = Variable('x')
 
+def test_distinct_degree_factorization():
     # Case 1: all factors same degree
     result = distinct_degree_factorization(x**4 + 1, x, 5)
     assert result == [(x**4 + 1, 2)]
@@ -41,8 +41,6 @@ def test_factor_mod_p():
             assert degrees == sorted(expected_degrees), f"Degree mismatch: {degrees} != {expected_degrees}"
         return factors
 
-    x = Variable("x")
-
     # 1. Single-attempt split test, isolated
     for _ in range(30):
         check_factor_mod_p(x**4 + 1, x, 5, expected_count=2, expected_degrees=[2, 2])
@@ -66,8 +64,6 @@ def test_factor_mod_p():
     check_factor_mod_p(2*(x**2 + 1), x, 3, expected_count=1, expected_degrees=[2])
 
 def test_complete_factor():
-    x = Variable('x')
-
     assert factor(7, x) == [7]
     assert factor(0, x) == [0]
     assert factor(-12*(x-3), x) == [12, 3-x]
@@ -118,5 +114,9 @@ def test_complete_factor():
     factors = factor(expr, x)
     assert set(factors) == {1, 2*x+3, x+1}
 
-def test_common_monomials():
-    ...
+def test_online_examples():
+    expr = 2*x**5 - 4*x**4 - 7*x**3 + 14*x**2 + 6*x - 12
+    factors = factor(expr, x)
+    assert set(factors) == {
+        1, (x-2), (x**2 - 2), (2*x**2 - 3),
+    }

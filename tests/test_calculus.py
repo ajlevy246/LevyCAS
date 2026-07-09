@@ -3,17 +3,17 @@ import pytest
 
 from levycas import *
 
+x = Variable('x')
+
 class TestDerivative:
     """Tests for the derivative operator"""
     
     def test_derivative_constant(self):
-        x = Variable('x')
-
+        
         assert derivative(Sin(Integer(1)), x) == 0
 
     def test_derivative_functions(self):
-        x = Variable('x')
-
+        
         assert derivative(Ln(x), x) == 1 / x
         assert derivative(Exp(x), x) == Exp(x)
 
@@ -26,17 +26,14 @@ class TestDerivative:
         assert derivative(Cot(x), x) == -Csc(x)**2
 
     def test_derivative_chain_rule(self):
-        x = Variable('x')
         assert derivative(Sin(x**2), x) == 2*x*Cos(x**2)
         assert derivative(Exp(Sin(x)), x) == Cos(x) * Exp(Sin(x))
         assert derivative(Ln(x**2 + 1), x) == 2*x / (x**2 + 1)
 
     def test_derivative_product_rule(self):
-        x = Variable('x')
         assert derivative(x * Sin(x), x) == Sin(x) + x*Cos(x)
 
     def test_derivative_power_rule(self):
-        x = Variable('x')
         assert derivative(x**3, x) == 3*x**2
         assert derivative(x**(1/2), x) == (1/2) * x**(-1/2)
 
@@ -46,7 +43,6 @@ class TestDerivative:
         assert derivative(x, x) == 1
 
     def test_derivative_second_order(self):
-        x = Variable('x')
         assert derivative(derivative(Sin(x), x), x) == -Sin(x)
 
 class TestIntegrate:
@@ -122,6 +118,10 @@ class TestIntegrate:
         assert (
             integrate(Sec(x)**2 * Tan(x), x)
             == Sec(x)**2 / 2
+        )
+        assert (
+            integrate(Cos(x)**2 * Cos(x), x)
+            == (3/4)*Sin(x) + (1/12)*Sin(3*x)
         )
 
     def test_integrate_linear(self):
@@ -221,16 +221,13 @@ class TestIntegrate:
         )
 
     def test_integrate_power_rule(self):
-        x = Variable('x')
         assert integrate(1 / x, x) == Ln(x)
         assert integrate(x**3, x) == (1/4) * x**4
 
     def test_integrate_sum_rule(self):
-        x = Variable('x')
         assert integrate(2*x + 3, x) == x**2 + 3*x
 
     def test_integrate_trig_identity(self):
-        x = Variable('x')
         assert (
             trig_simplify(integrate(Sin(x)**2 + Cos(x)**2, x) )
             == integrate(trig_simplify(Sin(x)**2 + Cos(x)**2), x)
@@ -239,14 +236,12 @@ class TestIntegrate:
 
     # TODO: Failing test case - hyperbolic integral issue?
     # def test_integrate_partial_fractions_rational(self):
-    #     x = Variable('x')
-    #     assert (
+    #         #     assert (
     #         integrate(1 / ((x + 1) * (x + 2)), x)
     #         == Ln(x + 1) - Ln(x + 2)
     #     )
 
     def test_integrate_fail(self):
-        x = Variable('x')
         assert integrate(Exp(x**2), x) is None
 
     def test_integrate_miscellaneous(self):
@@ -269,31 +264,24 @@ class TestLimit:
     """Tests for the limit routine."""
 
     def test_limit_simple(self):
-        x = Variable('x')
         assert limit(Sin(x) / x, x, 0) == 1
         assert limit((x**2 - 1) / (x - 1), x, 1) == 2
         assert limit((1 - Cos(x)) / x**2, x, 0) == 1/2
 
     def test_limit_direct_substitution(self):
-        x = Variable('x')
         assert limit(x**2 + 3*x, x, Integer(2)) == 10
 
     def test_limit_removable_discontinuity(self):
-        x = Variable('x')
         assert limit((x**2 - 1) / (x - 1), x, Integer(1)) == 2
 
     def test_limit_lhopital_single(self):
-        x = Variable('x')
         assert limit(Sin(x) / x, x, Integer(0)) == 1
 
     def test_limit_lhopital_repeated(self):
-        x = Variable('x')
         assert limit((1 - Cos(x)) / x**2, x, Integer(0)) == Rational(1, 2)
 
     def test_limit_genuine_asymptote(self):
-        x = Variable('x')
         assert limit(1 / x, x, Integer(0)) is UNDEFINED  # or +/- infinity, pending design below
 
     def test_limit_no_indeterminacy_needed(self):
-        x = Variable('x')
         assert limit(Cos(x), x, Integer(0)) == 1
