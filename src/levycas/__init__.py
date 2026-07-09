@@ -26,9 +26,9 @@ from .operations import (
     Deriv, derivative, integrate, limit,
     simplify, sym_eval, simplify_factorial, simplify_div, simplify_power, simplify_product, simplify_sum,
     trig_simplify, trig_substitute, trig_contract, trig_expand,
-    is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_pseudo_divide, polynomial_content, univariate_partial_fractions,
-    polynomial_gcd, polynomial_divide_recursive,
-    gcd, factor_integer, is_prime, radical, rational_simplify, factor_sqfree,
+    is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_pseudo_divide, polynomial_content, univariate_partial_fractions, reduce_mod_p, polynomial_divide_mod_p, polynomial_gcd_mod_p,
+    polynomial_gcd, polynomial_divide_recursive, rational_simplify, factor_sqfree, distinct_degree_factorization,
+    gcd, factor_integer, is_prime, radical, mod_inverse, factor_mod_p,
 )
 
 __all__ = [
@@ -47,8 +47,8 @@ __all__ = [
     'contains', 'copy', 'construct', 'map_op', 'substitute', 'symbols', 'get_symbols',
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
-    'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive',
-    'univariate_partial_fractions',
+    'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive', 'polynomial_divide_mod_p', 'polynomial_gcd_mod_p',
+    'univariate_partial_fractions', 'reduce_mod_p', 'distinct_degree_factorization', 'factor_mod_p',
     'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
 
     # Symbolic Calculus Module
@@ -58,5 +58,5 @@ __all__ = [
     'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
 
     # Numerical Methods
-    'gcd', 'factor_integer', 'is_prime', 'radical', 'rational_simplify', 'factor_sqfree',
+    'gcd', 'factor_integer', 'is_prime', 'radical', 'rational_simplify', 'factor_sqfree', 'mod_inverse',
 ]
