@@ -195,7 +195,7 @@ def _trig_contract_recursive(expr: Expression) -> Expression:
     Returns:
         Expression: The contracted expression
     """
-    expr = algebraic_expand_main(expr)
+    expr = algebraic_expand(expr)
     operation = type(expr)
 
     if operation == Power:
