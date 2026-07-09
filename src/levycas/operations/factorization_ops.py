@@ -124,13 +124,14 @@ def equal_degree_factorization(g: Expression, d: int, x: Variable, p: int) -> li
     return equal_degree_factorization(factor, d, x, p) + equal_degree_factorization(cofactor, d, x, p)
 
 def factor_sqfree(u: Expression, x: Variable) -> list[Expression]:
+    """Square-free factor for monic integer polynomials."""
     from .calculus_ops import derivative
 
     if u == 0:
         return [Integer(0)]
     u = algebraic_expand(u)
 
-    c = leading_coefficient(u, x)
+    c = polynomial_content(u, x, [])
     U = algebraic_expand(u / c)
 
     R = polynomial_gcd(U, derivative(U, x), [x])
@@ -520,9 +521,11 @@ def factor(f: Expression, x: Variable) -> list[Expression]:
     if degree(f, x) <= 0 or degree(f, x) is None:
         return [f]
 
+    content = polynomial_content(f, x, [])
+    f = algebraic_expand(f / content)
     squarefree_parts = factor_sqfree(f, x)
     constant = squarefree_parts[0]
-    result = [constant]
+    result = [constant * content]
 
     for part in squarefree_parts[1:]:
         if isinstance(part, Power):
