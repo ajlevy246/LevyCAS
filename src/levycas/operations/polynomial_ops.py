@@ -1,10 +1,11 @@
 """Operations on generalized polynomial expressions, both single and multivariate cases"""
 from numbers import Number
+import random
 
 from ..expressions import *
 from .expression_ops import contains
 from .algebraic_ops import algebraic_expand
-from .numerical_ops import gcd
+from .numerical_ops import gcd, mod_inverse
 
 def is_monomial(expr: Expression, vars: Expression | set[Expression]) -> bool:
     """Checks whether the given expression is a monomial in the given variables.
@@ -604,59 +605,31 @@ def polynomial_content(expr: Expression, main_var: Expression, vars: list[Expres
         content = polynomial_gcd(content, leading_coefficient(term, main_var), vars)
     return content
 
-def factor_sqfree(u: Expression, x: Variable) -> list[Expression]:
-    from .calculus_ops import derivative
+def reduce_mod_p(expr: Expression, x: Variable, p: int) -> Expression:
+    """Reduces the coefficients of a univariate polynomial expression mod p,
+    returns canonical form with coefficients in [0, p) and no zero terms.
 
-    if u == 0:
-        return [Integer(0)]
-    u = algebraic_expand(u)
+    Args:
+        expr (Expression): A univariate polynomial in x with integer coefficients.
+        x (Variable): The polynomial variable
+        p (int): Prime modulus
 
-    c = leading_coefficient(u, x)
-    U = algebraic_expand(u / c)
-
-    R = polynomial_gcd(U, derivative(U, x), [x])
-    F = polynomial_divide(U, R, [x])[0]
-
-    factors = []
-    j = 1
-    while R != 1:
-        G = polynomial_gcd(R, F, [x])
-        s = polynomial_divide(F, G, [x])[0]
-        if s != 1:
-            factors.append(s**j)
-        R = polynomial_divide(R, G, [x])[0]
-        F = G
-        j += 1
-
-    if F != 1:
-        factors.append(F**j)
-
-    return [c] + factors
-
-# def factor_sqfree(u: Expression, x: Variable) -> list[Expression]:
-#     from .calculus_ops import derivative
-#     if u == 0:
-#         return u
-#     u = algebraic_expand(u)
+    Returns:
+        Expression: The reduced polynomial canonical mod p.
+    """
+    expr = algebraic_expand(expr)
+    d = degree(expr, x)
+    if d is UNDEFINED:
+        return Integer(0)
     
-#     c = leading_coefficient(u, x)
-#     U = algebraic_expand(u / c)
-#     factors = []
-#     P = 1
-#     R = polynomial_gcd(U, derivative(U, x), [x])
-#     F = polynomial_divide(U, R, x)[0]
-#     j = 1
-#     while R != 1:
-#         G = polynomial_gcd(R, F, [x])
-#         s = polynomial_divide(F, G, x)[0]
-#         factors.append(s**j)
-#         P *= s**j
-#         R = polynomial_divide(R, G, x)[0]
-#         F = G
-#         j += 1
-#     factors.append(F ** j)
-#     P *= F**j
-#     return [c] + factors
+    result = Integer(0)
+    for i in range(int(d) + 1):
+        c = coefficient(expr, x, i)
+        c = Integer(0) if c is None else c
+        c_mod = int(c) % p
+        if c_mod != 0:
+            result += Integer(c_mod) * x**i
+    return result
 
 def rational_simplify(u: Expression) -> Expression:
     """Simplifies a rational expression by euclidean division.
@@ -681,3 +654,124 @@ def rational_simplify(u: Expression) -> Expression:
     num, denom = algebraic_expand(u.num()), algebraic_expand(u.denom())
     quot, rem = polynomial_divide(num, denom, sorted(syms))
     return rationalize(quot + rem / denom)
+
+def polynomial_divide_mod_p(u: Expression, v: Expression, x: Variable, p: int) -> tuple[Expression, Expression]:
+    """Univariate polynomial division with all arithmetic performed mod p.
+
+    Expects a polynomial with integer coefficients only.
+
+    Args:
+        u (Expression): Dividend
+        v (Expression): Divisor, nonzero mod p
+        x (Variable): Polynomial variable
+        p (int): Prime modulus
+
+    Returns:
+        tuple[Expression, Expression]: (quotient, remainder), both canonical mod p
+    """
+    u = reduce_mod_p(u, x, p)
+    v = reduce_mod_p(v, x, p)
+    if v == 0:
+        raise ZeroDivisionError
+
+    dv = int(degree(v, x))
+    lcv_inv = mod_inverse(int(leading_coefficient(v, x)), p)
+
+    quotient = Integer(0)
+    remainder = u
+    dr = degree(remainder, x)
+
+    while remainder != 0 and dr is not UNDEFINED and int(dr) >= dv:
+        lcr = int(leading_coefficient(remainder, x))
+        c = (lcr * lcv_inv) % p
+        shift = int(dr) - dv
+        term = Integer(c) * x**shift
+        quotient += term
+        remainder = reduce_mod_p(remainder - term * v, x, p)
+        dr = degree(remainder, x)
+
+    return quotient, remainder
+
+def polynomial_gcd_mod_p(u: Expression, v: Expression, x: Variable, p: int) -> Expression:
+    """Computes gcd(u, v) mod p via the Euclidean algorithm, returned monic.
+
+    Expect `p` to have integer coefficients, and p prime.
+
+    Args:
+        u (Expression): First polynomial
+        v (Expression): Second polynomial
+        x (Variable): Polynomial variable
+        p (int): Prime modulus
+
+    Returns:
+        Expression: The monic gcd, canonical mod p
+    """
+    U, V = reduce_mod_p(u, x, p), reduce_mod_p(v, x, p)
+    while V != 0:
+        _, R = polynomial_divide_mod_p(U, V, x, p)
+        U, V = V, R
+
+    if U == 0:
+        return U
+    lc_inv = mod_inverse(int(leading_coefficient(U, x)), p)
+    return reduce_mod_p(Integer(lc_inv) * U, x, p)
+
+def polynomial_mulmod(u: Expression, v: Expression, f: Expression, x: Variable, p: int) -> Expression:
+    """Multiplies two polynomials and reduces the result modulo f and modulo p.
+
+    Args:
+        u (Expression): First factor
+        v (Expression): Second factor
+        f (Expression): Modulus polynomial
+        x (Variable): Polynomial variable
+        p (int): Prime modulus
+
+    Returns:
+        Expression: (u*v) mod f, with coefficients canonical mod p
+    """
+    product = reduce_mod_p(algebraic_expand(u * v), x, p)
+    return polynomial_divide_mod_p(product, f, x, p)[1]
+
+def polynomial_pow_mod(base: Expression, exponent: int, f: Expression, x: Variable, p: int) -> Expression:
+    """Computes base^exponent mod f mod p via repeated squaring.
+
+    Args:
+        base (Expression): The polynomial to exponentiate
+        exponent (int): A non-negative integer exponent (may be huge, e.g. p**i)
+        f (Expression): Modulus polynomial
+        x (Variable): Polynomial variable
+        p (int): Prime modulus
+
+    Returns:
+        Expression: base^exponent mod f, canonical mod p
+    """
+    result = Integer(1)
+    base = polynomial_divide_mod_p(reduce_mod_p(base, x, p), f, x, p)[1]
+    e = exponent
+    while e > 0:
+        if e & 1:
+            result = polynomial_mulmod(result, base, f, x, p)
+        base = polynomial_mulmod(base, base, f, x, p)
+        e >>= 1
+    return result
+
+def random_polynomial_mod_p(x: Variable, max_degree: int, p: int) -> Expression:
+    """Generates a random nonzero polynomial mod p with degree strictly less 
+    than max_degree.
+
+    Args:
+        x (Variable): Polynomial variable
+        max_degree (int): Strict upper bound on the degree
+        p (int): Prime modulus
+
+    Returns:
+        Expression: A random nonzero polynomial, canonical mod p
+    """
+    while True:
+        poly = Integer(0)
+        for i in range(max_degree):
+            c = random.randrange(0, p)
+            if c != 0:
+                poly += Integer(c) * x**i
+        if poly != 0:
+            return poly

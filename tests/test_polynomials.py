@@ -3,8 +3,9 @@ import pytest
 
 from levycas import *
 
+x, y, z = symbols("x y z")
+
 def test_monomial():
-    x, y = symbols('x y')
     a = Variable('a')
 
     assert is_monomial(a*x**2*y**2, {x, y})
@@ -14,7 +15,6 @@ def test_monomial():
     assert not is_monomial(a**2 + x, {a})
 
 def test_polynomial():
-    x, y = symbols('x y')
     a = Variable('a')
 
     assert is_polynomial(x**2 + y**2, {x, y})
@@ -300,7 +300,6 @@ def test_polynomial_gcd():
     )
 
 def test_polynomial_degree_edge_cases():
-    x = Variable('x')
     assert degree(Integer(5), x) == 0
     assert degree(Integer(0), x) == UNDEFINED # temp until -inf is implemented.
 
@@ -319,14 +318,12 @@ def test_polynomial_gcd_with_zero():
 
 # TODO: After polynomial factorization, implement partial fractions for non-coprime factors.
 # def test_partial_fractions_repeated_root():
-#     x = Variable('x')
-#     u, v1, v2 = 3*x + 5
+#     #     u, v1, v2 = 3*x + 5
 #     v1 = v2 = x + 1
 #     assert univariate_partial_fractions(u, v1, v2, x) == (x+2)
     
 def test_partial_fractions():
-    x = Variable('x')
-
+    
     # (8x+7) / (x+2)(x-1) -> 3/(x+2) + 5/(x-1)
     u, v1, v2 = 8*x + 7, x + 2, x - 1
     u1, u2 = univariate_partial_fractions(u, v1, v2, x)
@@ -367,8 +364,7 @@ def test_sq_free_factor():
         assert algebraic_expand(rebuilt - expr) == 0, f"Mismatch: {rebuilt} != {expr}"
         return result
     
-    x = Variable('x')
-    
+        
     check_sqfree((x - 1) * (x + 2), x)
     check_sqfree((x - 1)**2 * (x + 3), x)
 
@@ -388,3 +384,25 @@ def test_sq_free_factor():
     assert c == 0
 
     check_sqfree((x-1)**2 * (x+2)**2 * (x-3)**5, x)
+
+def test_reduce_mod_p():
+    assert reduce_mod_p(6*x**2 + 10, x, 5) == x**2
+    assert reduce_mod_p(x**4 + 1, x, 5) == x**4 + 1
+    assert reduce_mod_p(-x + 3, x, 5) == 4*x + 3
+
+def test_divide_mod_p():
+    q, r = polynomial_divide_mod_p(x**4 + 1, x**2 + 2, x, 5)
+    assert q == x**2 + 3 and r == 0
+
+def test_gcd_mod_p():
+    # Coprime factors of x^4+1 mod 5 so gcd should be 1
+    assert polynomial_gcd_mod_p(x**2 + 2, x**2 + 3, x, 5) == 1
+
+    # Shared linear factor (x-1) mod 7, i.e. x+6
+    u = reduce_mod_p((x - 1)*(x + 1), x, 7)   # x^2 - 1
+    v = reduce_mod_p((x - 1)*(x + 2), x, 7)   # x^2 + x - 2
+    g = polynomial_gcd_mod_p(u, v, x, 7)
+    assert g == x + 6   # x - 1 canonicalized mod 7
+
+    # gcd(f, 0) = f
+    assert polynomial_gcd_mod_p(x**2 + 2, Integer(0), x, 5) == x**2 + 2
