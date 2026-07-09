@@ -28,7 +28,7 @@ from .operations import (
     trig_simplify, trig_substitute, trig_contract, trig_expand,
     is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial, monomial_divide, polynomial_divide, polynomial_pseudo_divide, polynomial_content, univariate_partial_fractions, reduce_mod_p, polynomial_divide_mod_p, polynomial_gcd_mod_p,
     polynomial_gcd, polynomial_divide_recursive, rational_simplify, factor_sqfree, distinct_degree_factorization,
-    gcd, factor_integer, is_prime, radical, mod_inverse, factor_mod_p,
+    gcd, factor_integer, is_prime, radical, mod_inverse, factor_mod_p, factor,
 )
 
 __all__ = [
@@ -48,7 +48,7 @@ __all__ = [
     'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
     'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
     'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive', 'polynomial_divide_mod_p', 'polynomial_gcd_mod_p',
-    'univariate_partial_fractions', 'reduce_mod_p', 'distinct_degree_factorization', 'factor_mod_p',
+    'univariate_partial_fractions', 'reduce_mod_p', 'distinct_degree_factorization', 'factor_mod_p', 'factor',
     'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
 
     # Symbolic Calculus Module
