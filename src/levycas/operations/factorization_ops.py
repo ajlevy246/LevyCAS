@@ -1,5 +1,6 @@
 """Polynomial factorization routines (Yun's Algorithm, Hensel Lifting, et cetera"""
 from itertools import combinations
+from math import lcm
 
 from levycas.expressions import *
 from .polynomial_ops import (
@@ -535,6 +536,11 @@ def factor(f: Expression, x: Variable) -> list[Expression]:
             base = part
             multiplicity = 1
 
+        # Multiply by LCM of denoms to remove rational coeffs
+        coeffs = _coefficient_list(base, x)
+        lcm_ = lcm(*(coeff.denom() for coeff in coeffs))
+        base *= lcm_
+        result[0] /= lcm_
         result.extend(_factor_squarefree(base, x, multiplicity))
 
     return result
