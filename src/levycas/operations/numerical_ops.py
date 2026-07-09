@@ -84,6 +84,13 @@ def factor_integer(a: Integer | int) -> dict[int, int]:
 
     return factors
 
+def small_primes():
+    """Generate primes up to 100"""
+    yield from [
+        2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43,
+        47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
+    ]
+
 @cache
 def is_prime(n: Integer) -> bool:
     """Primality test for the given integer, implemented only for small
