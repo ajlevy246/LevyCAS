@@ -64,3 +64,52 @@ def test_factor_mod_p():
 
     # 6. Non-monic leading coefficient, to check factor_mod_p's normalization step
     check_factor_mod_p(2*(x**2 + 1), x, 3, expected_count=1, expected_degrees=[2])
+
+def test_complete_factor():
+    x = Variable('x')
+
+    assert factor(7, x) == [7]
+    assert factor(0, x) == [0]
+    assert factor(-12*(x-3), x) == [-12, x-3]
+
+    expr = x + 2
+    factors = factor(expr, x)
+    assert set(factors) == {1, expr}
+
+    expr = x**2 + 1
+    factors = factor(expr, x)
+    assert set(factors) == {1, expr}
+
+    expr = (x-2) * (x+3)
+    factors = factor(expr, x)
+    assert set(factors) == {1, x - 2, x + 3}
+
+    expr = (x-3)**2
+    factors = factor(expr, x)
+    assert set(factors) == {1, (x-3)**2}
+
+    expr = (x-1)**3 * (x+2)**2
+    factors = factor(expr, x)
+    assert set(factors) == {1, (x-1)**3, (x+2)**2}
+
+    expr = (x**2+1) * (x-4)
+    factors = factor(expr, x)
+    assert set(factors) == {1, x**2+1, x-4}
+
+    expr = (x**2+1) * (x**2+x+1)
+    factors = factor(expr, x)
+    assert set(factors) == {1, x**2 + 1, x**2 + x + 1} 
+
+    expr = 6 * (x-1) * (x+2)
+    factors = factor(expr, x)
+    assert set(factors) == {6, x-1, x+2}
+
+    expr = (
+        (x-1) * (x+2) * (x-3) 
+        * (x+4) * (x-5) * (x+6)
+    )
+    factors = factor(expr, x)
+    assert set(factors) == {
+        1, (x-1), (x+2), (x-3),
+        (x+4), (x-5), (x+6)
+    }
