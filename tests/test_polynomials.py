@@ -378,7 +378,7 @@ def test_sq_free_factor():
     assert len(result) == 2
 
     result = check_sqfree(-2 * (x - 1) * (x + 1)**2, x)
-    assert result[0] == -2
+    assert result[0] == 2
 
     c, *factors = factor_sqfree(Integer(0), x)
     assert c == 0

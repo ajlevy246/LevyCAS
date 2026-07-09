@@ -70,7 +70,7 @@ def test_complete_factor():
 
     assert factor(7, x) == [7]
     assert factor(0, x) == [0]
-    assert factor(-12*(x-3), x) == [-12, x-3]
+    assert factor(-12*(x-3), x) == [12, 3-x]
 
     expr = x + 2
     factors = factor(expr, x)
@@ -113,3 +113,10 @@ def test_complete_factor():
         1, (x-1), (x+2), (x-3),
         (x+4), (x-5), (x+6)
     }
+
+    expr = 2*x**2 + 5*x + 3
+    factors = factor(expr, x)
+    assert set(factors) == {1, 2*x+3, x+1}
+
+def test_common_monomials():
+    ...

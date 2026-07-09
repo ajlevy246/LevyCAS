@@ -110,6 +110,7 @@ def integrate(expr: Expression, wrt: Variable) -> Expression | None:
         Expression | None: The integrated expression, or None if the integration failed.
     """
     assert isinstance(wrt, Variable), f"Cannot integrate with respect to {wrt}"
+
     integrated = _integrate_match(expr, wrt)
 
     if integrated is None:
@@ -198,7 +199,6 @@ def _integrate_linear(expr: Expression, wrt: Variable) -> Expression | None:
     Returns:
         Expression | None: The integrated expression, or None if the integration fails.
     """
-
     if isinstance(expr, Product):
         independent, dependent = _separate_factors(expr, wrt)
         if expr == dependent:
@@ -409,7 +409,6 @@ def _integrate_known_byparts(expr: Expression, wrt: Variable) -> Expression | No
         if by_parts is None:
             return None
         return (wrt**(exp+1)) / (exp+1) * Ln(a*wrt+b) - a/(exp+1) * by_parts
- 
  
 def limit(expr: Expression, x: Variable, point: Constant | Number) -> Expression | Literal['UNDEFINED']:
     """Compute the limit of an expression at a point."""
