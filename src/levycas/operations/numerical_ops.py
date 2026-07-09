@@ -184,3 +184,20 @@ def radical(n: Integer) -> Integer:
     for factor in factors.keys():
         rad *= factor
     return rad
+
+def mod_inverse(a: int, p: int) -> int:
+    """Computes the modular inverse of a mode p via Extended Euclidean alg.
+    
+    Assumes p prime.
+    """
+    assert is_prime(p), f"Expected prime modulus, not {p}"
+    a = a % p
+    if a == 0:
+        raise ZeroDivisionError(f"{a} has no inverse mod {p}")
+    old_r, r = a, p
+    old_s, s = 1, 0
+    while r != 0:
+        q = old_r // r
+        old_r, r = r, old_r - q * r
+        old_s, s = s, old_s - q * s
+    return old_s % p

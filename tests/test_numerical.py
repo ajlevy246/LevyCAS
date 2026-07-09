@@ -93,6 +93,13 @@ def test_radical():
         == 10
     )
 
+def test_mod_inverse():
+    assert mod_inverse(3, 11) == 4
+    assert mod_inverse(Integer(3), Integer(11)) == 4
+    assert mod_inverse(3, 7) == 5
+    with pytest.raises(AssertionError):
+        mod_inverse(2, 4)
+
 def test_issues():
     """Tests for various issues needing debugging"""
     assert (
