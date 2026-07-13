@@ -1,15 +1,21 @@
 from argparse import ArgumentParser
 
 from levycas.parser import parse
-from levycas.operations import derivative, integrate, get_symbols
+from levycas.operations import derivative, integrate, get_symbols, factor, simplify
+from levycas.expressions import Product
 
 def integrate_action(args) -> None:
     expr, wrt = parse(args.expr), parse(args.wrt)
     print(f"{integrate(expr, wrt)}")
 
-def derivate_action(args) -> None:
+def diff_action(args) -> None:
     expr, wrt = parse(args.expr), parse(args.wrt)
     print(f"{derivative(expr, wrt)}")
+
+def factor_action(args) -> None:
+    poly, var = parse(args.poly), parse(args.var)
+    factors = factor(poly, var)
+    print(simplify(Product(*factors)))
 
 def graph_action(args) -> None:
     try:
@@ -38,6 +44,7 @@ def launch_tui_action() -> None:
     launch_tui()
 
 def build_parser() -> ArgumentParser:
+    # Help opens with `levycas -h or --help`
     parser = ArgumentParser(
         prog="levycas",
         description=(
@@ -50,21 +57,22 @@ def build_parser() -> ArgumentParser:
     subparsers = parser.add_subparsers(
         dest="command",
         description="The specific command to run. Run with no command to launch the TUI.")
-
-    # Differentiate with `levycas derivate ...`
+    
+    # Differentiate with `levycas diff ...`
     diff_parser = subparsers.add_parser(
-        "derivate",
+        "diff",
         help="Compute the derivative of an expression.",
     )
     diff_parser.add_argument(
         "expr",
-        help="The expression to compute the derivative of."
+        help="The expression to compute the derivative of.",
     )
     diff_parser.add_argument(
         "wrt",
         nargs="?", default="x",
-        help="The variable of differentiation; 'x' by default."
+        help="The variable of differentiation; 'x' by default.",
     )
+
     # Integrate with `levycas integrate ...`
     int_parser = subparsers.add_parser(
         "integrate",
@@ -72,13 +80,29 @@ def build_parser() -> ArgumentParser:
     )
     int_parser.add_argument(
         "expr",
-        help="The expression to compute the integral of."
+        help="The expression to compute the integral of.",
     )
     int_parser.add_argument(
         "wrt",
         nargs="?", default="x",
-        help="The variable of integration; 'x' by default."
+        help="The variable of integration; 'x' by default.",
     )
+
+    # Factor with `levycas factor ...`
+    fact_parser = subparsers.add_parser(
+        "factor",
+        help="Factor a univariate polynomial with rational coefficients.",
+    )
+    fact_parser.add_argument(
+        "poly",
+        help="The polynomial to factor."
+    )
+    fact_parser.add_argument(
+        "var",
+        nargs="?", default="x",
+        help="The polynomial variable; 'x' by default.",
+    )
+
     # Graph with `levycas graph ...`
     graph_parser = subparsers.add_parser(
         "graph",
@@ -100,8 +124,10 @@ def main():
         launch_tui_action()
     elif command == "integrate":
         integrate_action(args)
-    elif command == "derivate":
-        derivate_action(args)
+    elif command == "diff":
+        diff_action(args)
+    elif command == "factor":
+        factor_action(args)
     elif command == "graph": 
         graph_action(args)
 
