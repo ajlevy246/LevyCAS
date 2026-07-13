@@ -24,7 +24,7 @@ class TestScriptingScreen:
             await pilot.click("#run-script")
             output_log = cas.screen.script_output
             assert output_log.lines == [
-                "Sin(y) + yCos(x) - yCos(y)",
+                "-yCos(y) + yCos(x) + Sin(y)",
                 "-Sin(x)",
                 "Cos(1)",
                 "Cos(2)",
@@ -168,9 +168,8 @@ class TestScriptingExecution:
         log = self.Log(output_record)
         run_script(stmt, log)
         assert output_record == [
-            'Sin(x²) + 2x²Cos(x²)',
-            '-(1/2)Cos(x²) + 2yxCos(y)',
-            '2Cos(y) - 2ySin(y)',
-            '2Cos(y) + 2ySin(y) + yxSin(x²)',
+            "2x²Cos(x²) + Sin(x²)",
+            "2yxCos(y) - (1/2)Cos(x²)",
+            "-2ySin(y) + 2Cos(y)",
+            "yxSin(x²) + 2ySin(y) + 2Cos(y)",
         ]
-            

@@ -131,11 +131,12 @@ class Sum(Expression):
         return "(" + " + ".join(term_repr) + ")"
     
     def __str__(self):
-        num_terms = len(self.terms)
+        terms = self.terms[::-1]
+        num_terms = len(terms)
         
-        string = str(self.terms[0])
+        string = str(terms[0])
         for i in range(num_terms - 1):
-            next = self.terms[i + 1]
+            next = terms[i + 1]
             if next.coefficient().is_negative():
                 string += f" - {str(-next)}"
             else:
