@@ -5,7 +5,7 @@
 
 **LevyCAS** is a lightweight symbolic computer algebra system (CAS) written in Python. It focuses on parsing natural mathematical expressions into symbolic objects and performing symbolic manipulation, calculus, simplification, and number-theoretic computations.
 
-<img src="./assets/graph.png" width=1000 alt="A screenshot of the LevyCAS graphing textual user interface. Expressions are entered on the left hand side, and an interactive graph is plotted on the right.">
+<img src="https://github.com/ajlevy246/LevyCAS/blob/main/assets/graph.png?raw=true" width=1000 alt="A screenshot of the LevyCAS graphing textual user interface. Expressions are entered on the left hand side, and an interactive graph is plotted on the right.">
 
 LevyCAS began as an educational project, exploring symbolic computation, expression trees, Pratt parsing, grammars, and terminal UIs. It's designed to combine the best of existing computational tools that I regularly use: Desmos, sympy, and Matlab. 
 
@@ -65,7 +65,7 @@ Launch the TUI directly in your terminal:
 
 By default, installing the `tui` extra adds the `levycas` script to PATH. Launch the powerful interface to write scripts or plot expressions:
 
-<img src="./assets/script.png" width=1000 alt="A screenshot of the LevyCAS scripting textual user interface. A script is entered on the left hand side, while output is printed on the right.">
+<img src="https://github.com/ajlevy246/LevyCAS/blob/main/assets/script.png?raw=true" width=1000 alt="A screenshot of the LevyCAS scripting textual user interface. A script is entered on the left hand side, while output is printed on the right.">
 
 <br/>
 
