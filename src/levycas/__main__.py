@@ -4,6 +4,16 @@ from levycas.parser import parse
 from levycas.operations import derivative, integrate, get_symbols, factor, simplify
 from levycas.expressions import Product
 
+def print_version():
+    try:
+        from importlib.metadata import version
+        print(f"LevyCAS: version=={version('levycas')}")
+    except ImportError:
+        print("importlib not found in standard library... LevyCAS may not support this Python version.")
+
+def launch_terminal_session():
+    raise NotImplementedError("Terminal session not yet implemented...  ")
+
 def integrate_action(args) -> None:
     expr, wrt = parse(args.expr), parse(args.wrt)
     print(f"{integrate(expr, wrt)}")
@@ -54,6 +64,9 @@ def build_parser() -> ArgumentParser:
         ),
         epilog="See github.com/ajlevy246/LevyCAS/ for examples and source."
     )
+    parser.add_argument("-v", "--version", help="print the levycas version and exit.", action='store_true')
+    parser.add_argument("-i", "--interactive", help="launch an interactive python session with common commands already run.", action='store_true')
+
     subparsers = parser.add_subparsers(
         dest="command",
         description="The specific command to run. Run with no command to launch the TUI.")
@@ -61,57 +74,57 @@ def build_parser() -> ArgumentParser:
     # Differentiate with `levycas diff ...`
     diff_parser = subparsers.add_parser(
         "diff",
-        help="Compute the derivative of an expression.",
+        help="compute the derivative of an expression.",
     )
     diff_parser.add_argument(
-        "expr",
-        help="The expression to compute the derivative of.",
+        "expr", metavar="EXPR",
+        help="the expression to compute the derivative of, e.g. 'x^2ln(x)'",
     )
     diff_parser.add_argument(
-        "wrt",
+        "wrt", metavar="VAR",
         nargs="?", default="x",
-        help="The variable of differentiation; 'x' by default.",
+        help="the variable of differentiation; 'x' by default.",
     )
 
     # Integrate with `levycas integrate ...`
     int_parser = subparsers.add_parser(
         "integrate",
-        help="Compute the integral of an expression.",
+        help="compute the integral of an expression.",
     )
     int_parser.add_argument(
-        "expr",
-        help="The expression to compute the integral of.",
+        "expr", metavar="EXPR",
+        help="the expression to compute the integral of, e.g. 'xsin(x^2)",
     )
     int_parser.add_argument(
-        "wrt",
+        "wrt", metavar="VAR",
         nargs="?", default="x",
-        help="The variable of integration; 'x' by default.",
+        help="the variable of integration; 'x' by default.",
     )
 
     # Factor with `levycas factor ...`
     fact_parser = subparsers.add_parser(
         "factor",
-        help="Factor a univariate polynomial with rational coefficients.",
+        help="factor a univariate polynomial with rational coefficients.",
     )
     fact_parser.add_argument(
-        "poly",
-        help="The polynomial to factor."
+        "poly", metavar="POLY",
+        help="the polynomial to factor, e.g. 'x^2 + 3x + 2'",
     )
     fact_parser.add_argument(
-        "var",
+        "var", metavar="VAR",
         nargs="?", default="x",
-        help="The polynomial variable; 'x' by default.",
+        help="the polynomial variable; 'x' by default.",
     )
 
     # Graph with `levycas graph ...`
     graph_parser = subparsers.add_parser(
         "graph",
-        help="Graph up to four expressions.",
+        help="graph up to four expressions.",
     )
     graph_parser.add_argument(
-        "exprs",
+        "exprs", metavar="EXPRS",
         nargs="*",
-        help="Enter up to four expressions to plot."
+        help="enter up to four expressions to plot, e.g. 'sin(x)'",
     )
     return parser
 
@@ -119,6 +132,14 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
     
+    # -v or -i launch actions and exit
+    if args.version:
+        print_version()
+        return
+    elif args.interactive:
+        launch_terminal_session()
+        return
+    # otherwise, expect a command + optional arguments
     command = args.command
     if command is None:
         launch_tui_action()

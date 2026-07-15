@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = [
     {name = "Alex Levy", email = "ajlevy246@gmail.com"},
 ]
-description = "A computer algebra system written in python, with an interact text-based user interface, complete with scripting, graphing, and a package interface."
+description = "A computer algebra system written in python, with an interactive text-based user interface complete with a built-in scripting language and graphing directly in the terminal."
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
