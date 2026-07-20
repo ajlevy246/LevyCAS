@@ -40,6 +40,8 @@ def get_symbols(expr: Expression) -> set[Variable]:
     Returns:
         set[Variable]: Set of variables in the expression
     """
+    if not isinstance(expr, Expression):
+        return set()
     if isinstance(expr, Constant):
         return set()
     elif isinstance(expr, Variable):
