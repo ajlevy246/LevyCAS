@@ -3,9 +3,10 @@ from numbers import Number
 import random
 
 from ..expressions import *
-from .expression_ops import contains
+from .expression_ops import contains, get_symbols
 from .algebraic_ops import algebraic_expand
 from .numerical_ops import gcd, mod_inverse
+
 
 def is_monomial(expr: Expression, vars: Expression | set[Expression]) -> bool:
     """Checks whether the given expression is a monomial in the given variables.
@@ -485,25 +486,130 @@ def _univariate_extended_euclidean(u: Expression, v: Expression, x: Expression) 
     U = algebraic_expand(U / c)
     return (U, app, bpp)
 
-def univariate_partial_fractions(u: Expression, v1: Expression, v2: Expression, x: Expression) -> tuple[Expression]:
-    """Given a rational expression u / (v1v2) where u, v1, v2 are univariate in
-    x and v1 and v2 are coprime wrt x, returns the expanded u1/v1 + u2/v2, where 
-    both terms are proper rational expressions.
+def partial_fractions(num, factors, x) -> list[Expression] | None:
+    """Compute the partial fraction decomposition for a univariate rational function.
 
     Args:
-        u (Expression): Numerator
-        v1 (Expression): LHS of denominator
-        v2 (Expression): RHS of denominator
-        x (Expression): Generalized variable
+        num (Expression): Numerator
+        factors (Expression): Denominator is the product of these factors (v1, v2, v3, ...)
+        wrt (Expression): Generalized variable.
 
     Returns:
-        tuple[Expressio] The list [u1, u2] in the decomposition u/(v1v2) = u1/v1 + u2/v2
+        Expression: Partial fraction decomposition of u / (v1*v2*v3*...)
     """
-    d, a, b = _univariate_extended_euclidean(v1, v2, x)
-    assert d == 1, f"partial fraction factors must be coprime"
-    u1 = polynomial_divide(algebraic_expand(b*u), v1, x)[1]
-    u2 = polynomial_divide(algebraic_expand(a*u), v2, x)[1]
-    return u1, u2
+    from .simplification_ops import sym_eval
+
+    N = 0
+    def dummy_poly(d):
+        nonlocal N
+        poly = Integer(0)
+        for i in range(d):
+            poly += Variable(f"<v{N}>")*x**i
+            N += 1
+        return poly
+
+    denom = Product(*factors)
+    constant, terms = Integer(1), []
+    for factor in factors:
+        if not contains(factor, x):
+            constant *= factor
+        elif isinstance(factor, Power):
+            base, m = factor.base(), factor.exponent()
+            d = degree(base, x)
+            for k in range(1, m + 1):
+                terms.append(dummy_poly(d) / base**k)
+        else:
+            terms.append(dummy_poly(degree(factor, x)) / factor)
+    denom /= constant
+
+    # build partial fractions equation with dummy variables
+    expanded_terms = sum(denom * term for term in terms)
+    expanded_terms = algebraic_expand(expanded_terms)
+    expanded_terms -= num
+
+    # construct linear equations in terms of dummy variables
+    eqns = []
+    for d in range(0, degree(expanded_terms, x)+1):
+        eqns.append(coefficient(expanded_terms, x, d))
+    soln = _solve_linear_system(eqns) # should return {'<v1>': ..., '<v2>': ..., } for all "<vn>"
+    if soln is None: return None
+    soln = {str(var): val for var, val in soln.items()}
+
+    # substitute in the solved vars
+    fractions = sum(terms) 
+    return 1/constant * sym_eval(fractions, **soln)
+
+def _solve_linear_system(eqns: list[Expression]) -> dict[Variable, Expression]:
+    """Solve a linear system of equations with constant (rational) coefficients.
+
+    Uses Guassian elimination algo from https://cp-algorithms.com/linear_algebra/linear-system-gauss.html
+    """
+    # Find x in Ax = b (variables in the system)
+    vars = set().union(*(get_symbols(e) for e in eqns))
+    if any(degree(e, vars) != 1 for e in eqns): 
+        # Expect a linear system with rational coefficients.
+        return None
+    x = sorted(vars)
+
+    # Construct the augmented matrix [A|b] in Ax = b
+    A = [[] for _ in range(len(eqns))]
+    for i, eq in enumerate(eqns):
+        for var in x:
+            coeff = coefficient(eq, var, 1)
+            A[i].append(coeff)
+            eq -= coeff * var
+        A[i].append(-eq)
+
+    # Solve with gaussian elimination
+    N, M = len(A), len(x)
+
+    where = [-1] * M
+
+    row = 0
+    for col in range(M):
+        # find pivot
+        for i in range(row, N):
+            if A[i][col] != 0:
+                pivot = i
+                break
+        else: 
+            continue
+
+        # swap into place
+        A[row], A[pivot] = A[pivot], A[row]
+        where[col] = row
+
+        # normalize pivot row
+        pivot_val = A[row][col]
+        for j in range(col, M + 1):
+            A[row][j] /= pivot_val
+
+        # eliminate from other rows
+        for i in range(N):
+            if i == row or A[i][col] == 0: 
+                continue
+
+            factor = A[i][col]
+            for j in range(col, M + 1):
+                A[i][j] -= factor * A[row][j]
+
+        row += 1
+        if row == N: break
+
+    # Construct solution
+    for i in range(N):
+        if all(A[i][j] == 0 for j in range(M)) and A[i][M] != 0:
+            return None
+        
+    soln = {}
+    for j, var in enumerate(x):
+        if where[j] == -1:
+            # free variable, set to zero
+            soln[var] = Integer(0)
+        else:
+            soln[var] = A[where[j]][M]
+
+    return soln
 
 def polynomial_gcd(u: Expression, v: Expression, L: list[Expression]) -> Expression:
     """Given u, v that are two multivariate polynomials with variables in L and rational coefficients,
@@ -775,3 +881,57 @@ def random_polynomial_mod_p(x: Variable, max_degree: int, p: int) -> Expression:
                 poly += Integer(c) * x**i
         if poly != 0:
             return poly
+
+def _coeff_var_monomial(u: Expression, S: set[Expression]) -> list[Expression, Expression]:
+    """For a monomial u = c_1*c_2*...*S_1*S_2*..., returns the list
+    [c_1*c_2*..., S_1*S_2*...]
+    """
+    assert is_monomial(u, S), f"Expression {u} is not a monomial in {S}"
+    if not contains(u, S):
+        return [u, Integer(1)]
+    
+    if isinstance(u, Power):
+        return [Integer(1), u]
+    
+    assert isinstance(u, Product), f"Expected a monomial in terms of {S}; got {u}"
+    coeff, vars = Integer(1), Integer(1)
+    for factor in u.operands():
+        if contains(factor, S):
+            vars *= factor
+        else:
+            coeff *= factor
+    return [coeff, vars]
+
+def collect_terms(u: Expression, S: Expression | set[Expression]) -> Expression | None:
+    """Collects like-terms for a general algebraic expression u, given variables in S.
+
+    A polynomial is in 'collected form' if it is a monomial in S or a sum of monomials in S with distinct variable parts.
+
+    Args:
+        u (Expression): General algebraic expression
+        S (set[Expression]): Generalized variable/variables
+
+    Returns:
+        Expression: Collected form of u, or None if u is not a general polynomial expression in S.
+    """
+    S = S if isinstance(S, set) else {S}
+    
+    if not is_polynomial(u, S): 
+        return None
+    
+    if u in S:
+        return u
+
+    T: list[list[Expression, Expression]] = []
+    for term in u.operands():
+        coeff_part, var_part = _coeff_var_monomial(term, S)
+        for i, (collected_coeffs, collected_vars) in enumerate(T):
+            # Already seen these variables, combine with like terms
+            if var_part == collected_vars:
+                T[i] = (collected_coeffs + coeff_part, collected_vars)
+                break
+        else:
+            # Variables not yet seen, add a new term
+            T.append([coeff_part, var_part])
+
+    return sum(c * v for c, v in T)
