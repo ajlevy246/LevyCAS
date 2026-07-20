@@ -59,10 +59,12 @@ def build_parser() -> ArgumentParser:
         prog="levycas",
         description=(
             "A set of symbolic computation tools, with a powerful text-based UI built with Textual. "
-            "Do calculus, simplification, graphing, scripting, and more.\n"
-            "Run with no arguments to launch the TUI."
+            "Do calculus, simplification, graphing, scripting, and more. "
         ),
-        epilog="See github.com/ajlevy246/LevyCAS/ for examples and source."
+        epilog=(
+            "See github.com/ajlevy246/LevyCAS/ for examples and source. "
+            "Run with no arguments to launch the TUI."
+        )
     )
     parser.add_argument("-v", "--version", help="print the levycas version and exit.", action='store_true')
     parser.add_argument("-i", "--interactive", help="launch an interactive python session with common commands already run.", action='store_true')
@@ -136,9 +138,11 @@ def main():
     if args.version:
         print_version()
         return
-    elif args.interactive:
+
+    if args.interactive:
         launch_terminal_session()
         return
+
     # otherwise, expect a command + optional arguments
     command = args.command
     if command is None:
