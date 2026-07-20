@@ -6,7 +6,7 @@ from .expression_ops import construct, contains
 
 def algebraic_expand(expr: Expression) -> Expression:
     """Given an expression, returns an equivalent expression in expanded form.
-    For now, will only return a completely result for integer exponents. 
+    For now, will only return a completely expanded result for integer exponents.  
 
     Args:
         expr (Expression): The expression to expand
@@ -110,8 +110,8 @@ def _expand_power(u: Expression, int_exp: Integer) -> Sum | Power:
     """
     from math import comb
     if isinstance(int_exp, Integer):
-        if int_exp.is_negative():
-            return u ** int_exp
+        if int_exp < 0:
+            return 1 / algebraic_expand(u ** -int_exp)
         elif int_exp == 0:
             return 1
         elif int_exp == 1:
@@ -235,7 +235,7 @@ def quadratic_form(expr: Expression, wrt: Variable) -> list[Expression] | None:
         list[Expression] | None: The list [a, b, c] or None if the expression is not quadratic.
     """
     if expr == wrt:
-        return [Integer(1), Integer(0), Integer(0)]
+        return [Integer(0), Integer(1), Integer(0)]
 
     operation = type(expr)
     if operation in [Integer, Rational, Variable]:
@@ -256,7 +256,7 @@ def quadratic_form(expr: Expression, wrt: Variable) -> list[Expression] | None:
             term_form = quadratic_form(term, wrt)
             if term_form is None:
                 return None
-            
+            # operands are sorted from lowest degree to highest
             quadratic[0] += term_form[0]
             quadratic[1] += term_form[1]
             quadratic[2] += term_form[2]
@@ -283,5 +283,5 @@ def quadratic_form(expr: Expression, wrt: Variable) -> list[Expression] | None:
 
     elif not contains(expr, wrt):
         return [Integer(0), Integer(0), expr]
-    
+
     return None
