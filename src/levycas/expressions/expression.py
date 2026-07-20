@@ -56,7 +56,7 @@ class Expression:
         return hash(repr(self))
 
     def __gt__(self, other):
-        return not (self < other)
+        return not (self < other) and not (self == other)
 
     def __add__(self, other):
         from ..operations import simplify_sum
@@ -550,6 +550,9 @@ class Constant(Expression):
 
     def __le__(self, other):
         return repr(self) == repr(other) or self < other
+
+    def __ge__(self, other):
+        return repr(self) == repr(other) or self > other
 
     def __add__(self, other):
         other = convert_primitive(other)
