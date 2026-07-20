@@ -1,6 +1,7 @@
 """Methods acting on an expression's AST. 
 These operations perform simplification procedures, to transform binary ASTs into a normal form.
 """
+import math
 
 from ..expressions import *
 from ..operations import construct, get_symbols
@@ -171,8 +172,9 @@ def simplify_div(expr: Div) -> Expression:
 def simplify_factorial(expr: Factorial) -> Expression:
     operand = expr.operands()[0]
     if isinstance(operand, Integer):
-        from math import factorial
-        return Integer(factorial(int(operand)))
+        return Integer(
+                math.factorial(int(operand))
+            )
     return expr
 
 def flatten_factors(factors: list[Expression]) -> list[Expression]:
@@ -400,19 +402,19 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
     operation = type(expr)
     evaluated_operands = [convert_primitive(sym_eval(operand, approximate, **symbols)) for operand in expr.operands()]
 
-    if operation == Sum:
+    if operation is Sum:
         return simplify(sum(evaluated_operands))
 
-    elif operation == Product:
+    elif operation is Product:
         evaluated = 1
         for operand in evaluated_operands:
             evaluated *= operand
         return simplify(evaluated)
 
-    elif operation == Div:
+    elif operation is Div:
         return simplify(evaluated_operands[0] / evaluated_operands[1])
 
-    elif operation == Power:
+    elif operation is Power:
         """Since `simplify` will not automatically reduce potentially imaginary rational powers,
         we special case here.
         """
@@ -422,33 +424,35 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
                 return convert_primitive(float(base) ** float(exp))
         return simplify(base ** exp)
     
-    elif operation == Factorial:
+    elif operation is Factorial:
         operand = evaluated_operands[0]
         if isinstance(operand, Integer) and approximate:
-            from math import factorial
-            return Integer(factorial(int(operand)))
+            return Integer(math.factorial(int(operand)))
         return Factorial(operand)
 
-    elif operation == Sin:
+    elif operation is Sin:
         operand = convert_primitive(evaluated_operands[0])
         if approximate and isinstance(operand, Constant):
-            from math import sin
-            return convert_primitive(sin(operand))
+            return convert_primitive(math.sin(operand))
         return Sin(operand)
         
-    elif operation == Cos:
+    elif operation is Cos:
         operand = convert_primitive(evaluated_operands[0])
         if approximate and isinstance(operand, Constant):
-            from math import cos
-            return convert_primitive(cos(operand))
+            return convert_primitive(math.cos(operand))
         return Cos(operand)
     
-    elif operation == Ln:
+    elif operation is Ln:
         operand = convert_primitive(evaluated_operands[0])
         if approximate and isinstance(operand, Constant):
-            from math import log
-            return convert_primitive(log(operand))
+            return convert_primitive(math.log(operand))
         return Ln(operand)
+
+    elif operation is Exp:
+        operand = convert_primitive(evaluated_operands[0])
+        if approximate and isinstance(operand, Constant):
+            return convert_primitive(math.exp(operand))
+        return Exp(operand)
 
     else:
         return simplify(construct(evaluated_operands, operation))
