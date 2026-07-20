@@ -323,21 +323,19 @@ def test_polynomial_gcd_with_zero():
 #     assert univariate_partial_fractions(u, v1, v2, x) == (x+2)
     
 def test_partial_fractions():
-    
     # (8x+7) / (x+2)(x-1) -> 3/(x+2) + 5/(x-1)
-    u, v1, v2 = 8*x + 7, x + 2, x - 1
-    u1, u2 = univariate_partial_fractions(u, v1, v2, x)
+    num = 8*x + 7
+    factors = [x+2, x-1]
     assert (
-        rationalize(u1 / v1 + u2 / v2)
-        == u / (v1 * v2)
+        partial_fractions(num, factors, x)
+        == 5/(x-1) + 3/(x+2)
     )
-
     # (x-1)/(x+5)(x+3) -> 3/(x+5) - 2/(x+3)
-    u, v1, v2 = x - 1, x + 5, x + 3
-    u1, u2 = univariate_partial_fractions(u, v1, v2, x)
+    num = x-1
+    factors = [x+5, x+3]
     assert (
-        rationalize(u1 / v1 + u2 / v2)
-        == u / (v1 * v2)
+        partial_fractions(num, factors, x)
+        == 3/(x+5) - 2/(x+3)
     )
 
 def test_rational_simplify():

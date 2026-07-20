@@ -3,7 +3,10 @@ import pytest
 
 from levycas import *
 
-x = Variable('x')
+def sqrt(x):
+    return convert_primitive(x)**Rational(1, 2)
+
+x, y = symbols("x y")
 
 class TestDerivative:
     """Tests for the derivative operator"""
@@ -38,7 +41,6 @@ class TestDerivative:
         assert derivative(x**(1/2), x) == (1/2) * x**(-1/2)
 
     def test_derivative_multivariate(self):
-        x, y = symbols("x y")
         assert derivative(Sin(y), x) == 0
         assert derivative(x, x) == 1
 
@@ -49,19 +51,11 @@ class TestIntegrate:
     """Tests for the integrate operator"""
 
     def test_integrate_constant(self):
-        x, y = symbols('x y')
-
         assert integrate(2 * y, x) == 2*y*x
         assert integrate(Sin(Integer(1)), x) == Sin(Integer(1))*x
         assert integrate(Cos(Sin(Rational(-1, 2))), x) == Cos(Sin(Rational(-1, 2))) * x
 
-    def test_integrate_match(self):
-        x, y = symbols('x y')
-        pass
-
     def test_integrate__elementary_substitute(self):
-        x, y = symbols('x y')
-        
         assert (
             integrate(Sin(x) * Cos(x), x)
             == - (1 / 2) * Cos(x) ** 2
@@ -84,7 +78,6 @@ class TestIntegrate:
         )
 
     def test_integrate_algebraic_substitute(self):
-        x, y = symbols("x y")
         assert (
             integrate((3*x + 1)**4, x)
             == Rational(1, 15) * (3*x + 1)**5
@@ -99,7 +92,6 @@ class TestIntegrate:
         )
 
     def test_integrate_rational_expressions(self):
-        x, y = symbols("x y")
         assert (
             integrate((2*x) / (x**2 + 1), x)
             == Ln(x**2 + 1)
@@ -110,7 +102,6 @@ class TestIntegrate:
         )
 
     def test_integrate_trig_sub(self):
-        x, y = symbols('x y')
         assert (
             integrate(Cos(x)**2 * Sin(x), x)
             == -Rational(1, 3) * Cos(x)**3
@@ -125,13 +116,9 @@ class TestIntegrate:
         )
 
     def test_integrate_linear(self):
-        x, y = symbols('x y')
-
         assert integrate(2*x + (1 / 2)*x**2, x) == x**2 + Rational(1, 6)*x**3
 
     def test_integration_byparts(self):
-        x, y = symbols('x y')
-
         #Exponential tests
         assert (
             integrate(x*Exp(x), x)
@@ -234,19 +221,10 @@ class TestIntegrate:
             == x
         )
 
-    # TODO: Failing test case - hyperbolic integral issue?
-    # def test_integrate_partial_fractions_rational(self):
-    #         #     assert (
-    #         integrate(1 / ((x + 1) * (x + 2)), x)
-    #         == Ln(x + 1) - Ln(x + 2)
-    #     )
-
     def test_integrate_fail(self):
         assert integrate(Exp(x**2), x) is None
 
     def test_integrate_miscellaneous(self):
-        x, y = symbols('x y')
-
         assert (
             integrate(Cos(x) / (Sin(x)**2 + 3*Sin(x) + 4), x)
             == 2 * (Arctan((3 + 2 * Sin(x)) / 7 ** Rational(1, 2)) / 7**Rational(1, 2))
@@ -258,6 +236,185 @@ class TestIntegrate:
         assert (
             integrate(x*Exp(x), x)
             == x * Exp(x) - Exp(x)
+        )
+
+    def test_integrate_partial_fractions(self):
+        # Distinct linear factors
+        assert (
+            integrate(1 / ((x-1)*(x+2)), x)
+            == -1/3*Ln(x+2) + (1/3)*Ln(x-1)
+        )
+        assert (
+            integrate(x / ((x-1)*(x+2)), x)
+            == 2/3*Ln(x+2)+1/3*Ln(x-1)
+        )
+        assert (
+            integrate((x+3) / ((x-1)*(x+1)), x)
+            == 2*Ln(x-1) - Ln(x+1)
+        )
+        assert (
+            integrate((3*x + 7) / ((2*x + 1)*(x-4)), x)
+            == -11/18*Ln(2*x+1) + 19/9*Ln(x-4)
+        )
+        assert (
+            integrate((x**2 + 1) / ((x-1)*(x+2)*(x+5)), x)
+            == 13/9*Ln(x+5) - 5/9*Ln(x+2) + 1/9*Ln(x-1)
+        )
+        # Linear + Quadratic factors
+        assert (
+            integrate(1 / ((x+1)*(x**2 + 1)), x)
+            == -1/4*Ln(x**2 + 1) + 1/2*Ln(x+1) + 1/2*Arctan(x)
+        )
+        assert (
+            integrate(x / ((x - 1)*(x**2 + 4)), x)
+            == -1/10*Ln(x**2+4) + 1/5*Ln(x-1) + 2/5*Arctan(x/2)
+        )
+        assert (
+            integrate((3*x + 2) / ((x+2)*(x**2 + 2*x + 5)), x)
+            == 2/5*Ln(x**2+2*x+5) - 4/5*Ln(x+2)+11/10*Arctan(x/2+1/2)
+        )
+        assert (
+            integrate(x**2 / ((x-3)*(x**2 + x + 1)), x)
+            == 2/13*Ln(x**2+x+1) + 9/13*Ln(x-3) + sqrt(3)*2/39*Arctan(1/sqrt(3)*(2*x+1))
+        )
+        # Distinct quadratic factors
+        assert(
+            integrate(1 / ((x**2 + 1)*(x**2 + 4)), x)
+            == -1/6*Arctan(x/2)+1/3*Arctan(x)
+        )
+        assert (
+            integrate(x / ((x**2 + 1)*(x**2 + 9)), x)
+            == -1/16*Ln(x**2+9) + 1/16*Ln(x**2+1)
+        )
+        assert (
+            integrate((2*x+1) / ((x**2+x+1)*(x**2+2*x+5)), x)
+            == -7/26*Ln(x**2+2*x+5)
+             +  7/26*Ln(x**2+x+1)
+             +  sqrt(3)/13*Arctan((2*x+1)/sqrt(3))
+             -  5/26*Arctan(x/2+1/2)
+        )
+
+    def test_integrate_improper_rational(self):
+        assert (
+            integrate((x**2 + 1) / (x+1), x)
+            == 1/2*x**2 - x + 2*Ln(x+1)
+        )
+        assert (
+            integrate((x**3 + 1) / (x**2 + 1), x)
+            == 1/2*x**2 - 1/2*Ln(x**2+1) + Arctan(x)
+        )
+        assert (
+            integrate((x**4 + 3) / (x**2 + 1), x)
+            == 1/3*x**3 - x + 4*Arctan(x)
+        )
+        assert (
+            integrate((x**3 + x) / (x-1), x)
+            == 1/3*x**3 + 1/2*x**2 + 2*x + 2*Ln(x-1)
+        )
+
+    def test_integrate_many_factor_rational(self):
+        assert (
+            integrate(1 / ((x-1)*(x+2)*(x+5)), x)
+            == 1/18*Ln(x+5) - 1/9*Ln(x+2) + 1/18*Ln(x-1)
+        )
+        assert (
+            integrate(x / ((x-1)*(x+1)*(x+2)), x)
+            == -2/3*Ln(x+2) + 1/2*Ln(x+1) + 1/6*Ln(x-1)
+        )
+        assert (
+            integrate(x**2 / ((x-2)*(x+1)*(x+3)), x)
+            == 9/10*Ln(x+3) - 1/6*Ln(x+1) + 4/15*Ln(x-2)
+        )
+        assert (
+            integrate((5*x + 1) / ((2*x-1)*(x+4)*(x-7)), x)
+            == -7/117*Ln(2*x-1) - 19/99*Ln(x+4) + 36/143*Ln(x-7)
+        )
+
+    def test_integrate_high_degree_rational(self):
+        assert (
+            integrate(1 / (x**3 - x), x)
+            == 1/2*Ln(x+1) + 1/2*Ln(x-1) - Ln(x)
+        )
+        assert (
+            integrate(1 / (x**4 - 1), x)
+            == -1/4*Ln(x+1) + 1/4*Ln(x-1) - 1/2*Arctan(x)
+        )
+        assert (
+            integrate(x / (x**4 - 5*x**2 + 4), x) 
+            == 1/6*Ln(x+2) - 1/6*Ln(x+1) - 1/6*Ln(x-1) + 1/6*Ln(x-2)
+        )
+        assert (
+            integrate(1 / (x**5 - x), x)
+            == 1/4*Ln(x**2+1) + 1/4*Ln(x+1) + 1/4*Ln(x-1) - Ln(x)
+        )
+        
+    def test_integrate_rational_repeated_factors(self):
+        # Repeated linear factors
+        assert (
+            integrate(1 / (x-1)**2, x)
+            == -1 / (x-1)
+        )
+        assert (
+            integrate(1 / ((x-1)**2*(x+2)), x)
+            == -1/3 / (x-1) + 1/9*Ln(x+2) - 1/9*Ln(x-1)
+        )
+        assert (
+            integrate(x / (x-3)**3, x)
+            == -1/(x-3) - (3/2)/(x-3)**2
+        )
+        assert (
+            integrate((x+1) / ((x-2)**2*(x+5)), x)
+            == -(3/7)/(x-2) - 4/49*Ln(x+5) + 4/49*Ln(x-2)
+        )
+        # Repeated quadratic factors
+        assert (
+            integrate(1 / (x**2 + 1)**2, x)
+            == (1/2)*x/(x**2+1) + 1/2*Arctan(x)
+        )
+        assert (
+            integrate(1 / ((x**2 + 1)**2 * (x-2)), x)
+            == 1/5*(x-1/2)/(x**2+1)*-1
+             - 1/50*Ln(x**2+1)
+             + 1/25*Ln(x-2)
+             - 7/25*Arctan(x)
+        )
+        assert (
+            integrate(x**2 / ((x**2 + x + 1)**2), x)
+            == (1/3)*(x-1)/(x**2+x+1)*-1 
+             + 4/9*sqrt(3) * Arctan(sqrt(3)/3*(2*x+1))
+        )
+
+    def test_integrate_rational_stress(self):
+        assert (
+            integrate(1 / ((x-3)*(x-2)*(x-1)*(x+1)*(x+2)), x)
+            == 1/60*Ln(x+2)
+             - 1/24*Ln(x+1)
+             + 1/12*Ln(x-1)
+             - 1/12*Ln(x-2)
+             + 1/40*Ln(x-3)
+        )
+        assert (
+            integrate(x**3 / ((x-4)*(x-2)*(x-1)*(x+1)*(x+3)), x)
+            == -27/280*Ln(x+3)
+             +    1/60*Ln(x+1)
+             +    1/24*Ln(x-1)
+             -    4/15*Ln(x-2)
+             +  32/105*Ln(x-4)
+        )
+        assert (
+            integrate(1 / ((x**2 + 1)*(x + 1)*(x-2)), x)
+            == 1/20*Ln(x**2+1)
+             -  1/6*Ln(x+1)
+             + 1/15*Ln(x-2)
+             - 3/10*Arctan(x)
+        )
+        assert (
+            integrate(x**2 / ((x**2 + 1) * (x**2 + 4) * (x-3)), x)
+            == -2/39*Ln(x**2 + 4)
+             +  1/60*Ln(x**2+1)
+             + 9/130*Ln(x-3)
+             -  2/13*Arctan(1/2*x)
+             +  1/10*Arctan(x)
         )
 
 class TestLimit:
