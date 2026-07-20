@@ -3,7 +3,15 @@
 from ..expressions import *
 from .expression_ops import contains, copy, substitute
 from .algebraic_ops import algebraic_expand, linear_form, quadratic_form
-from .polynomial_ops import is_polynomial, polynomial_divide, degree
+from .polynomial_ops import (
+    is_polynomial, 
+    polynomial_divide, 
+    degree, 
+    partial_fractions, 
+    polynomial_gcd, 
+    coefficient,
+    _solve_linear_system,
+)
 from .trig_ops import trig_simplify
 
 from typing import Literal
@@ -257,7 +265,6 @@ def _trial_substitutions(expr: Expression) -> set[Expression]:
     if operation in [Integer, Rational, Variable]:
         return candidates
 
-    #TODO: Have all functions (trigonometric, exponential) inherit from the Function class.
     if isinstance(expr, Elementary):
         candidates.add(expr)
         candidates = candidates.union(set(expr.operands()))
@@ -293,67 +300,203 @@ def _separate_factors(expr: Product, wrt: Variable) -> list[Product | Integer]:
     return [independent, dependent]
 
 def _integrate_rational(expr: Expression, wrt: Variable) -> Expression | None:
-    """Given an expression in rational form, attemps to integrate with respect to the given variable.
-    Expressions integrated with this method are of the form (rx + s) / (ax^2 + bx + c), or u / v1v2
-    where v1, v2 are relatively prime and partial fraction decomposition allows for integration.
+    """Given an expression in rational form (P/Q with P, Q polynomials), 
+    attemps to integrate with respect to the given variable via Hermite reduction,
+    partial fractions or closed forms.
 
     Args:
         expr (Expression): The expression to integrate
-        wrt (Variable): The variable of integration
+        wrt (Variable): The variable of integration 
 
     Returns:
         Expression | None: The integrated expression, or None if the integration fails.
     """
-    denominator = expr.denom()
-    if not is_polynomial(denominator, wrt):
+    from .factorization_ops import factor
+    num, denom = algebraic_expand(expr.num()), algebraic_expand(expr.denom())
+    if not (is_polynomial(denom, wrt) and is_polynomial(num, wrt)):
+        # Expression is not rational, try integrating somewhere else
         return None
-    denom_degree = degree(denominator, wrt)
-    if not int(denom_degree) <= 2:
-        #try partial fractions; factor_sqfree as placeholder until better factorization is implemented
-        from .factorization_ops import factor_sqfree
-        constant, *factors = factor_sqfree(denominator, wrt)
-        
-        #Partial fractions only implemented now for easy case
-        if len(factors) != 2:
-            return None
-        v1, v2 = factors
-        
-        from .polynomial_ops import univariate_partial_fractions
-        u1, u2 = univariate_partial_fractions(expr.num(), v1, v2, wrt)
-        decomposed_integral = integrate(u1 / v1 + u2 / v2, wrt)
-        if decomposed_integral is None:
-            return None
-        return (1 / constant) * decomposed_integral
-
-    numerator = expr.num()
-    if not is_polynomial(numerator, wrt):
-        return None
-    num_degree = degree(numerator, wrt)
-    if num_degree > denom_degree:
-        quotient, remainder = polynomial_divide(numerator, denominator, [wrt])
-        return integrate(quotient + remainder / denominator, wrt)
     
-    a, b, c = quadratic_form(denominator, wrt)
-    discriminant = b**2 - 4*a*c 
-    if numerator == 1:
-        if isinstance(discriminant, Integer):
-            if discriminant == 0:
-                return -1 / (a*(a*wrt + b))
-            elif discriminant.is_positive():
-                #Hyperbolic arctanh not yet implemented
-                print(f"Hyperbolic arctanh not yet implemented")
-                return None
-        
-        return 2 * Arctan((2*a*wrt + b)/(-discriminant)**(1/2)) / (-discriminant)**(1/2)
+    num_degree, denom_degree = degree(num, wrt), degree(denom, wrt)
+    if num_degree >= denom_degree:
+        Q, R = polynomial_divide(num, denom, [wrt])
+        R_int = integrate(R/denom, wrt)
+        if R_int is not None:
+            return integrate(Q, wrt) + R_int
+        return None
 
-    else:
-        if num_degree == 1:
-            r, s = linear_form(numerator, wrt)
+    reduction = _hermite_reduce(num, denom, wrt)
+    if reduction not in (None, 0):
+        return reduction
+    
+    if denom_degree <= 2:
+        # try first with partial fractions, which 
+        # returns a nice result if successful.
+        partial_int = _integrate_partial(num, denom, wrt)
+        if partial_int is not None: 
+            return partial_int
+
+        # Failed with partial fractions, return 
+        #  closed form (which might be uglier).
+        a, b, c = quadratic_form(denom, wrt)
+        discriminant = b**2 - 4*a*c
+        if num == 1:
+            if not isinstance(discriminant, Integer) or discriminant < 0:
+                sqrt_nd = (-discriminant)**(1/2)
+                return 2 * Arctan((2*a*wrt + b)/sqrt_nd) / sqrt_nd
+            if discriminant == 0:
+                return -2 / (2*a*wrt + b)
+            elif discriminant.is_positive():
+                # Arctanh form uses Ln expansion.
+                #  assumes complex logarithm until Abs() implemented.
+                sqrt_d = discriminant ** (1/2)
+                return -1 / sqrt_d * Ln((1 + (2*a*wrt + b) / sqrt_d)/(1 - (2*a*wrt + b) / sqrt_d))
+
+        elif num_degree == 1:
+            r, s = linear_form(num, wrt)
             alpha = r / (2*a)
             beta = s - r*b/(2*a)
             #Correction from Elementary Algorithms, beta -> 1/beta
-            factor = integrate(1 / denominator, wrt)
-            return None if factor is None else alpha*Ln(denominator) + beta * factor
+            factor = integrate(1 / denom, wrt)
+            return None if factor is None else alpha*Ln(denom) + beta * factor
+                
+        return None
+    
+    # no closed form for denominator of degree > 2;
+    #  try partial fractions
+    return _integrate_partial(num, denom, wrt)
+
+def _hermite_reduce(P: Expression, Q: Expression, x: Expression) -> Expression | None:
+    """Uses Hermite's method to reduce the integral p/q in x.
+
+    Algorithm 11.1 from Algorithms for Computer Algebra (Geddes, Czapor, Labahn)
+
+    Args:
+        P (Expression): Numerator
+        Q (Expression): Denominator
+        x (Expression): Polynomial generalized variable
+
+    Returns:
+        Expression: The sum rational_part + \int(poly_part) + \int(integral_part)
+    """
+    from .factorization_ops import factor_sqfree
+
+    # Check that denominator is square-free
+    g = polynomial_gcd(Q, derivative(Q, x), [x])
+    if g == 1:
+        return None
+
+    poly_part, r_rem = polynomial_divide(P, Q, x)
+
+    factors = factor_sqfree(Q, x)
+    q = [factor.base() for factor in factors]
+    mult = [factor.exponent() for factor in factors]
+
+    # Construct numerators dict r := {(factor_base, multiplicity) -> numerator}
+    pf_decomp = partial_fractions(r_rem, factors, x)
+    r = {}
+    terms = pf_decomp.operands() if isinstance(pf_decomp, Sum) else [pf_decomp]
+    for term in terms:
+        
+        # the following mess is due to constants automatically distributed across
+        #  sum. e.g. (1/9) / (x+1) has _denom() -> 9x+9.
+        #  thus we manually move the coefficient in the denominator back to the numerator.
+        c = term.coefficient()
+        term /= c
+        num, denom = term.num(), term.denom()
+        num *= c
+
+        if isinstance(denom, Power):
+            f, m = denom.base(), denom.exponent()
+        else:
+            f, m = denom, Integer(1)
+
+        r[(f, m)] = num
+
+    rational_part, integral_part = Integer(0), Integer(0)
+
+    for idx in range(len(q)):
+        qi = q[idx]
+        m_i = mult[idx]
+        qi_prime = derivative(qi, x)
+
+        # reduce numerators from multiplicity m_i down to multiplicity 2
+        for j in range(m_i, 1, -1):
+            num_ij = r.get((qi, j), Integer(0))
+            if num_ij == 0:
+                continue
+
+            reduction = _hermite_solve_reduction(qi, qi_prime, num_ij, x)
+            if reduction is None:
+                return None
+            s, t = reduction
+
+            rational_part -= t / ((j - 1) * qi ** (j - 1))
+            r[(qi, j - 1)] = r.get((qi, j - 1), Integer(0)) + s + derivative(t, x) / (j - 1)
+
+        # what's left has multiplicity 1 and goes into the "hard" integral part
+        integral_part += r.get((qi, 1), Integer(0)) / qi
+
+    poly_integral = integrate(poly_part, x)
+    if poly_integral is None:
+        return None
+    integral_part_integral = integrate(integral_part, x)
+    if integral_part_integral is None:
+        return None
+
+    return rational_part + poly_integral + integral_part_integral
+
+def _hermite_solve_reduction(f, f_prime, num, x) -> tuple[Expression, Expression] | None:
+    """Solves s*f + t*f' = num for polynomials s, t with deg(s), deg(t) < deg(f).
+
+    f and f' are coprime (f is square-free), so a solution always exists.
+    """
+    n = degree(f, x)
+    if n == 0:
+        return Integer(0), Integer(0)
+
+    s_coeffs = [Variable(f'<s_{k}>') for k in range(n)]
+    t_coeffs = [Variable(f'<t_{k}>') for k in range(n)]
+    s = sum((c * x**k for k, c in enumerate(s_coeffs)), Integer(0))
+    t = sum((c * x**k for k, c in enumerate(t_coeffs)), Integer(0))
+
+    eq = algebraic_expand(s * f + t * f_prime - num)
+    deg_eq = degree(eq, x)
+    if deg_eq is None:
+        deg_eq = 0
+
+    system = [coefficient(eq, x, d) for d in range(deg_eq + 1)]
+    soln = _solve_linear_system(system)
+    if soln is None:
+        return None
+
+    s_val = sum((soln.get(c, Integer(0)) * x**k for k, c in enumerate(s_coeffs)), Integer(0))
+    t_val = sum((soln.get(c, Integer(0)) * x**k for k, c in enumerate(t_coeffs)), Integer(0))
+    return s_val, t_val
+
+def _integrate_partial(num: Expression, denom: Expression, wrt: Expression) -> Expression | None:
+    """Given an expression in rational form (P/Q with P, Q polynomials), 
+    attemps to integrate with respect to the given variable by decomposing via partial fractions.
+
+    Args:
+        num (Expression): Numerator (P)
+        denom (Expression): Denominator (Q)
+        wrt (Expression): Generalised variable of integration
+
+    Returns:
+        Expression | None: The integrated expression, or None if the partial fractions decomposition fails.
+    """
+    from .factorization_ops import factor
+
+    constant, *factors = factor(denom, wrt)
+    decomposed_expr = partial_fractions(num, factors, wrt)
+    if decomposed_expr is None or decomposed_expr == num/(constant*Product(*factors)):
+        # Partial fractions failed to yield new information.
+        return None
+    decomposed_integral = integrate(decomposed_expr, wrt)
+    if decomposed_integral is None:
+        return None
+    return (1 / constant) * decomposed_integral
 
 def _integrate_known_byparts(expr: Expression, wrt: Variable) -> Expression | None:
     """Given an expression of a known form that can be integrated wrt to the given 
