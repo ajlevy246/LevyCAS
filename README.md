@@ -48,7 +48,7 @@ print(integrate(expr, x))
 
 Or through the command-line interface:
 ```bash
-[user@localhost] levycas integrate "xsin(x^2)"
+$ levycas integrate "xsin(x^2)"
 ```
 
 ## Terminal-Based TUI
@@ -61,13 +61,13 @@ python3 -m pip install levycas[tui] --extra-index-url https://test.pypi.org/simp
 Launch the TUI directly in your terminal:
 
 ```bash
-[user@locahost]$ levycas
+$ levycas
 ```
 
 Or jump straight to the graphing interface:
 
 ```bash
-[user@localhost]$ levycas graph "sin(x)" "x^2" "lnx" "exp(x)"
+$ levycas graph "sin(x)" "x^2" "lnx" "exp(x)"
 ```
 
 <br/>

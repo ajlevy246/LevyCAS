@@ -386,7 +386,7 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
 
     Args:
         expr (Expression): The expression to evaluate.
-        approximate (bool, optional): Expand rational functions (e.g. cos, sin, factorial)
+        approximate (bool, optional): Approximate elementary functions (e.g. cos, sin, factorial)
         symbols (dict[Expression, Expression]): The symbol table containing variable definitions.
 
     Returns:
@@ -430,7 +430,7 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
     elif operation is Factorial:
         operand = evaluated_operands[0]
         if isinstance(operand, Integer) and approximate:
-            return Integer(math.factorial(int(operand)))
+            return Integer(math.factorial(operand))
         return Factorial(operand)
 
     elif operation is Sin:
