@@ -17,6 +17,9 @@ def simplify(expr: Expression) -> Expression:
     Returns:
         Expression: The simplified expression
     """
+    if expr is UNDEFINED: 
+        return UNDEFINED
+    
     operation = type(expr)
 
     if isinstance(expr, (Constant, Variable)):
