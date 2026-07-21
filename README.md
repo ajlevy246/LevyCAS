@@ -7,9 +7,9 @@
 
 <img src="https://github.com/ajlevy246/LevyCAS/blob/main/assets/graph.png?raw=true" width=1000 alt="A screenshot of the LevyCAS graphing textual user interface. Expressions are entered on the left hand side, and an interactive graph is plotted on the right.">
 
-LevyCAS began as an educational project, exploring symbolic computation, expression trees, Pratt parsing, grammars, and terminal UIs. It's designed to combine the best of existing computational tools that I regularly use: Desmos, sympy, and Matlab. 
+<br/> 
 
-<br/>
+LevyCAS began as an educational project, exploring symbolic computation, expression trees, Pratt parsing, grammars, and terminal UIs. It's designed to combine the best of existing computational tools that I regularly use: Desmos, sympy, and Matlab. 
 
 ## Features
 - Parse natural mathematical expressions
@@ -27,11 +27,11 @@ LevyCAS began as an educational project, exploring symbolic computation, express
 
 While the base package has no dependencies, it is designed for Python3.10+
 
-### Core package
+## Core package & CLI
 LevyCAS is uploaded as a Python package on the TestPyPi index [here](https://test.pypi.org/project/levycas/). Install with pip:
 
 ```bash
-python3 -m pip install --index-url https://test.pypi.org/simple/ levycas
+python3 -m pip install levycas --index-url https://test.pypi.org/simple/ 
 ```
 
 Then, get started by launching python and running:
@@ -46,17 +46,28 @@ print(derivative(expr, x))
 print(integrate(expr, x))
 ```
 
-### Command-Line TUI
+Or through the command-line interface:
+```bash
+[user@localhost] levycas integrate "xsin(x^2)"
+```
+
+## Terminal-Based TUI
 To use the textual user interface, install with the `tui` extra. This extra depends on the [`Textual`](https://textual.textualize.io/) library, as well as the `textual-plot` package.
 
 ```bash
-python3 -m pip install --extra-index-url https://test.pypi.org/simple/ levycas[tui]
+python3 -m pip install levycas[tui] --extra-index-url https://test.pypi.org/simple/ 
 ```
 
 Launch the TUI directly in your terminal:
 
 ```bash
 [user@locahost]$ levycas
+```
+
+Or jump straight to the graphing interface:
+
+```bash
+[user@localhost]$ levycas graph "sin(x)" "x^2" "lnx" "exp(x)"
 ```
 
 <br/>
@@ -92,28 +103,83 @@ In addition, LevyCAS includes a native Pratt parser capable of interpreting natu
 ```python
 >>> from levycas import parse
 
->>> parse("sin(x)cosx")
-Sin(x)Cos(x)
+# implicit multiplication & function args
+>>> parse("1/2sin(x)cosx")
+(1/2)Sin(x)Cos(x)
 
+# symbol generation
 >>> parse("ax^2 + bx + c")
 ax² + bx + c
 
->>> parse("1/2x + 3ln(x^2)")
-6Ln(x) + (1/2)x
+# automatic simplification/normalization
+>>> parse("2(x+3) - x - 6y/y")
+x
 ```
 
-### Integer Radical
+### Polynomial Factoring
 ```python
->>> from levycas import factor_integer
+>>> from levycas import Variable, factor
+>>> x = Variable("x")
 
->>> def rad(n: Integer) -> Integer:
->>>     rad, factors = 1, factor_integer(n).keys()
->>>     for factor in factors:
->>>         rad *= factor
->>>     return rad
+# repeated irreducible factors
+>>> factor(x**8 + 2*x**6 - 6*x**5 - 12*x**3 + 9*x**2 + 18, x)
+[1, x² + 2, (x³ - 3)^2]
 
->>> rad(18)
-6
+# generalized polynomial variables
+>>> factor(4*Ln(x)**2 + 10*Ln(x) + 6, Ln(x))
+[2, Ln(x) + 1, 2Ln(x) + 3]
+```
+
+### Symbolic Integration
+```python
+>>> from levycas.expressions import Variable, Sin, Cos, Ln,
+>>> from levycas.operations  import integrate, collect_terms
+>>> x = Variable("x")
+
+# u-substitution
+>>> integrate(x*Sin(x**2), x)
+-(1/2)(Cos(x)^2)
+
+# partial fractions via Hermite reduction
+>>> integrate(1 / ((x**2+1)*(x-2)), x)
+-(1/10)Ln(x² + 1) + (1/5)Ln(x - 2) - (2/5)Arctan(x)
+
+# integration by parts
+>>> integrate(x**3 * Exp(x), x)
+>>> collect_terms(_, Exp(x))
+(x³ - 3x² + 6x - 6)Exp(x)
+```
+
+### Symbolic Derivatives
+```python
+>>> from levycas.expression import Variable, Cos, Ln
+>>> from levycas.operations import derivative, trig_simplify
+>>> x = Variable('x')
+
+>>> derivative(x**4 + x**3 + x**2 + x, x)
+1 + 2x + 3x² + 4x³
+
+>>> derivative((Cos(x)+Sin(x))**2,  x)
+>>> trig_simplify(_)
+2Cos(2x)
+
+>>> derivative(x*Ln(x) - x, x)
+Ln(x)
+```
+
+### Algebraic Operations
+```python
+>>> from levycas.expressions import Variable
+>>> from levycas.operations import rationalize, partial_fractions as partial
+>>> x = Variable('x')
+
+# partial fractions
+>>> partial(8*x+7, [x+2, x-1], x)
+3/(x+2) + 5/(x-1)
+
+# rationalization
+>>> rationalize(3/(x+2) + 5/(x-1))
+(8x+7)/((x+2)*(x-1))
 ```
 
 ### Integer Operations
@@ -125,49 +191,15 @@ ax² + bx + c
 
 >>> factor_integer(2**4 * 3**5 * 5**3 * 7**9)
 {2: 4, 3: 5, 5: 3, 7: 9}
+
+# integer radical
+>>> def rad(n: Integer) -> Integer:
+>>>     rad, factors = 1, factor_integer(n).keys()
+>>>     for factor in factors:
+>>>         rad *= factor
+>>>     return rad
+
+>>> rad(18)
+6
 ```
 
-
-### Symbolic Integration
-```python
->>> from levycas import Variable, integrate, Sin, Cos, Ln
->>> x = Variable("x")
-
->>> integrate(Sin(x) * Cos(x), x)
--(1/2)(Cos(x)^2)
-
->>> integrate(4*x**3 + 3*x**2 + 2*x + 1, x)
-x + x² + x³ + x⁴
-
->>> integrate(Ln(x), x)
--x + xLn(x)
-```
-
-### Symbolic Derivatives
-```python
->>> from levycas import Variable, derivative, Cos, Ln
->>> x = Variable('x')
-
->>> derivative(-(1 / 2) * (Cos(x)**2), x)
-Sin(x)Cos(x)
-
->>> derivative(x**4 + x**3 + x**2 + x, x)
-1 + 2x + 3x² + 4x³
-
->>> derivative(x * Ln(x) - x, x)
-Ln(x)
-```
-
-### Partial Fractions and Rationalization
-```python
->>> from levycas import Variable, rationalize
->>> from levycas import univariate_partial_fractions as partial
->>> x = Variable('x')
-
-# (8x+7) / (x+2)(x-1) -> 3/(x+2) + 5/(x-1)
->>> partial(8*x + 7, x + 2, x - 1, x)
-(3, 5)
-
-# 3 / (x+2) + 5 / (x-1) -> (8x+7) / (x+2)(x-1)
->>> rationalize(3 / (x + 2) + 5 / (x - 1))
-((x + -1) ^ -1) · ((x + 2) ^ -1) · (8x + 7)
