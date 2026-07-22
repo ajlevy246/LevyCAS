@@ -2,7 +2,7 @@
 from itertools import combinations
 from math import lcm
 
-from levycas.expressions import *
+from ..expressions import *
 from .polynomial_ops import (
     random_polynomial_mod_p,
     algebraic_expand,

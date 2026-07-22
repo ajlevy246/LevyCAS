@@ -1,6 +1,6 @@
 from textual.screen import Screen
 from textual.app import ComposeResult
-from textual.widgets import Button, Static, Header, Footer
+from textual.widgets import Button, Static, Header
 from textual.containers import Horizontal
 
 class WelcomeScreen(Screen):

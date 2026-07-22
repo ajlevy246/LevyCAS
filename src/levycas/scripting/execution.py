@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass, field
 
-from levycas.parser import parse
-from levycas.expressions import Variable, Integer
-from levycas.operations import sym_eval, derivative, integrate
-from levycas.cli.scripting.errors import ExecutionError, ReferenceError
+from ..parser import parse
+from ..expressions import Variable, Integer
+from ..operations import sym_eval, derivative, integrate
+from .errors import ExecutionError, ReferenceError
 
 
 """Global state is a stored as a dictionary 'env'.

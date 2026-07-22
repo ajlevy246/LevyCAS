@@ -1,31 +1,101 @@
 """Routines acting on LevyCAS expression trees, including simplification and calculus routines."""
-from .algebraic_ops import algebraic_expand, algebraic_expand_main, rationalize, linear_form, quadratic_form
-from .calculus_ops import Deriv, derivative, integrate, limit
-from .expression_ops import contains, copy, construct, map_op, substitute, symbols, get_symbols
-from .simplification_ops import simplify, sym_eval, simplify_power, simplify_product, simplify_sum, simplify_div, simplify_factorial
-from .trig_ops import trig_simplify, trig_substitute, trig_expand, trig_contract
-from .exponential_ops import exp_expand, log_expand, exp_contract, exp_simplify
-from .polynomial_ops import (
-    is_monomial, is_polynomial, variables, coefficient, degree, leading_coefficient, lex_lt, leading_monomial,
-    monomial_divide, polynomial_divide_recursive, polynomial_divide, polynomial_pseudo_divide, polynomial_content, polynomial_gcd,
-    partial_fractions, rational_simplify, reduce_mod_p, polynomial_divide_mod_p, polynomial_gcd_mod_p, collect_terms,
+
+from .expression_ops import (
+    symbols, get_symbols,
+    contains, copy, map_op,
+    construct, substitute
 )
+
+from .simplification_ops import (
+    simplify, sym_eval,
+    simplify_power, simplify_sum, 
+    simplify_product, simplify_factorial,
+    simplify_div,
+)
+
+from .algebraic_ops import (
+    algebraic_expand, algebraic_expand_main,
+    rationalize, linear_form, quadratic_form
+)
+
+from .calculus_ops import (
+    Deriv,
+    derivative, integrate, limit
+)
+
+from .exponential_ops import (
+    exp_expand, exp_contract, exp_simplify,
+    log_expand
+)
+
 from .factorization_ops import (
-    factor_sqfree,
-    distinct_degree_factorization,
-    factor_mod_p, factor,
+    factor_sqfree, factor_mod_p, factor,
 )
-from .numerical_ops import gcd, factor_integer, is_prime, radical, mod_inverse
+
+from .numerical_ops import (
+    gcd, mod_inverse, 
+    small_primes, is_prime, 
+    factor_integer, radical,
+)
+
+from .polynomial_ops import (
+    is_monomial, is_polynomial, variables,
+    coefficient, leading_coefficient, leading_monomial,
+    polynomial_divide, polynomial_gcd, polynomial_content,
+    rational_simplify, collect_terms,
+    reduce_mod_p, polynomial_divide_mod_p, polynomial_gcd_mod_p,
+    partial_fractions, degree, lex_lt
+)
+
+from .trig_ops import (
+    trig_contract, trig_expand, trig_simplify,
+    trig_substitute, 
+)
 
 __all__ = [
-    'contains', 'copy', 'construct', 'map_op', 'substitute', 'symbols', 'get_symbols',
-    'algebraic_expand', 'algebraic_expand_main', 'rationalize', 'linear_form', 'quadratic_form',
-    'Deriv', 'derivative', 'integrate', 'limit',
-    'simplify', 'sym_eval', 'simplify_power', 'simplify_product', 'simplify_sum', 'simplify_div', 'simplify_factorial',
-    'trig_simplify', 'trig_substitute', 'trig_expand', 'trig_contract',
-    'is_monomial', 'is_polynomial', 'variables', 'coefficient', 'degree', 'leading_coefficient', 'lex_lt', 'leading_monomial',
-    'monomial_divide', 'polynomial_divide', 'polynomial_pseudo_divide', 'polynomial_content', 'polynomial_gcd', 'polynomial_divide_recursive',
-    'partial_fractions', 'rational_simplify', 'factor_sqfree', 'reduce_mod_p', 'factor_mod_p', 'factor', 'collect_terms',
-    'gcd', 'factor_integer', 'is_prime', 'radical', 'mod_inverse', 'polynomial_divide_mod_p', 'polynomial_gcd_mod_p', 'distinct_degree_factorization',
-    "exp_expand", "log_expand", "exp_contract", "exp_simplify",
+    # Expression operations
+    "symbols", "get_symbols",
+    "contains", "copy", "map_op",
+    "construct", "substitute",
+
+    # Simplification routines
+    "simplify", "sym_eval",
+    "simplify_power", "simplify_sum", 
+    "simplify_product", "simplify_factorial",
+    "simplify_div",
+
+    # Algebraic operations
+    "algebraic_expand", "algebraic_expand_main",
+    "rationalize", "linear_form", "quadratic_form",
+
+    # Calculus operations
+    "Deriv",
+    "derivative", "integrate", "limit",
+
+    # Exponential operations
+    "exp_expand", "exp_contract", "exp_simplify",
+    "log_expand",
+
+    # Factorization operations
+    "factor_sqfree", "factor_mod_p", "factor",
+
+    # Numerical operations
+    "gcd", "mod_inverse", 
+    "small_primes", "is_prime", 
+    "factor_integer", "radical",
+
+    # Polynomial operations
+    "is_monomial", "is_polynomial", "variables",
+    "coefficient", "leading_coefficient", "leading_monomial",
+    "polynomial_divide", "polynomial_gcd", "polynomial_content",
+    "rational_simplify", "collect_terms",
+    "reduce_mod_p", "polynomial_divide_mod_p", "polynomial_gcd_mod_p",
+    "partial_fractions", "degree", "lex_lt",
+
+    # Trigonometric routines
+    "trig_contract", "trig_expand", "trig_simplify",
+    "trig_substitute",
+
+    # Equation solving routines
+
 ]

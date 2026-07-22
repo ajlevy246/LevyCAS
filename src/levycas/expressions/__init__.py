@@ -5,13 +5,29 @@ from .expression import (
     Rational, Variable, Elementary,
     convert_primitive
 )
-from .trig import Trig, Sin, Cos, Tan, Csc, Sec, Cot, Arctan, Arccos, Arcsin
-from .exp import Exp, Ln
+
+from .trig import (
+    Trig, Sin, Cos, 
+    Tan, Csc, Sec, Cot, 
+    Arctan, Arccos, Arcsin
+)
+
+from .exp import (
+    Exp, Ln
+)
 
 __all__ = [
-    'Constant', 'Integer', 'Rational', 'convert_primitive',
-    'UNDEFINED', 'Expression', 'Sum', 'Product', 'Div', 'Power', 'Factorial',
-    'Trig', 'Sin', 'Cos', 'Tan', 'Csc', 'Sec', 'Cot', 'Arctan', 'Arccos', 'Arcsin',
-    'Variable', 'Elementary',
-    'Exp', "Ln"
+    # Expression
+    "UNDEFINED", "Expression", "Sum", "Product", "Div", "Power", 
+    "Factorial", "Constant", "Integer",
+    "Rational", "Variable", "Elementary",
+    "convert_primitive",
+
+    # Trigonometric
+    "Trig", "Sin", "Cos", 
+    "Tan", "Csc", "Sec", "Cot", 
+    "Arctan", "Arccos", "Arcsin",
+
+    # Exponentials
+    "Exp", "Ln",
 ]

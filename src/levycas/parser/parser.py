@@ -1,7 +1,6 @@
 """An implementation of a Pratt Parser for simple expressions"""
 from .lexer import Token, tokenize
 from ..expressions import *
-from ..operations import simplify
 
 #Global verbose vars for testing purposes
 pv = False #parsing verbose 

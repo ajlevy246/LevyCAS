@@ -4,7 +4,7 @@ from textual.screen import Screen
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Header, Static, Button, TextArea, Log
 
-from levycas.cli.scripting import run_script, lex_script
+from ...scripting import run_script, lex_script
 
 from time import sleep
 

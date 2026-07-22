@@ -1,4 +1,4 @@
-from textual import work, on
+from textual import on
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.containers import Horizontal, Vertical, VerticalScroll, Center
@@ -11,9 +11,10 @@ from textual.geometry import Offset
 from textual_hires_canvas import Canvas, HiResMode
 from textual_plot.plot_widget import PlotWidget, LegendLocation
 from rich.text import Text
-from textual.color import Color
 
-from levycas import Expression, Variable, sym_eval, parse, get_symbols, trig_simplify
+from ...expressions import Expression, Variable
+from ...operations import sym_eval, get_symbols, trig_simplify
+from ...parser import parse
 
 from dataclasses import dataclass
 

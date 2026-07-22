@@ -114,6 +114,5 @@ GraphingScreen {
                 height: 3;
             }
         }
-    
     }
 }

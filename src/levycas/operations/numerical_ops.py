@@ -1,7 +1,7 @@
 """Operations acting on Constants (rationals)."""
 from functools import cache
 
-from levycas.expressions import Constant, Integer, Rational
+from ..expressions import Constant, Integer, Rational, convert_primitive
 
 def gcd(a: Constant, b: Constant) -> Integer:
     """Computes the greated common divisor of two integers using binary gcd algorithm.
@@ -13,6 +13,8 @@ def gcd(a: Constant, b: Constant) -> Integer:
     Returns:
         Integer: gcd(a, b)
     """
+    a, b = convert_primitive(a), convert_primitive(b)
+    
     if isinstance(a, Rational) or isinstance(b, Rational):
         return Integer(1)
     
@@ -20,9 +22,9 @@ def gcd(a: Constant, b: Constant) -> Integer:
     if a == 1 or b == 1:
         return Integer(1)
     if a == 0:
-        return abs(Integer(b))
+        return abs(b)
     if b == 0:
-        return abs(Integer(a))
+        return abs(a)
 
     a, a_d = _reduce(abs(a))
     b, b_d = _reduce(abs(b))
@@ -34,7 +36,7 @@ def gcd(a: Constant, b: Constant) -> Integer:
         else:
             b = _reduce(b - a)[0]
 
-    return Integer(2 ** d * abs(a))
+    return Integer(2**d * abs(a))
 
 def _reduce(a: Integer) -> tuple[Integer]:
     """Helper method to reduce an even number to an odd one,

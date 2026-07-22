@@ -1,6 +1,6 @@
 """Routines acting on implicit equations or systems of equations."""
-from levycas.expressions import *
-from levycas.operations.algebraic_ops import linear_form, quadratic_form
+from ..expressions import *
+from .algebraic_ops import linear_form, quadratic_form
 
 def solve_implicit(expr: Expression, var: Variable) -> list[Expression] | None:
     """Find the zeroes of an equation of a given variable.

@@ -1,14 +1,21 @@
 import pytest
 
 from levycas.cli.__main__ import LevyCasApp
-import levycas.cli.scripting.scripting as scripting
-from levycas.cli.scripting.scripting import (
-            lex_script, parse_script, run_script,
-            ScriptToken as Token,
-            TokenType as tk,
-        )
-from levycas.cli.scripting.errors import ExecutionError, ReferenceError
-from levycas.cli.scripting.execution import *
+
+# need access to module-level globals (i.e. 'tokens')
+import levycas.scripting.scripting as scripting
+from levycas.scripting import *
+from levycas.scripting.scripting import (
+    ScriptToken as Token,
+    TokenType as tk,
+    PrintStatement,
+    AssignmentStatement,
+    ReferenceStatement,
+    ExpressionStatement,
+    ForLoop,
+    WhileLoop,
+    Script
+)
 
 class TestScriptingScreen:
     async def test_screen_load(self):
