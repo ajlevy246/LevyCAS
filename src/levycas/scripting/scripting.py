@@ -1,13 +1,13 @@
 """How does it work? 
 
 Expressions within a script are parsed using the LevyCAS built-in Pratt parser. This parser is built around that, essentially
-a wrapper that extends the functionality of the basic expression parser into a fully fledged computer algebra system. Because of this
+a wrapper that extends the functionality of the basic expression parser into a fully fledged computer algebra system. Because of this,
 much of the code here (especially the lexical analysis phase) looks very similar to that found in the Pratt parser. 
 
 Each command in a script falls under three categories:
 
 1. Control Logic:
-The for loops and while loops that allow for more complex scripts.
+The for loops and while loops that allow for complex logical branching.
     - Example: for (i : 3) {...}
 
 2. Declarations:
@@ -18,7 +18,7 @@ Initializations of variables and functions.
 Simple statements of computation.
     - Example: f(3, 4) + 5;
 
-4. Assignments (Not Yet Implemented):
+4. Assignments:
 Updates of a declared variables/function's value.
     - Example: x = x * x + 5;
 
@@ -131,6 +131,7 @@ def run_script(script: str, log) -> None:
     """Starts the parsing process; executes the resulting script.
 
     Argument 'log' is a reference to the output log where output should be written.
+        - Or, any class implementing a "write_line()" method.
     """
     global tokens
     tokens = lex_script(script)[::-1]
