@@ -1,14 +1,10 @@
 # LevyCAS Scripting - Grammar
 
-> **NOTE**: Allowing expressions like `f(f(a, 2))` (that is, arbitrary expressions as arguments) prevents implicit multiplication in expressions like `x(4x + 3)`, although these expressions can be parsed by LevyCAS. Normal implicit multiplication is still supported, like `(x + 1)(x + 2)` or `2(x^2)`.
+Welcome to LevyCAS scripting! This module presents a simple custom scripting language
+that can be used as an alternative to directly touching the Python core. 
 
-> **TODO**: Check for problems with referencing functions that take no arguments, arising from empty `expression` rules.
-
-> **NOTE**: Parsing of the final argument in a list of arguments will consume the `RPAREN` that was meant to close the list... thus parantheses are disallowed in arguments. Exceptions are when they appear as a reference, like `f(f(x))`. 
-> - Allowed: `f(2x, 3x+4, a*b^c)`
-> - Disallowed: `f(Sin(x), \derivate(2x))`...
-
-> **TODO**: Due to the above, test for commands as arguments, as in `f(\derivate(Sin(x)))`, and just parens in commands by themselves, as in `\derivate(sin(x))`. Solution may be to add expression grammar (would not need to encode operator precedence or associativity).
+The grammar below is a simple context-free, LL(1) grammar capturing the syntax of the scripting language. 
+See the top-down 1-token lookahead parser in [`scripting/scripting.py`](scripting.py), and the structures it generates in [`scripting/execution.py`](execution.py).
 
 **Entry Point**
 
