@@ -9,17 +9,17 @@
 
 <br/> 
 
-LevyCAS began as an educational project, exploring symbolic computation, expression trees, Pratt parsing, grammars, and terminal UIs. It's designed to combine the best of existing computational tools that I regularly use: Desmos, sympy, and Matlab. 
+LevyCAS remains an educational project, exploring symbolic computation, expression trees, Pratt parsing, grammars, and terminal UIs. It's designed to combine the best of existing computational tools that I regularly use: Desmos, Sympy, and Matlab. 
 
 ## Features
-- Parse natural mathematical expressions
-- Symbolic differentiation
-- Symbolic integration
-- Expression simplification
-- Integer factorization and number-theoretic operations
-- Rationalization and partial fractions
-- Interactive Textual-based graphing & scripting interface
-- Python core w/ no required dependencies 
+- Parse natural mathematical expressions.
+- Write scripts with a custom scripting language.
+- Symbolic integrals & derivatives.
+- Expression simplification & normalization.
+- Integer factorization & number-theoretic operations.
+- Multivariate polynomial operations: factoring, partial fractions, rationalization.
+- Interactive Textual-based graphing & scripting interface.
+- Python library core with no required dependencies.
 
 <br/>
 
@@ -31,7 +31,7 @@ While the base package has no dependencies, it is designed for Python3.10+
 LevyCAS is uploaded as a Python package on the TestPyPi index [here](https://test.pypi.org/project/levycas/). Install with pip:
 
 ```bash
-python3 -m pip install levycas --index-url https://test.pypi.org/simple/ 
+$ python3 -m pip install levycas --index-url https://test.pypi.org/simple/ 
 ```
 
 Then, get started by launching python and running:
@@ -55,7 +55,7 @@ $ levycas integrate "xsin(x^2)"
 To use the textual user interface, install with the `tui` extra. This extra depends on the [`Textual`](https://textual.textualize.io/) library, as well as the `textual-plot` package.
 
 ```bash
-python3 -m pip install levycas[tui] --extra-index-url https://test.pypi.org/simple/ 
+$ python3 -m pip install levycas[tui] --extra-index-url https://test.pypi.org/simple/ 
 ```
 
 Launch the TUI directly in your terminal:
@@ -93,7 +93,9 @@ In addition, LevyCAS includes a native Pratt parser capable of interpreting natu
 
 - [`parser/`](./src/levycas/parser/__init__.py): All of the Pratt parsing logic is contained here. Lexing converts and input string into tokens, and the parsing logic converts it to native objects.
 
-- [`cli/`](./src/levycas/cli/__init__.py): All of the logic for the textual user interface is contained here. This submodule does not expose any external routines, but the scripts here may be interesting to those building simple Textual apps themselves.
+- [`cli/`](./src/levycas/cli/__init__.py): All of the logic for the textual user interface is contained here. This module does not expose any external functions, but the scripts here may be interesting to those building simple Textual apps themselves.
+
+- [`scripting/`](./src/levycas/scripting/__init__.py): The custom scripting language logic is written here. See the grammar and examples in [`GRAMMAR.md`](./src/levycas/scripting/GRAMMAR.md). Use the TUI to run scripts or load them from disk.
 
 <br/>
 
