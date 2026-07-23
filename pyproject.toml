@@ -22,6 +22,7 @@ dev = [
     "textual",
     "textual-plot",
     "textual-dev",
+    "pytest-textual-snapshot",
     "pytest-cov",
     "pytest-asyncio",
 ]
