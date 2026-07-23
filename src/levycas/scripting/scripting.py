@@ -148,7 +148,7 @@ def parse_iterator_assignment():
     """
     next_token = tokens.pop()
     if next_token.type != TokenType.LPAREN:
-        raise ParserError("Expected left paren while parsing iterator assignment.")
+        raise SyntaxError("Expected left paren while parsing iterator assignment.")
 
     iterator = tokens.pop()
     if iterator.type != TokenType.SYMBOL:
@@ -164,7 +164,7 @@ def parse_iterator_assignment():
 
     next_token = tokens.pop()
     if next_token.type != TokenType.RPAREN:
-        raise SyntaxError("Expected a closing parentheses (')') while parsing iterator assignment.")
+        raise SyntaxError("Expected a closing parenthesis (')') while parsing iterator assignment.")
     
     return iterator.literal, count.literal
 
@@ -180,13 +180,12 @@ def parse_for_loop():
     iterator, count = parse_iterator_assignment()
     next_token = tokens.pop()
     if next_token.type != TokenType.LBRACKET:
-        raise SyntaxError("Expected an opening brace '{' for the body of a for loop.")
+        raise SyntaxError("Expected an opening brace '{' to open the body of a for loop.")
     
     body = parse_script()
 
-    next_token = tokens.pop()
-    if next_token.type != TokenType.RBRACKET:
-        raise SyntaxError("Expected a closing brace '}' for the body of a for loop.")
+    if len(tokens) == 0 or tokens.pop().type != TokenType.RBRACKET:
+        raise SyntaxError("Expected a closing brace '}' to end the body of a for loop.")
     return ForLoop(
         iterator=iterator,
         count=int(count),
@@ -290,7 +289,7 @@ def parse_expression():
             expression.add_child(parse_expression())
         next_token = tokens.pop()
         if next_token.type != TokenType.RPAREN:
-            raise SyntaxError("Expected closing parentheses at the end of a subexpression.")
+            raise SyntaxError("Expected closing parenthesis at the end of a subexpression.")
         expression.add_child(next_token.literal)
 
     elif next_token.type == TokenType.COMMAND:
@@ -426,5 +425,14 @@ def parse_script():
     ):
         script.add_executable(parse_statement())
         script.add_executable(parse_script())
+
+    elif next_token.type == TokenType.LBRACKET:
+        tokens.pop()
+        script = parse_script()
+        if len(tokens) == 0 or tokens.pop().type != TokenType.RBRACKET:
+            raise SyntaxError("Expected closing bracket to match script's opening brace")
+
+    elif next_token.type != TokenType.RBRACKET:
+        raise SyntaxError(f"Expected the start of a valid statement, not '{next_token.literal}'")
 
     return script
