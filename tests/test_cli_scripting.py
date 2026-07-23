@@ -4,6 +4,7 @@ from levycas.cli.__main__ import LevyCasApp
 
 # need access to module-level globals (i.e. 'tokens')
 import levycas.scripting.scripting as scripting
+
 from levycas.scripting import *
 from levycas.scripting.scripting import (
     ScriptToken as Token,
