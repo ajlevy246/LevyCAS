@@ -11,6 +11,7 @@ from textual.geometry import Offset
 from textual_hires_canvas import Canvas, HiResMode
 from textual_plot.plot_widget import PlotWidget, LegendLocation
 from rich.text import Text
+from rich.color import ANSI_COLOR_NAMES
 
 from ...expressions import Expression, Variable
 from ...operations import sym_eval, get_symbols, trig_simplify
@@ -22,7 +23,8 @@ from dataclasses import dataclass
 MAX_PLOTS        = 4
 DEFAULT_X_BOUNDS = (-13.0, 13.0)
 DEFAULT_Y_BOUNDS = (-10.0, 10.0)
-PLOT_COLORS      = ("black", "green", "purple", "red")
+INPUT_COLORS     = ("black", "darkgreen", "purple", "red")
+PLOT_COLORS      = ("black", "dark_green", "purple", "red")
 DEFAULT_RES_MODE = HiResMode.BRAILLE
 EPS              = 1e-6  # max difference to consider two floats equal
 SIMPLIFY_EXPRESSIONS = True # Simplify expressions fully; may hide removable discontinuities
@@ -78,7 +80,7 @@ class ExpressionInput(Widget):
             classes="expression-input",
             id=f"expression-input-{idx}",
         )
-        self.input.styles.border = ("tall", PLOT_COLORS[idx])
+        self.input.styles.border = ("tall", INPUT_COLORS[idx])
         self.delete_button = Button(
             label="x",
             classes="expression-delete",
