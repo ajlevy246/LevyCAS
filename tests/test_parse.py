@@ -1,5 +1,9 @@
 import pytest
-from levycas import *
+
+from levycas.parser import parse
+from levycas.expressions import Rational, Factorial, Sin, Cos
+from levycas.operations import integrate, symbols
+
 
 def test_parse():
     x, y, z = symbols('x y z')
@@ -29,6 +33,33 @@ def test_parse():
         parse("3 + 4 * 2 / (1 - 5) ^ 2 ^ 3")
         == Rational(24577, 8192)
     )
+    assert (
+        parse("0.5 - 0.2 + 1.234 - 3.0")
+        == Rational(-733, 500)
+    )
+    assert (
+        parse("--x++x")
+        == parse("++x--x")
+        == parse("-(-x + -x)")
+        == 2*x
+    )
+    assert (
+        parse("4.0! + 5.!")
+        == Factorial(4) + Factorial(5)
+    )
+
+def test_parse_errors():
+    with pytest.raises(SyntaxError):
+        parse("(x+1")
+
+    with pytest.raises(SyntaxError):
+        parse("x + ")
+
+    with pytest.raises(SyntaxError):
+        parse("x + * 1")
+
+    with pytest.raises(SyntaxError):
+        parse(")")
 
 def test_tests():
     """Reruns some tests, but with parsing"""
