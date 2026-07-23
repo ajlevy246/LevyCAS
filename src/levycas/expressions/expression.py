@@ -34,7 +34,7 @@ class Expression:
         return Integer(1)
 
     def term(self):
-        return Product(self)
+        return self
 
     def num(self):
         return self
@@ -246,7 +246,13 @@ class Product(Expression):
         return self.factors[0] if isinstance(self.factors[0], Constant) else Integer(1)
     
     def term(self):
-        return Product(*self.factors[1::]) if isinstance(self.factors[0], Constant) else self
+        if not isinstance(self.factors[0], Constant):
+            return self
+        
+        if len(self.factors) == 2:
+            return self.factors[1]
+        
+        return Product(*self.factors[1::])
     
     def num(self):
         first_factor = self.factors[0]
