@@ -16,6 +16,8 @@ from levycas.scripting.scripting import (
     Script
 )
 
+log = type("", tuple(), {"write_line": lambda *args: None})() 
+
 class TestScriptingParsing:
     def test_lexer(self):
         def tok_eq(expected, actual):
@@ -106,18 +108,46 @@ class TestScriptingParsing:
                 ])
             ])
 
+    def test_lex_errors(self):
+        with pytest.raises(SyntaxError, match=r"Invalid token:"):
+            run_script("print 4x & 3;", log)
 
-    def test_for_loops(self):
-        ...
+    def test_loop_errors(self):
+        # iterator assignment
+        with pytest.raises(SyntaxError, match=r"Expected left paren"):
+            run_script("for i : 3) { print i; }", log)
+        with pytest.raises(SyntaxError, match=r"must be a variable."):
+            run_script("for (2 : x) { print x; }", log)
+        with pytest.raises(SyntaxError, match=r"Expected a colon"):
+            run_script("for (i, 3) { print i; }", log)
+        with pytest.raises(SyntaxError, match=r"iterations must be an integer."):
+            run_script("for (i : x) { print i; }", log)
+        with pytest.raises(SyntaxError, match=r"Expected a closing parenthesis"):
+            run_script("for (i : 3 { print i; }", log)
 
-    def test_print(self):
-        ...
+        # for loop body
+        with pytest.raises(SyntaxError, match=r"Expected an opening brace"):
+            run_script("for (x : 4) print x;", log)
+        with pytest.raises(SyntaxError, match=r"Expected closing bracket"):
+            run_script("for (x : 4) { print x; {", log)
 
-    def test_definitions(self):
-        ...
+    def test_reference_errors(self):
+        with pytest.raises(SyntaxError, match=r"Expected right paren"):
+            run_script("print f(1;", log)
+        with pytest.raises(SyntaxError, match=r"Parameters must be symbols."):
+            run_script("f(x, 1) = x + 3;", log)
+        with pytest.raises(SyntaxError, match=r"Expected closing parenthesis"):
+            run_script(f"f(x, y = x + 3;", log)
 
-    def test_substitutions(self):
-        ...
+    def test_expression_errors(self):
+        with pytest.raises(SyntaxError, match=r"Expected closing parenthesis"):
+            run_script("print(2x + 3;", log)
+
+    def test_statement_errors(self):
+        with pytest.raises(SyntaxError, match=r"Expected the start of a valid statement, not '='"):
+            run_script("=;", log)
+        with pytest.raises(SyntaxError, match=r"Expected the start of a valid statement, not '1'"):
+            run_script("print x; 1=x;", log)
 
 class TestScriptingExecution:
     
