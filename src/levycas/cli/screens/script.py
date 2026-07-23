@@ -6,8 +6,6 @@ from textual.widgets import Header, Static, Button, TextArea, Log
 
 from ...scripting import run_script, lex_script
 
-from time import sleep
-
 class ScriptingScreen(Screen):
     TITLE = "LevyCAS - Scripting"
     CSS_PATH = "styles/scripting.tcss"
