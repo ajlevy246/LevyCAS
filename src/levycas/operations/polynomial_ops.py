@@ -445,47 +445,6 @@ def _is_univariate(expr: Expression, var: Expression) -> bool:
     """
     return variables(expr) == variables(var)
 
-def _univariate_gcd(u: Expression, v: Expression,  x: Expression) -> Expression:
-    """Computes the gcd of a univariate polynomial in x.
-
-    Args:
-        u (Expression): u(x)
-        v (Expression): v(x)
-        var (Expression): x
-
-    Returns:
-        Constant: gcd(u, v)
-    """
-    return _univariate_extended_euclidean(u, v, x)[0]
-
-def _univariate_extended_euclidean(u: Expression, v: Expression, x: Expression) -> tuple[Expression]:
-    """Extended euclidean algorithm for univariate polynomials.
-
-    Args:
-        u (Expression): u(x)
-        v (Expression): v(x)
-        x (tuple[Expression]): Parameter x
-
-    Returns:
-        Expression: The list [g, r, s] where gcd(u, v) = g = u*r + v*s
-    """
-    if u == 0 and v == 0:
-        return [0, 0, 0]
-
-    U, V = u, v
-    app, ap = 1, 0
-    bpp, bp = 0, 1
-    while V != 0:
-        q, r = polynomial_divide(U, V, x)
-        a, b = app - q * ap, bpp - q * bp
-        app, bpp = ap, bp
-        ap, bp = a, b
-        U, V = V, r
-    c = leading_coefficient(U, x)
-    app, bpp = algebraic_expand(app / c), algebraic_expand(bpp / c)
-    U = algebraic_expand(U / c)
-    return (U, app, bpp)
-
 def partial_fractions(num, factors, x) -> list[Expression] | None:
     """Compute the partial fraction decomposition for a univariate rational function.
 
