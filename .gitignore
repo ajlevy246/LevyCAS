@@ -199,4 +199,5 @@ cython_debug/
 .cursorindexingignore
 
 .gradio/
+snapshot_report.html
 TODO.txt
