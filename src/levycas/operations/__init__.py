@@ -2,7 +2,7 @@
 
 from .expression_ops import (
     symbols, get_symbols,
-    contains, copy, map_op,
+    contains, copy_expr, map_op,
     construct, substitute
 )
 
@@ -55,7 +55,7 @@ from .trig_ops import (
 __all__ = [
     # Expression operations
     "symbols", "get_symbols",
-    "contains", "copy", "map_op",
+    "contains", "copy_expr", "map_op",
     "construct", "substitute",
 
     # Simplification routines

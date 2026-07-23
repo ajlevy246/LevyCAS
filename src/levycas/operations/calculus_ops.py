@@ -1,7 +1,7 @@
 """Methods acting on an expression's AST. These are calculus operations."""
 
 from ..expressions import *
-from .expression_ops import contains, copy, substitute
+from .expression_ops import contains, substitute
 from .algebraic_ops import algebraic_expand, linear_form, quadratic_form
 from .polynomial_ops import (
     is_polynomial, 

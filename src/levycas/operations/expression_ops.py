@@ -85,7 +85,7 @@ def contains(expr: Expression, subs: Expression | set[Expression]) -> bool:
                 return True
         return False
 
-def copy(expr: Expression) -> Expression:
+def copy_expr(expr: Expression) -> Expression:
     """Creates a copy of the given expression.
     
     Args:
@@ -104,7 +104,7 @@ def copy(expr: Expression) -> Expression:
     copied_operands = []
     for operand in expr.operands():
         if isinstance(operand, Expression):
-            copied_operands.append(copy(operand))
+            copied_operands.append(copy_expr(operand))
         else:
             copied_operands.append(operand)
     return type(expr)(*copied_operands)
