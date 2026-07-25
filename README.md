@@ -5,6 +5,8 @@
 
 **LevyCAS** is a lightweight symbolic computer algebra system (CAS) written in Python. It focuses on parsing natural mathematical expressions into symbolic objects and performing symbolic manipulation, calculus, simplification, and number-theoretic computations.
 
+<br/>
+
 <img src="https://github.com/ajlevy246/LevyCAS/blob/main/assets/graph.png?raw=true" width=1000 alt="A screenshot of the LevyCAS graphing textual user interface. Expressions are entered on the left hand side, and an interactive graph is plotted on the right.">
 
 <br/> 
@@ -28,10 +30,10 @@ LevyCAS remains an educational project, exploring symbolic computation, expressi
 While the base package has no dependencies, it is designed for Python3.10+
 
 ## Core package & CLI
-LevyCAS is uploaded as a Python package on the TestPyPi index [here](https://test.pypi.org/project/levycas/). Install with pip:
+LevyCAS is uploaded as a Python package on the PyPi index [here](https://pypi.org/project/levycas/). Install with pip:
 
 ```bash
-$ python3 -m pip install levycas --index-url https://test.pypi.org/simple/ 
+$ python3 -m pip install levycas
 ```
 
 Then, get started by launching python and running:
@@ -55,7 +57,7 @@ $ levycas integrate "xsin(x^2)"
 To use the textual user interface, install with the `tui` extra. This extra depends on the [`Textual`](https://textual.textualize.io/) library, as well as the `textual-plot` package.
 
 ```bash
-$ python3 -m pip install levycas[tui] --extra-index-url https://test.pypi.org/simple/ 
+$ python3 -m pip install levycas[tui]
 ```
 
 Launch the TUI directly in your terminal:
