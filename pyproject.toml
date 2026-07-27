@@ -47,8 +47,5 @@ asyncio_mode = "auto"
 source = ["levycas"]
 
 [tool.coverage.report]
-omit = [
-    "src/levycas/cli/*",
-]
 show_missing = true
 skip_covered = true

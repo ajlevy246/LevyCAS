@@ -3,7 +3,7 @@ from pytest_textual_snapshot import snap_compare
 from textual.widgets import TextArea
 from textual.pilot import Pilot
 
-from levycas.cli.__main__ import LevyCasApp
+from levycas.tui.__main__ import LevyCasApp
 
 class TestScriptingScreen:
     async def test_screen_load(self):

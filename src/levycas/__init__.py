@@ -10,4 +10,4 @@ from .expressions import *
 from .operations import *
 from .parser import *
 from .scripting import *
-from .cli import *
+from .tui import *

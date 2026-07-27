@@ -37,7 +37,7 @@ def graph_action(args) -> None:
         )
 
     assert len(args.exprs) <= 4, f"Support for more than four graphs at once is not yet available."
-    from levycas.cli.__main__ import LevyCasApp
+    from levycas.tui.__main__ import LevyCasApp
     app = LevyCasApp(graphing=True, exprs=args.exprs)
     app.run()
 
@@ -50,7 +50,7 @@ def launch_tui_action() -> None:
             f"Please see installation instructions in the README."
         )
 
-    from levycas.cli.__main__ import main as launch_tui
+    from levycas.tui.__main__ import main as launch_tui
     launch_tui()
 
 def build_parser() -> ArgumentParser:
