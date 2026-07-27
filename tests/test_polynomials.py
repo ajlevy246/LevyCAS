@@ -404,3 +404,17 @@ def test_gcd_mod_p():
 
     # gcd(f, 0) = f
     assert polynomial_gcd_mod_p(x**2 + 2, Integer(0), x, 5) == x**2 + 2
+
+def test_collect_terms():
+    assert (
+        collect_terms(Ln(y)*(x+1) + 3*Sin(y)*(x+1), (x+1))
+        == (x+1)*(Ln(y)+3*Sin(y))
+    )
+    assert (
+        collect_terms(-6*Exp(x) + 6*x*Exp(x) - 3*x**2*Exp(x) + x**3*Exp(x), Exp(x))
+        == Exp(x) * (x**3 - 3*x**2 + 6*x - 6)
+    )
+    assert (
+        collect_terms(Ln(x)**2 + Ln(x), x)
+        is None
+    )
