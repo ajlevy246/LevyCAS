@@ -6,9 +6,8 @@
 # Scripting: Full scripting support using ";" to deliminate instructions. 
 # Buttons to switch screens have event handler in main App. Format: name = 'switch-screen', id = 'demo', e.g. (name of screen) 
 
-from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical, HorizontalScroll, VerticalScroll
-from textual.widgets import Header, Footer, Input, Static, Button, TextArea
+from textual.app import App
+from textual.widgets import Button
 from textual.theme import Theme
 
 from .screens import WelcomeScreen, ScriptingScreen, GraphingScreen
