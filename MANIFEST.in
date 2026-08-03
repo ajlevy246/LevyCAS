@@ -1,1 +1,1 @@
-include src/levycas/cli/screens/styles/*
+include src/levycas/tui/screens/styles/*
