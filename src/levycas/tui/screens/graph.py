@@ -18,6 +18,7 @@ from ...operations import sym_eval, get_symbols, trig_simplify
 from ...parser import parse
 
 from dataclasses import dataclass
+from math import dist
 
 # Graph config
 MAX_PLOTS        = 4
@@ -139,16 +140,10 @@ class CasPlot(PlotWidget):
         super().__init__(invert_mouse_wheel=True)
         # Keep track of each expression requesting a plot.
         self.expressions: list[Expression|None] = [None] * MAX_PLOTS
-        # Keep track of the number of plots visible for nice legend positioning.
-        self.num_legend_markers: int = 0
 
     def on_mount(self) -> None:
         super().on_mount()
-        self.show_legend(LegendLocation.BOTTOMLEFT)
-        self._update_legend()
-        legend = self.query_one_optional("#legend", Static)
-        legend.offset = Offset(1, 5)
-        # if not legend: return
+        self.show_legend(LegendLocation.TOPLEFT)
 
     def _render_plot(self) -> None:
         """Renders axis lines before drawing plots, then canvas box & ticks."""
@@ -166,41 +161,49 @@ class CasPlot(PlotWidget):
             thickness=2,
             style=str(self.get_component_rich_style("plot--axis")),
         )
-        # render tick marks and labels
+        
         self._render_x_ticks(); self._render_x_label()
         self._render_y_ticks(); self._render_y_label()
-        # update legend
+
         self._update_legend()
 
     def draw_grid_lines(self, canvas: Canvas) -> None:
         """Render grid lines at tick labels"""
+        rect_right_bound = self._scale_rectangle.right - 1
+        rect_bottom_bound = self._scale_rectangle.bottom - 1
+
         x_ticks = self._x_formatter.get_ticks(self._x_min, self._x_max)
         y_ticks = self._y_formatter.get_ticks(self._y_min, self._y_max)
-        rect_right_bound  = self._scale_rectangle.right - 1
-        rect_bottom_bound = self._scale_rectangle.bottom - 1
-        coords = []
+        x_coords, y_coords = [], [] # avoids recomputing pixel coordinates for intersections
+
+        # vertical lines │
         for x_tick in x_ticks:
-            for y_tick in y_ticks:
-                x, y = self.get_pixel_from_coordinate(x_tick, y_tick)
-                coords.append((x, y))
-                canvas.draw_line( # horizontal line (─)
-                    1, y,
-                    rect_right_bound, y,
-                    style="white",
-                    char=GRID_HORIZONTAL_CHAR,
-                )
-                canvas.draw_line( # vertical line (│)
-                    x, 1,
-                    x, rect_bottom_bound,
-                    style="white",
-                    char=GRID_VERTICAL_CHAR,
-                )
-        for x, y in coords: # intersections (┿)
-            canvas.set_pixel(
-                x, y,
-                char=GRID_CROSS_CHAR,
+            x, _ = self.get_pixel_from_coordinate(x_tick, 0)
+            canvas.draw_line(
+                x, 1,
+                x, rect_bottom_bound,
                 style="white",
+                char=GRID_VERTICAL_CHAR,
             )
+            x_coords.append(x)
+        # horizontal lines ─
+        for y_tick in y_ticks: 
+            _, y = self.get_pixel_from_coordinate(0, y_tick)
+            canvas.draw_line(
+                1, y,
+                rect_right_bound, y,
+                style="white",
+                char=GRID_HORIZONTAL_CHAR,
+            )
+            y_coords.append(y)
+        # intersections ┿
+        for x in x_coords:
+            for y in y_coords:
+                canvas.set_pixel(
+                    x, y,
+                    style="white",
+                    char=GRID_CROSS_CHAR,
+                )
 
     def render_expressions(self, canvas: Canvas) -> None:
         """Compute & plot the current expressions.
@@ -218,8 +221,7 @@ class CasPlot(PlotWidget):
             hires_pixels = [self.get_hires_pixel_from_coordinate(xi, yi) for xi, yi in data]
             segments = [(*hires_pixels[i-1], *hires_pixels[i]) for i in range(1, len(hires_pixels))]
             canvas.draw_hires_lines(segments, style=color, hires_mode=DEFAULT_RES_MODE)
-            # canvas.set_hires_pixels(hires_pixels, style=color, hires_mode=DEFAULT_RES_MODE)
-
+            
     def update_expression(self, idx: int, expr: Expression) -> None:
         """Plot a new expression."""
         if expr and SIMPLIFY_EXPRESSIONS:
@@ -249,12 +251,17 @@ class CasPlot(PlotWidget):
             
         legend.display = True
         legend.update(Text.from_markup("\n\n".join(legend_lines)))
-        
-        #TODO: Fix graph Legend positioning; hide when screen is too small; add hide/show option.
-        # Move the display up one line for each additional plot.
-        new_num_visible = len(legend_lines)
-        legend.offset += Offset(0, -(new_num_visible - self.num_legend_markers)) 
-        self.num_legend_markers = new_num_visible
+
+    @staticmethod
+    def compute_point(
+        expr: Expression,
+        x: float,
+    ) -> float | None:
+        """Compute f(x) for f = expr"""
+        try:
+            return float(sym_eval(expr, approximate=True, x=x))
+        except (ValueError, ZeroDivisionError):
+            return None
         
     @staticmethod
     def compute_data(
@@ -273,7 +280,7 @@ class CasPlot(PlotWidget):
             try:
                 y = float(sym_eval(expr, approximate=True, x=x))
             except ValueError as e:
-                continue
+                y = None
             data.append((x, y))
         return data
 
@@ -290,7 +297,6 @@ class GraphingScreen(Screen):
         self.expression_inputs_container.border_title = "expression input"
         self.expression_inputs_container.border_subtitle = "input"
 
-        # self.plot_data = [[] for i in range(MAX_PLOTS)]
         self.inputs    = [ExpressionInput(i) for i in range(MAX_PLOTS)]
         for input in self.inputs:
             input.display = False
@@ -304,7 +310,6 @@ class GraphingScreen(Screen):
                 id="add-expression-container",
             )
 
-        # self.plot = PlotWidget(invert_mouse_wheel=True)
         self.plot = CasPlot()
 
     @property
