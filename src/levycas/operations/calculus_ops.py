@@ -377,7 +377,7 @@ def _hermite_reduce(P: Expression, Q: Expression, x: Expression) -> Expression |
         x (Expression): Polynomial generalized variable
 
     Returns:
-        Expression: The sum rational_part + \int(poly_part) + \int(integral_part)
+        Expression: The sum rational_part + \\int(poly_part) + \\int(integral_part)
     """
     from .factorization_ops import factor_sqfree
 
