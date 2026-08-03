@@ -218,7 +218,7 @@ class CasPlot(PlotWidget):
             data  = self.compute_data(
                 expr, self._x_min, self._x_max, density,
             )
-            hires_pixels = [self.get_hires_pixel_from_coordinate(xi, yi) for xi, yi in data]
+            hires_pixels = [self.get_hires_pixel_from_coordinate(xi, yi) for xi, yi in data if yi is not None]
             segments = [(*hires_pixels[i-1], *hires_pixels[i]) for i in range(1, len(hires_pixels))]
             canvas.draw_hires_lines(segments, style=color, hires_mode=DEFAULT_RES_MODE)
             
