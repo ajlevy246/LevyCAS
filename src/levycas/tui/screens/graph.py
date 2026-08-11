@@ -434,7 +434,9 @@ class CasPlot(PlotWidget):
             style = PLOT_COLORS[color_idx]
             text = Text("▀▄▀▄") # "\u2580\u2584"*2
             text.stylize(style)
-            text.append(f" {expr}")
+            key = str(expr)
+            key = key if len(key) < 20 else key[:17] + "..."
+            text.append(f" {key}")
             legend_lines.append(text.markup)
         if not legend_lines:
             legend.display = False
