@@ -17,6 +17,8 @@ class TestScriptingScreen:
         await pilot.click("#load-example")
         await pilot.click("#run-script")
 
+        await pilot.pause()
+
     async def test_script_example(self):
         cas = LevyCasApp()
         async with cas.run_test() as pilot:
@@ -29,8 +31,6 @@ class TestScriptingScreen:
                 "Cos(2)",
                 "Cos(3)",
             ]
-
-        await pilot.pause()
 
     def test_script_snapshot(self, snap_compare):
         cas = LevyCasApp()

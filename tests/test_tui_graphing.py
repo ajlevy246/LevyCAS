@@ -54,7 +54,7 @@ class TestGraphing:
             await pilot.click("#expression-color-0")
             await pilot.click("#expression-color-0")
 
-            await pilot.pause()
+            await pilot.pause(0.5)
 
         assert snap_compare(
             cas, 

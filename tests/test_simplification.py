@@ -1,11 +1,13 @@
 import pytest
 from levycas import *
+from levycas.expressions.expression import MIN_ERROR
+
+a, b, c = symbols("a b c")
+x, y, z = symbols("x y z")
 
 class TestSimplification:
     """Tests for automatic simplification of expressions"""
     def test_sum(self):
-        x, y, z = symbols("x y z")
-
         assert (
             1 + x + y + z
             == x + 1 + z + y
@@ -28,9 +30,53 @@ class TestSimplification:
             == 0
         )
 
-    def test_product(self):
-        x, y, z = symbols("x y z")
+    def test_div(self):
+        # Divs should be auto simplified to products
+        #  the / operator is overloaded to do this already,
+        #  so this is only necessary on manual construction of a Div
+        assert (
+            simplify(Div(Integer(1), x))
+            == Power(x, Integer(-1))
+        )
+        assert (
+            simplify(Div((x-1)**2, (x+1)*(x-1)))
+            == (x-1)**2 * (x+1)**-1 * (x-1)**-1
+            == (x-1) / (x+1)
+        )
+        assert (
+            simplify(Div(Rational(1, 2), Integer(2)))
+            == Rational(1, 2) / Integer(2)
+            == 1/4
+        )
+        assert (
+            simplify(Div(Integer(0), Integer(-1)))
+            == 0
+        )
 
+        # TODO: the behavior below should be consistent
+        with pytest.raises(ZeroDivisionError):
+            simplify(Div(Integer(0), Integer(0)))
+        assert (
+            simplify(Div(Sin(x)*Cos(x), 2*(x+1)-2*x - 2))
+            is UNDEFINED
+        )
+
+    def test_factorial(self):
+        # evaluates integer factorials, but leaves others as is
+        assert (
+            simplify(Factorial(UNDEFINED))
+            is UNDEFINED
+        )
+        assert (
+            simplify(Factorial(Integer(5)))
+            == 120
+        )
+        assert (
+            simplify(Factorial(x+1))
+            == Factorial(x+1)
+        )
+
+    def test_product(self):
         assert (
             x * y * z * x * y * z
             == (x*y*z)**2
@@ -52,9 +98,18 @@ class TestSimplification:
             == 0
         )
 
-    def test_power(self):
-        a, b, c = symbols("a b c ")
+        # products that were manually constructed
+        #  exercise different paths
+        assert (
+            simplify(Product(Integer(1)))
+            == 1
+        )
+        assert (
+            simplify(Product(x))
+            == x
+        )
 
+    def test_power(self):
         assert (
             a**2 / a**5
             == a**(-3)
@@ -76,6 +131,21 @@ class TestSimplification:
             == b**3 / a**2
         )
         assert (
+            Integer(1) ** 45
+            == (x / x) ** (45 + x)
+            == ((x+1)/(x+1)) ** 0
+            == 1
+        )
+        assert (
+            0 ** Integer(2)
+            == 0
+        )
+        assert (
+            0 ** Integer(-2)
+            is 0 ** -Integer(2)
+            is UNDEFINED
+        )
+        assert (
             Integer(5)**Rational(1, 2) / Integer(10)
             == (Integer(20)**Rational(1, 2))**Integer(-1)
             == (Integer(2)*Integer(5)**Rational(1, 2))**Integer(-1)
@@ -85,8 +155,6 @@ class TestSimplification:
         )
 
     def test_rationals(self):
-        x, y, z = symbols("x y z")
-
         a = Rational(1, 5)
 
         r = Integer(5) ** Rational(1, 2) / Integer(5)
@@ -112,9 +180,6 @@ class TestSimplification:
         )
 
     def test_basics(self):
-        x, y, z = symbols("x y z")
-        a, b, c = symbols("a b c")
-        
         assert x / x == 1
         assert (x / y)*(y / x) == 1
         assert 0 / x == 0
@@ -165,3 +230,34 @@ class TestSimplification:
             2*x**Rational(3, 2)
             == 2 * x * x**Rational(1, 2)
         )
+
+class TestSymbolicEvaluation:
+    """Tests for routines that evaluate/approximate expressions."""
+    def test_sym_eval(self):
+        assert (
+            sym_eval(
+                4*(x / (2*y))**2 / (x + 2*y) / Sin(x*y),
+                y=x,
+            )
+            == 1/(3*x*Sin(x**2))
+        )
+        assert (
+            sym_eval(
+                (Sin(x) * Cos(a) + Cos(a)) / Sin(b),
+                x=2,
+            )
+            == (Sin(2)*Cos(a)+Cos(a))/Sin(b)
+        )
+
+        # approximate flag evaluates constant sub-expressions
+        assert (
+            sym_eval(
+                (Sin(x) * Cos(a) + Cos(a)) / Sin(b),
+                approximate=True,
+                x=2,
+            )
+            == (1+0.9092974268313452)*Cos(a)/Sin(b)
+        )
+
+    def test_compile_approximation(self):
+        ...
