@@ -1,6 +1,8 @@
 """Methods acting on an expression's AST. 
 These operations perform simplification procedures, to transform binary ASTs into a normal form.
 """
+from typing import Callable, Optional
+from functools import cache
 import math
 
 from ..expressions import *
@@ -459,3 +461,66 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
 
     else:
         return simplify(construct(evaluated_operands, operation))
+
+_UNARY_FUNCS: dict[type, str] = {
+    Sin: "math.sin",
+    Cos: "math.cos",
+    Tan: "math.tan",
+    Arctan: "math.atan",
+    Arcsin: "math.asin",
+    Arccos: "math.acos",
+    Ln:  "math.log",
+    Exp: "math.exp"
+}
+
+@cache
+def compile_approximation(expr: Expression, var: str = "x") -> Callable[[float], Optional[float]]:
+    """Compile an expression into a plain Python function of one float variable.
+    
+    Unlike sym_eval, the Expression tree is walked only once, and the returned callable 
+     does only arithmetic instead of acting on Expression objects.
+    """
+    consts: dict[str, float] = {}
+    body = _emit(expr, var, consts)
+
+    func_src = f"def _f({var}):\n   return {body}\n"
+    namespace: dict[str, object] = {"math": math, **consts}
+    exec(func_src, namespace)
+    raw_f = namespace["_f"]
+
+    def f(x: float) -> Optional[float]:
+        try:
+            y = raw_f(x)
+        except (ValueError, ArithmeticError, TypeError):
+            return None
+        if y is None or isinstance(y, complex) or not math.isfinite(y):
+            return None
+        return y
+
+    return f
+
+def _emit(expr: Expression, var: str, consts: dict[str, float]) -> str:
+    if isinstance(expr, Variable):
+        if expr == var:
+            return var
+        raise ValueError(f"unbound variable {expr} (only {var} is bound)")
+
+    if isinstance(expr, Constant):
+        name = f"_c{len(consts)}"
+        consts[name] = float(expr)
+        return name
+
+    operation = type(expr)
+    args = [_emit(op, var, consts) for op in expr.operands()]
+    if operation is Sum:
+        return "(" + " + ".join(args) + ")"
+    if operation is Product:
+        return "(" + " * ".join(args) + ")"
+    if operation is Div:
+        return f"({args[0]}/{args[1]})"
+    if operation is Power:
+        return f"({args[0]}**{args[1]})"
+    if operation is Factorial:
+        return f"math.gamma({args[0]} + 1)"
+    if operation in _UNARY_FUNCS:
+        return f"{_UNARY_FUNCS[operation]}({args[0]})"

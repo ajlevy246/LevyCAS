@@ -7,7 +7,7 @@ from .expression_ops import (
 )
 
 from .simplification_ops import (
-    simplify, sym_eval,
+    simplify, sym_eval, compile_approximation,
     simplify_power, simplify_sum, 
     simplify_product, simplify_factorial,
     simplify_div,
@@ -59,7 +59,7 @@ __all__ = [
     "construct", "substitute",
 
     # Simplification routines
-    "simplify", "sym_eval",
+    "simplify", "sym_eval", "compile_approximation",
     "simplify_power", "simplify_sum", 
     "simplify_product", "simplify_factorial",
     "simplify_div",
