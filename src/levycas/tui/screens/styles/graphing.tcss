@@ -57,15 +57,28 @@ GraphingScreen {
                     height: 3;
                     margin: 0;
                 }
+                
+                Vertical {
+                    hatch: right $background-darken-2;
                     
-                .expression-delete {
-                    border: none;
-                    background: $error;
-                    height: 1;
-                    max-width: 3;
-                    text-style: bold;
-                    text-align: center;
+                    .expression-delete {
+                        border: none;
+                        background: $error;
+                        height: 1;
+                        max-width: 3;
+                        text-style: bold;
+                        text-align: center;
+                    }
+                    .expression-color {
+                        border: none;
+                        height: 1;
+                        max-width: 3;
+                        text-style: bold;
+                        text-align: center;
+                        margin-top: 1;
+                    }
                 }
+                
             }
             
             #add-expression-container {
@@ -100,6 +113,7 @@ GraphingScreen {
                 background: $panel;
                 min-height: 4;
                 padding: 1;
+                margin-left: 1;
             }
         }
 
