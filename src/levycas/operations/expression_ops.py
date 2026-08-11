@@ -109,38 +109,6 @@ def copy_expr(expr: Expression) -> Expression:
             copied_operands.append(operand)
     return type(expr)(*copied_operands)
 
-def map_op(expr: Expression, op: Callable) -> Expression:
-    """Maps the operator "op" acting on AST's to the arguments of an expression.
-
-    Args:
-        expr (Expression): The expression to map to
-        op (function): The operation to map
-
-    Returns:
-        Expression: The mapped expression
-    """
-    if type(expr) in [Integer, Rational, Variable]:
-        return op(expr)
-    
-    mapped_operators = [map_op(operator, op) for operator in expr.operands()]
-    operation = type(expr)
-    
-    #Special case to force simplification
-    if operation == Sum:
-        return op(sum(mapped_operators))
-    
-    elif operation == Product:
-        prod = 1
-        for mapped_operator in mapped_operators:
-            prod *= mapped_operator
-        return op(prod)
-    
-    elif operation == Power:
-        return op(mapped_operators[0] ** mapped_operators[1])
-    
-    else:
-        return op(operation(*mapped_operators))
-
 def construct(operands: list[Expression], op: type[Expression]) -> Expression | Literal['UNDEFINED']:
     """Given a list of operands and an operation, 
     returns the constructed operation.

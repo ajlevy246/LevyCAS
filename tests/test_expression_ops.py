@@ -3,7 +3,7 @@ import pytest
 from levycas import Exp, Sin, Cos, Variable
 from levycas.operations.expression_ops import (
     symbols, get_symbols,
-    contains, map_op, construct,
+    contains, construct,
     substitute, copy_expr
 )
 
@@ -42,9 +42,6 @@ def test_contains():
         assert contains(expr, sub)
     assert not contains(1, x)
     assert not contains(Sin(x) + 3*Cos(x), y)
-
-def test_map_op():
-    ...
 
 def test_copy_expr():
     expr = 4*(Exp(4*Sin(x**2 + 3*x + Cos(x))))
