@@ -32,15 +32,15 @@ def simplify(expr: Expression) -> Expression:
         return UNDEFINED
     
     expr = construct(simplified_operands, operation)
-    if operation == Power:
+    if operation is Power:
         return simplify_power(expr)
-    elif operation == Product:
+    elif operation is Product:
         return simplify_product(expr)
-    elif operation == Sum:
+    elif operation is Sum:
         return simplify_sum(expr)
-    elif operation == Div:
+    elif operation is Div:
         return simplify_div(expr)
-    elif operation == Factorial:
+    elif operation is Factorial:
         return simplify_factorial(expr)
     else:
         return expr
@@ -172,7 +172,10 @@ def simplify_div(expr: Div) -> Expression:
     if isinstance(numerator, Constant) and isinstance(denominator, Constant):
         return numerator / denominator
     else:
-        return simplify(numerator * denominator ** Integer(-1))
+        power = denominator ** Integer(-1)
+        if power is UNDEFINED:
+            return UNDEFINED
+        return simplify(numerator * power)
 
 def simplify_factorial(expr: Factorial) -> Expression:
     operand = expr.operands()[0]
