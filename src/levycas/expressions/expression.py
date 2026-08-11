@@ -1,16 +1,15 @@
 """Classes for internal representations of mathematical expressions"""
-from math import lcm, comb, factorial
+from math import lcm
 from fractions import Fraction
 from numbers import Number
 
-from functools import cache, cached_property
+from functools import cache
 
-"""Undefined flyweight; default value for expressions that can not be evaluated
-"""
 UNDEFINED = "UNDEFINED" 
+"""Undefined flyweight; default value for expressions that can not be evaluated"""
 
-"""Minimumn threshold used to determine if a float is an integer"""
 MIN_ERROR = 10 ** -30
+"""Minimumn threshold used to determine if a float is an integer"""
 
 #============ OPERATIONS ===============
 
