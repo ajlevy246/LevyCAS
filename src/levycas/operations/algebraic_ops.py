@@ -22,19 +22,19 @@ def algebraic_expand(expr: Expression) -> Expression:
 
     operation = type(expr)
     operands = expr.operands()
-    if operation == Sum:
+    if operation is Sum:
         expanded_operands = [algebraic_expand(operand) for operand in operands]
         return sum(expanded_operands)
 
-    elif operation == Product:
+    elif operation is Product:
         first_factor = operands[0]
         remaining = expr / first_factor
         new_num = _expand_product(algebraic_expand(first_factor).num(), algebraic_expand(remaining).num())
         new_denom = _expand_product(algebraic_expand(first_factor).denom(), algebraic_expand(remaining).denom())
 
-        return new_num / new_denom
+        return new_num / new_denom        
 
-    elif operation == Power:
+    elif operation is Power:
         return _expand_power(algebraic_expand(operands[0]), algebraic_expand(operands[1]))
     
     expanded_operands = [algebraic_expand(operand) for operand in operands]
@@ -58,10 +58,10 @@ def algebraic_expand_main(expr: Expression) -> Expression:
     
     operation = type(expr)
     operands = expr.operands()
-    if operation == Sum:
+    if operation is Sum:
         return expr
     
-    elif operation == Product:
+    elif operation is Product:
         first_factor = operands[0]
         remaining = expr / first_factor
         return _expand_product(first_factor, remaining)
@@ -69,7 +69,7 @@ def algebraic_expand_main(expr: Expression) -> Expression:
         new_denom = _expand_product(first_factor.denom(), remaining.denom()) 
         return new_num / new_denom
     
-    elif operation == Power:
+    elif operation is Power:
         return _expand_power(operands[0], operands[1])
     
     return expr
@@ -87,11 +87,11 @@ def _expand_product(r: Expression, s: Expression) -> Sum | Product:
     """
     r_op = type(r)
     s_op = type(s)
-    if r_op == Sum:
+    if r_op is Sum:
         f = r.operands()[0]
         return _expand_product(f, s) + _expand_product(r - f, s)
         
-    elif s_op == Sum:
+    elif s_op is Sum:
         return _expand_product(s, r)
 
     return r * s
@@ -116,7 +116,7 @@ def _expand_power(u: Expression, int_exp: Integer) -> Sum | Power:
             return 1
         elif int_exp == 1:
             return u
-        elif type(u) == Sum:
+        elif type(u) is Sum:
             n = int_exp.eval()
             f = u.operands()[0]
             r = u - f
@@ -140,16 +140,16 @@ def rationalize(expr: Expression) -> Expression:
     operation = type(expr)
     operands = expr.operands()
 
-    if operation == Power:
+    if operation is Power:
         return rationalize(operands[0]) ** operands[1]
-    elif operation == Product:
+    elif operation is Product:
         first_factor = rationalize(operands[0])
         if len(operands) == 1:
             return first_factor
         else:
             remaining_factor = rationalize(Product(*operands[1::]))
             return first_factor * remaining_factor
-    elif operation == Sum:
+    elif operation is Sum:
         first_term = rationalize(operands[0])
         if len(operands) == 1:
             return first_term
