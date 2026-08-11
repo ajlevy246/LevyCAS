@@ -24,6 +24,8 @@ class TestGraphing:
             for expr in exprs:
                 await pilot.press(*expr, "enter")
 
+            await pilot.pause()
+
 
         assert snap_compare(
             cas,
@@ -51,6 +53,8 @@ class TestGraphing:
             await pilot.click("#expression-color-0")
             await pilot.click("#expression-color-0")
             await pilot.click("#expression-color-0")
+
+            await pilot.pause()
 
         assert snap_compare(
             cas, 
@@ -80,6 +84,8 @@ class TestGraphing:
             for _ in range(15):
                 await pilot.press("right", "up")
             await pilot._post_mouse_events([MouseScrollUp], times=5, widget="#plot")
+
+            await pilot.pause()
 
         assert snap_compare(
             cas,
@@ -112,6 +118,8 @@ class TestGraphing:
 
             # reset plot; should see gridlines and legend back at default axes.
             await pilot.press("r")
+
+            await pilot.pause()
 
         assert snap_compare(
             cas,

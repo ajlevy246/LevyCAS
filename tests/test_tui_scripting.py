@@ -30,6 +30,8 @@ class TestScriptingScreen:
                 "Cos(3)",
             ]
 
+        await pilot.pause()
+
     def test_script_snapshot(self, snap_compare):
         cas = LevyCasApp()
         assert snap_compare(cas, run_before=self.run_example)
