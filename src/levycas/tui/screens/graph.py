@@ -4,36 +4,45 @@ from textual.screen import Screen
 from textual.containers import Horizontal, Vertical, VerticalScroll, Center
 from textual.widgets import Header, Static, Button, Input
 from textual.message import Message
+from textual.renderables.gradient import LinearGradient
 from textual.widget import Widget
 from textual._box_drawing import BOX_CHARACTERS 
-from textual.geometry import Offset
+from textual.reactive import reactive
 
 from textual_hires_canvas import Canvas, HiResMode
 from textual_plot.plot_widget import PlotWidget, LegendLocation
 from rich.text import Text
-from rich.color import ANSI_COLOR_NAMES
 
 from ...expressions import Expression, Variable
-from ...operations import sym_eval, get_symbols, trig_simplify
+from ...operations import sym_eval, compile_approximation, get_symbols, trig_simplify, derivative
 from ...parser import parse
 
 from dataclasses import dataclass
 from math import dist
 
+from typing import Optional
+
 # Graph config
 MAX_PLOTS        = 4
 DEFAULT_X_BOUNDS = (-13.0, 13.0)
 DEFAULT_Y_BOUNDS = (-10.0, 10.0)
-INPUT_COLORS     = ("black", "darkgreen", "purple", "red")
-PLOT_COLORS      = ("black", "dark_green", "purple", "red")
+INPUT_COLORS     = ("black", "darkgreen", "purple", "red", "green",)
+PLOT_COLORS      = ("black", "dark_green", "purple", "red", "green",)
 DEFAULT_RES_MODE = HiResMode.BRAILLE
 EPS              = 1e-6  # max difference to consider two floats equal
 SIMPLIFY_EXPRESSIONS = True # Simplify expressions fully; may hide removable discontinuities
-# Gridlines
-DRAW_GRIDLINES       = True
-GRID_HORIZONTAL_CHAR = BOX_CHARACTERS[(0, 1, 0, 1)]
-GRID_VERTICAL_CHAR   = BOX_CHARACTERS[(1, 0, 1, 0)]
-GRID_CROSS_CHAR      = BOX_CHARACTERS[(1, 2, 1, 2)]
+COLOR_GRADIENT = LinearGradient(
+    angle=25.0,
+    stops=(
+        (0.0, "#FF0000"),
+        (0.2, "#FFEE00"),
+        (0.3, "#09FF00"),
+        (0.5, "#00FFFF"),
+        (0.7, "#1100FF"),
+        (0.8, "#AE00FF"),
+        (1.0, "#FF00DD"),
+    )
+)
 
 class ExpressionInput(Widget):
     """Single-line expression input field widget.
@@ -48,14 +57,14 @@ class ExpressionInput(Widget):
         "ln(2x)",
         "x^(1/2)",
     ]
-    DEFAULT_TOOLTIP = \
-        'Start typing an expression, e.g. "{sample}"'
+    DEFAULT_TOOLTIP = 'Start typing an expression, e.g. "{sample}"'
     
     @dataclass
     class Plot(Message):
         """Request to render a parsed expression."""
         idx:  int        # index of the expression to graph
         expr: Expression # expression to graph
+        color_idx: str   # parseable color string for the plot
     
     @dataclass
     class Clear(Message):
@@ -69,6 +78,7 @@ class ExpressionInput(Widget):
 
     def __init__(self, idx: int) -> None:
         self.idx = idx
+        self.color_idx = idx
         sample = self.SAMPLES[idx]
         self.default_tooltip = self.DEFAULT_TOOLTIP.format(sample=sample)
         
@@ -81,20 +91,32 @@ class ExpressionInput(Widget):
             classes="expression-input",
             id=f"expression-input-{idx}",
         )
-        self.input.styles.border = ("tall", INPUT_COLORS[idx])
+        self.input.styles.border = ("tall", INPUT_COLORS[self.color_idx])
+        self.input.tooltip = self.default_tooltip
+
         self.delete_button = Button(
             label="x",
             classes="expression-delete",
             id=f"expression-delete-{idx}",
         )
-        self.input.tooltip = self.default_tooltip
+        self.delete_button.tooltip = "clear/delete the plot"
+
+        self.color_button = Button(
+            label="✓", # \u2713
+            classes="expression-color",
+            id=f"expression-color-{idx}",
+        )
+        self.color_button.render = lambda: COLOR_GRADIENT
+        self.color_button.tooltip = "change the plot's color"
 
         super().__init__()
 
     def compose(self) -> ComposeResult:
         with self.container:
             yield self.input
-            yield self.delete_button
+            with Vertical():
+                yield self.delete_button
+                yield self.color_button
 
     def on_input_changed(self, event: Input.Changed) -> None:
         """Parse the expression, send plot request if valid."""
@@ -120,11 +142,25 @@ class ExpressionInput(Widget):
                 self.Plot(
                     idx=self.idx,
                     expr=expr,
+                    color_idx=self.color_idx,
                 )
             )
-            
+    
         except (SyntaxError, AssertionError) as e:
             self.input.tooltip = f"Failed to parse: {e}"
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        button = event.button
+        if button.id.startswith("expression-color"):
+            self.color_idx = (self.color_idx + 1) % len(INPUT_COLORS)
+            self.input.styles.border = ("tall", INPUT_COLORS[self.color_idx])
+            self.post_message(
+                self.Plot(
+                    idx=self.idx,
+                    expr=None, # don't update expression
+                    color_idx=self.color_idx,
+                )
+            )
 
     def key_enter(self) -> None:
         """Request a new input field when enter is pressed."""
@@ -136,14 +172,23 @@ class CasPlot(PlotWidget):
     Extended to allow for grid lines and some optimizations.
     Not a general-use widget; hardcoded for the LevyCAS Graphing screen.
     """
+    BINDINGS = [
+        ("l", 'toggle_legend', "show/hide legend"),
+        ("g", 'toggle_gridlines', "show/hide gridlines"),
+    ]
+
+    # graph config
+    visible_legend = reactive(True, layout=True)
+    hide_gridlines = reactive(False, layout=True)
+    
     def __init__(self) -> None:
         super().__init__(invert_mouse_wheel=True)
-        # Keep track of each expression requesting a plot.
-        self.expressions: list[Expression|None] = [None] * MAX_PLOTS
+        # Keep track of each expression requesting a plot, as well as its color.
+        self.expressions: list[tuple[Optional[Expression],int]] = [(None, -1)] * MAX_PLOTS
 
     def on_mount(self) -> None:
         super().on_mount()
-        self.show_legend(LegendLocation.TOPLEFT)
+        self.show_legend(LegendLocation.TOPLEFT, is_visible=self.visible_legend)
 
     def _render_plot(self) -> None:
         """Renders axis lines before drawing plots, then canvas box & ticks."""
@@ -152,7 +197,7 @@ class CasPlot(PlotWidget):
         if canvas is None or canvas._canvas_size is None: return
         canvas.reset()
 
-        if DRAW_GRIDLINES: self.draw_grid_lines(canvas)
+        self.draw_grid_lines(canvas)
         self.render_expressions(canvas)
         # Render axis, ticks, and labels
         canvas.draw_rectangle_box(
@@ -169,6 +214,9 @@ class CasPlot(PlotWidget):
 
     def draw_grid_lines(self, canvas: Canvas) -> None:
         """Render grid lines at tick labels"""
+        if self.hide_gridlines:
+            return
+        
         rect_right_bound = self._scale_rectangle.right - 1
         rect_bottom_bound = self._scale_rectangle.bottom - 1
 
@@ -183,7 +231,7 @@ class CasPlot(PlotWidget):
                 x, 1,
                 x, rect_bottom_bound,
                 style="white",
-                char=GRID_VERTICAL_CHAR,
+                char=BOX_CHARACTERS[(1, 0, 1, 0)],
             )
             x_coords.append(x)
         # horizontal lines ─
@@ -193,7 +241,7 @@ class CasPlot(PlotWidget):
                 1, y,
                 rect_right_bound, y,
                 style="white",
-                char=GRID_HORIZONTAL_CHAR,
+                char=BOX_CHARACTERS[(0, 1, 0, 1)],
             )
             y_coords.append(y)
         # intersections ┿
@@ -202,7 +250,7 @@ class CasPlot(PlotWidget):
                 canvas.set_pixel(
                     x, y,
                     style="white",
-                    char=GRID_CROSS_CHAR,
+                    char=BOX_CHARACTERS[(1, 2, 1, 2)],
                 )
 
     def render_expressions(self, canvas: Canvas) -> None:
@@ -211,22 +259,160 @@ class CasPlot(PlotWidget):
         Approximates a graph by computing one point per canvas width coord,
         then drawing straight lines between them.
         """
-        density = self._scale_rectangle.width
-        for idx, expr in enumerate(self.expressions):
-            if expr is None: continue
-            color = PLOT_COLORS[idx]
-            data  = self.compute_data(
-                expr, self._x_min, self._x_max, density,
+        # parameters for plot resolution
+        #  raising either will increase computed points, while decreasing performance. 
+        #  max_depth = 10 and initial_intervals = 25 works reasonably well for `tan(x)` & `1/x`.
+        max_depth = 10
+        initial_intervals = max(25, self._scale_rectangle.width // 2)
+        edges = [
+            self._x_min + i * (self._x_max - self._x_min) / initial_intervals
+            for i in range(initial_intervals + 1)
+        ]
+
+        for expr, color_idx in self.expressions:
+            if expr is None: 
+                continue
+            f = compile_approximation(expr)
+
+            for i in range(initial_intervals):
+                self._adaptive_sample(
+                    canvas, PLOT_COLORS[color_idx],
+                    f, edges[i], edges[i+1],
+                    depth=max_depth,
+                )
+
+    def _adaptive_sample(
+        self, 
+        canvas: Canvas, color: str,
+        f,
+        a, c,
+        depth,
+        fa=None, fb=None, fc=None,
+    ) -> list[tuple[float, float]]:
+        b  = (a + c) / 2
+        a1 = (a + b) / 2
+        b1 = (b + c) / 2
+
+        fa = f(a) if fa is None else fa
+        fb = f(b) if fb is None else fb
+        fc = f(c) if fc is None else fc
+        fa1, fb1 = f(a1), f(b1)
+
+        xs = ( a,  a1,  b,  b1,  c  )
+        ys = ( fa, fa1, fb, fb1, fc )
+
+        if depth <= 0:
+            samples = zip(xs, ys)
+            self.draw_pixels(samples, canvas, color)
+            return
+
+        # Check oscillation/discontinuity criteria
+        if all(y == None for y in ys): # e.g ln(x) for x < 0
+            return
+        discontinuity_present = None in ys or float('-inf') in ys or float('inf') in ys
+
+        if not discontinuity_present:
+            oscillating_segments = 0
+            for p1, p2, p3 in zip(ys, ys[1:], ys[2:]):
+                if (
+                    (p2 > p1 and p2 > p3)
+                    or (p2 < p1 and p2 < p3)
+                ):
+                    oscillating_segments += 1
+
+        needs_subdivision = discontinuity_present or oscillating_segments
+        if not needs_subdivision:
+            if self._screen_linear(xs, ys):
+                pa = self.get_hires_pixel_from_coordinate(a, fa)
+                pb = self.get_hires_pixel_from_coordinate(b, fb)
+                pc = self.get_hires_pixel_from_coordinate(c, fc)
+                canvas.draw_hires_line(*pa, *pc, DEFAULT_RES_MODE, color)
+                return
+
+        # resolution isn't quite there;
+        #  subdivide again
+        self._adaptive_sample(
+            canvas, color,
+            f, a, b,
+            depth-1,
+            fa=fa, fb=fa1, fc=fb,
+        ) 
+        self._adaptive_sample(
+            canvas, color, 
+            f, b, c,
+            depth-1,
+            fa=fb, fb=fb1, fc=fc,
+        )
+
+    def _screen_linear(
+        self,
+        xs: tuple[float, ...],
+        ys: tuple[float, ...],
+        *,
+        tolerance: float = 0.75,
+    ) -> bool:
+        """Test whether sampled points are visually linear in screen coordinates.
+
+        If all interior samples lie within the same segment of pixels joining
+            the first and last samples, then we can approximate the segment with a line
+            from one endpoint to the other.
+
+        A perpendicular-distance test is used rather than comparing y-values
+            because it behaves correctly for steep lines.
+        """
+        pixels = [
+            self.get_hires_pixel_from_coordinate(x, y)
+            for x, y in zip(xs, ys)
+        ]
+
+        x0, y0 = pixels[0]
+        x1, y1 = pixels[-1]
+
+        dx = x1 - x0
+        dy = y1 - y0
+
+        length_sq = dx * dx + dy * dy
+
+        # All samples project to the same screen point.
+        if length_sq <= 1e-12:
+            tolerance_sq = tolerance * tolerance
+
+            return all(
+                (px - x0) ** 2 + (py - y0) ** 2 <= tolerance_sq
+                for px, py in pixels[1:-1]
             )
-            hires_pixels = [self.get_hires_pixel_from_coordinate(xi, yi) for xi, yi in data if yi is not None]
-            segments = [(*hires_pixels[i-1], *hires_pixels[i]) for i in range(1, len(hires_pixels))]
-            canvas.draw_hires_lines(segments, style=color, hires_mode=DEFAULT_RES_MODE)
-            
-    def update_expression(self, idx: int, expr: Expression) -> None:
+
+        tolerance_sq = tolerance * tolerance
+
+        # Distance from point p to the infinite endpoint line:
+        #  |cross(endpoint, point)| / |endpoint|
+        for px, py in pixels[1:-1]:
+            cross = (
+                dx * (py - y0)
+                - dy * (px - x0)
+            )
+
+            if cross * cross > tolerance_sq * length_sq:
+                return False
+
+        return True
+
+    def draw_pixels(self, data, canvas: Canvas, color):
+        data = [self.get_hires_pixel_from_coordinate(x, y) for x, y in data if y is not None]
+        canvas.set_hires_pixels(data, DEFAULT_RES_MODE, color)
+
+    def update_expression(self, idx: int, expr: Expression, color_idx: int) -> None:
         """Plot a new expression."""
-        if expr and SIMPLIFY_EXPRESSIONS:
-            expr = trig_simplify(expr)
-        self.expressions[idx] = expr
+        if expr is None:
+            if color_idx != -1:
+                expr = self.expressions[idx][0]
+        else:
+            simp = trig_simplify(expr)
+            # TODO: fix this silly heuristic for guessing which 
+            #  will be cheaper to compute.
+            expr = expr if len(str(expr)) < len(str(simp)) else simp
+
+        self.expressions[idx] = (expr, color_idx)
         self._rerender()
 
     def _update_legend(self) -> None:
@@ -237,52 +423,31 @@ class CasPlot(PlotWidget):
         """
         legend = self.query_one_optional("#legend", Static)
         if not legend: return
+
+        legend.display = self.visible_legend
+        if not legend.display:
+            return
         
         legend_lines = []
-        for idx, expr in enumerate(self.expressions):
+        for expr, color_idx in self.expressions:
             if expr is None: continue  
-            style = PLOT_COLORS[idx]
+            style = PLOT_COLORS[color_idx]
             text = Text("▀▄▀▄") # "\u2580\u2584"*2
             text.stylize(style)
             text.append(f" {expr}")
             legend_lines.append(text.markup)
         if not legend_lines:
-            legend.display = False; return
-            
-        legend.display = True
+            legend.display = False
+            return
+
         legend.update(Text.from_markup("\n\n".join(legend_lines)))
 
-    @staticmethod
-    def compute_point(
-        expr: Expression,
-        x: float,
-    ) -> float | None:
-        """Compute f(x) for f = expr"""
-        try:
-            return float(sym_eval(expr, approximate=True, x=x))
-        except (ValueError, ZeroDivisionError):
-            return None
-        
-    @staticmethod
-    def compute_data(
-        expr: Expression, 
-        x_min: float,
-        x_max: float,
-        density: int,
-    ) -> list[tuple[float, float]]:
-        """Compute (x, y) points across the canvas for a given expression."""
-        data = []
-        if (x_max - x_min) < EPS:
-            x_max += EPS; x_min -= EPS
-        dx = (x_max - x_min) / (density - 1)
-        for i in range(density):
-            x = x_min + i * dx
-            try:
-                y = float(sym_eval(expr, approximate=True, x=x))
-            except ValueError as e:
-                y = None
-            data.append((x, y))
-        return data
+    def action_toggle_gridlines(self) -> None:
+        self.hide_gridlines = not self.hide_gridlines
+
+    def action_toggle_legend(self) -> None:
+        self.visible_legend = not self.visible_legend
+
 
 class GraphingScreen(Screen):
     TITLE = "LevyCAS - Graphing"
@@ -372,6 +537,8 @@ class GraphingScreen(Screen):
         elif button.id == "add-expression":
             self.add_input()
         elif button.id == "reset-plot":
+            self.plot.hide_gridlines = False
+            self.plot.visible_legend = True
             self.reset_plot_limits()
 
     def remove_input(self, input_container: ExpressionInput) -> None:
@@ -414,10 +581,10 @@ class GraphingScreen(Screen):
 
     def on_expression_input_plot(self, message: ExpressionInput.Plot) -> None:
         """Plot the sent expression."""
-        idx, expr = message.idx, message.expr
-        self.plot.update_expression(idx, expr)
+        idx, expr, color_idx = message.idx, message.expr, message.color_idx
+        self.plot.update_expression(idx, expr, color_idx)
 
     def on_expression_input_clear(self, message: ExpressionInput.Clear) -> None:
         """Clear the indicated expression."""
         idx = message.idx
-        self.plot.update_expression(idx, None)
+        self.plot.update_expression(idx, None, -1)
