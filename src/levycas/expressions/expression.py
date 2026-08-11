@@ -3,7 +3,7 @@ from math import lcm, comb, factorial
 from fractions import Fraction
 from numbers import Number
 
-from functools import cache
+from functools import cache, cached_property
 
 """Undefined flyweight; default value for expressions that can not be evaluated
 """
@@ -21,6 +21,18 @@ class Expression:
         assert len(args) == 2
         self.left = args[0]
         self.right = args[1]
+
+    def __str__(self) -> str:
+        cached = self.__dict__.get("_str_cache")
+        if cached is None:
+            cached = self._str_cache = self._get_str()
+        return cached
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def _get_str(self):
+        raise NotImplementedError()
 
     #The following four methods allow us to treat arbitrary expressions as powers/products/rationals. 
     #This is useful for automatic simplification and total ordering of expressions.
@@ -125,12 +137,8 @@ class Sum(Expression):
 
     def __init__(self, *terms):
         self.terms = list(terms)
-
-    def __repr__(self):
-        term_repr = [repr(term) for term in self.terms[::-1]]
-        return "(" + " + ".join(term_repr) + ")"
     
-    def __str__(self):
+    def _get_str(self):
         terms = self.terms[::-1]
         num_terms = len(terms)
         
@@ -183,27 +191,18 @@ class Product(Expression):
     def __init__(self, *factors):
         self.factors = list(factors)
 
-    def __repr__(self):
-        if len(self.factors) == 2 and isinstance(self.factors[0], Integer) and isinstance(self.factors[1], Variable):
-            if self.factors[0] == -1:
-                return "-" + repr(self.factors[1])
-            return f"{self.factors[0]}{self.factors[1]}" #Implicit multiplication is easier on the eyes
-        
-        factor_repr = [repr(factor) for factor in self.factors]
-        return "(" + " \u00B7 ".join(factor_repr) + ")" #\u00b7 -> (•)
-
-    def __str__(self):
+    def _get_str(self):
         string = ""
         first = self.factors[0]
         # Reverse the list so that variables are printed before elementary functions, 
         # but rational coefficients are always printed first
         remaining_spliced = self.factors[::-1]
         if isinstance(first, Constant):
-            if first.is_negative():
-                return "-" + str(-self)
+            if first == -1:
+                string += "-"
             else:
                 string += str(first)
-                remaining_spliced = self.factors[-1:0:-1]
+            remaining_spliced = self.factors[-1:0:-1]
             
         for curr in remaining_spliced:
             if isinstance(curr, (Constant, Variable, Elementary)):
@@ -275,7 +274,7 @@ class Div(Expression):
     Divs are not created directly in the parser,
     and are automatically simplified as a/b -> a*b^-1.
     """
-    def __repr__(self):
+    def _get_str(self):
         return f"({self.left} / {self.right})"
 
     def operands(self):
@@ -289,7 +288,7 @@ class Div(Expression):
 
 class Power(Expression):
     """A Power represents exponentiation"""
-    def __repr__(self):
+    def _get_str(self):
         base_str = str(self.left)
         if isinstance(self.left, Sum):
             base_str = f"({base_str})"
@@ -366,7 +365,7 @@ class Factorial(Expression):
         """Create a new Factorial object"""
         self.value = value
 
-    def __repr__(self):
+    def _get_str(self):
         return f"({self.value}!)"
     
     def __lt__(self, other):
@@ -401,7 +400,7 @@ class Variable(Expression):
         """Create a new Variable object"""
         self.name = name
 
-    def __repr__(self) -> str:
+    def _get_str(self) -> str:
         """Return the name of the variable"""
         return self.name
     
@@ -446,12 +445,8 @@ class Elementary(Expression):
             return self_kind < other.name
 
         return NotImplemented
-
-    def __repr__(self):
-        args_repr = "(" + ", ".join([repr(arg) for arg in self.args]) + ")"
-        return type(self).__name__ + args_repr
         
-    def __str__(self):
+    def _get_str(self):
         args_repr = "(" + ", ".join([str(arg) for arg in self.args]) + ")"
         return type(self).__name__ + args_repr
         
@@ -490,7 +485,7 @@ class Elementary(Expression):
 #         assert definition is not None, f"Function {self.name} was cleared?"
 #         return definition.sym_eval(**symbols)
 
-#     def __repr__(self):
+#     def _get_repr(self):
 #         if self.args:
 #             args_repr = [repr(arg) for arg in self.args]
 #             return f"{self.name}({', '.join(args_repr)})"
@@ -654,8 +649,8 @@ class Rational(Constant):
         """
         pass
 
-    def __repr__(self):
-        return f"({self.left}/{self.right})"
+    def _get_str(self):
+        return f"{self.left}/{self.right}"
 
     def __eq__(self, other):
         if isinstance(other, Number):
@@ -736,9 +731,9 @@ class Integer(Constant):
         """Creates a new Integer object"""
         self.value = value
 
-    def __repr__(self):
+    def _get_str(self):
         """Returns the value of the integer"""
-        return repr(self.value)
+        return str(self.value)
 
     def __hash__(self):
         return hash(self.eval())
