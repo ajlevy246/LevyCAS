@@ -184,7 +184,7 @@ class TestScriptingExecution:
         run_script(stmt, log)
         assert output_record == [
             "2x²Cos(x²) + Sin(x²)",
-            "2yxCos(y) - (1/2)Cos(x²)",
+            "2yxCos(y) - 1/2Cos(x²)",
             "-2ySin(y) + 2Cos(y)",
             "yxSin(x²) + 2ySin(y) + 2Cos(y)",
         ]
