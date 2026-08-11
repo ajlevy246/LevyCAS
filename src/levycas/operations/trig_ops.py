@@ -4,6 +4,7 @@ trigonometric functions
 
 from ..expressions import *
 from .expression_ops import construct
+from .simplification_ops import simplify_sum
 from .algebraic_ops import algebraic_expand_main, rationalize, algebraic_expand
 
 from math import comb
@@ -131,16 +132,16 @@ def _multiple_angle_sin(n: Integer, theta: Expression) -> Expression:
     Returns:
         Expression: Expanded form
     """
-    expanded = 0
-
     if isinstance(theta, Sum):
         sin_theta, cos_theta = _trig_expand_recursive(theta)
     else:
         sin_theta, cos_theta = Sin(theta), Cos(theta)
 
-    for j in range(1, n + 1, 2):
-        expanded += (-1)**((j - 1) // 2) * comb(n, j) * sin_theta ** j * cos_theta ** (n -j)
-    return expanded
+    terms = [
+        (-1)**((j - 1) // 2) * comb(n, j) * sin_theta ** j * cos_theta ** (n -j)
+        for j in range(1, n + 1, 2)
+    ]
+    return simplify_sum(Sum(*terms))
 
 def _multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
     """Given an expression Cos(n * theta), with argument that has an integer
@@ -160,10 +161,12 @@ def _multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
         sin_theta, cos_theta = _trig_expand_recursive(theta)
     else:
         sin_theta, cos_theta = Sin(theta), Cos(theta)
-    
-    for j in range(0, n + 1, 2):
-        expanded += (-1) ** (j // 2) * comb(n, j) * cos_theta ** (n - j) * sin_theta ** j
-    return expanded
+
+    terms = [
+        (-1) ** (j // 2) * comb(n, j) * cos_theta ** (n - j) * sin_theta ** j
+        for j in range(0, n + 1, 2)
+    ]
+    return simplify_sum(Sum(*terms))
 
 def trig_contract(expr: Expression) -> Expression:
     """Given an expression, returns an equivalent expression in trigonometric-contracted form.
@@ -181,7 +184,7 @@ def trig_contract(expr: Expression) -> Expression:
     contracted_operation = construct(contracted_operands, operation)
 
     if operation in [Product, Power]:
-        return _trig_contract_recursive(contracted_operation)
+        return _trig_contract_recursive(algebraic_expand(contracted_operation))
     else:
         return contracted_operation
     
@@ -195,7 +198,6 @@ def _trig_contract_recursive(expr: Expression) -> Expression:
     Returns:
         Expression: The contracted expression
     """
-    expr = algebraic_expand(expr)
     operation = type(expr)
 
     if operation == Power:
@@ -212,13 +214,11 @@ def _trig_contract_recursive(expr: Expression) -> Expression:
             return algebraic_expand_main(non_trig_factors * _contract_trig_product(trig_factors))
 
     elif operation == Sum:
-        s = 0
-        for operand in expr.operands():
-            if type(operand) in [Product, Power]:
-                s += _trig_contract_recursive(operand)
-            else:
-                s += operand
-        return s
+        new_terms = [
+            _trig_contract_recursive(t) if type(t) in (Product, Power) else t
+            for t in expr.operands()
+        ]
+        return simplify_sum(Sum(*new_terms))
     
     else:
         return expr
