@@ -274,16 +274,23 @@ class CasPlot(PlotWidget):
                 continue
             f = compile_approximation(expr)
 
+            pixels = []
+            segments = []
             for i in range(initial_intervals):
-                self._adaptive_sample(
-                    canvas, PLOT_COLORS[color_idx],
+                new_pixels, new_segments = self._adaptive_sample(
                     f, edges[i], edges[i+1],
                     depth=max_depth,
                 )
+                pixels += new_pixels
+                segments += new_segments
+
+            if pixels:
+                canvas.set_hires_pixels(pixels, DEFAULT_RES_MODE, PLOT_COLORS[color_idx])
+            if segments:
+                canvas.draw_hires_lines(segments, DEFAULT_RES_MODE, PLOT_COLORS[color_idx])
 
     def _adaptive_sample(
         self, 
-        canvas: Canvas, color: str,
         f,
         a, c,
         depth,
@@ -292,23 +299,22 @@ class CasPlot(PlotWidget):
         b  = (a + c) / 2
         a1 = (a + b) / 2
         b1 = (b + c) / 2
-
+  
         fa = f(a) if fa is None else fa
         fb = f(b) if fb is None else fb
         fc = f(c) if fc is None else fc
         fa1, fb1 = f(a1), f(b1)
 
-        xs = ( a,  a1,  b,  b1,  c  )
+        xs = (  a,  a1,  b,  b1,  c )
         ys = ( fa, fa1, fb, fb1, fc )
 
         if depth <= 0:
-            samples = zip(xs, ys)
-            self.draw_pixels(samples, canvas, color)
-            return
+            samples = [self.get_hires_pixel_from_coordinate(x, y) for x, y in zip(xs, ys) if y is not None]
+            return [samples, []]
 
         # Check oscillation/discontinuity criteria
         if all(y == None for y in ys): # e.g ln(x) for x < 0
-            return
+            return [[], []]
         discontinuity_present = None in ys or float('-inf') in ys or float('inf') in ys
 
         if not discontinuity_present:
@@ -324,25 +330,22 @@ class CasPlot(PlotWidget):
         if not needs_subdivision:
             if self._screen_linear(xs, ys):
                 pa = self.get_hires_pixel_from_coordinate(a, fa)
-                pb = self.get_hires_pixel_from_coordinate(b, fb)
                 pc = self.get_hires_pixel_from_coordinate(c, fc)
-                canvas.draw_hires_line(*pa, *pc, DEFAULT_RES_MODE, color)
-                return
+                return [[], [pa+pc]]
 
         # resolution isn't quite there;
         #  subdivide again
-        self._adaptive_sample(
-            canvas, color,
-            f, a, b,
-            depth-1,
-            fa=fa, fb=fa1, fc=fb,
-        ) 
-        self._adaptive_sample(
-            canvas, color, 
-            f, b, c,
-            depth-1,
-            fa=fb, fb=fb1, fc=fc,
-        )
+        lhs = self._adaptive_sample(
+                f, a, b,
+                depth-1,
+                fa=fa, fb=fa1, fc=fb,
+            )
+        rhs = self._adaptive_sample(
+                f, b, c,
+                depth-1,
+                fa=fb, fb=fb1, fc=fc,
+            )
+        return [lhs[0]+rhs[0], lhs[1]+rhs[1]]
 
     def _screen_linear(
         self,
@@ -397,10 +400,6 @@ class CasPlot(PlotWidget):
 
         return True
 
-    def draw_pixels(self, data, canvas: Canvas, color):
-        data = [self.get_hires_pixel_from_coordinate(x, y) for x, y in data if y is not None]
-        canvas.set_hires_pixels(data, DEFAULT_RES_MODE, color)
-
     def update_expression(self, idx: int, expr: Expression, color_idx: int) -> None:
         """Plot a new expression."""
         if expr is None:
@@ -449,7 +448,6 @@ class CasPlot(PlotWidget):
 
     def action_toggle_legend(self) -> None:
         self.visible_legend = not self.visible_legend
-
 
 class GraphingScreen(Screen):
     TITLE = "LevyCAS - Graphing"
