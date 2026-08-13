@@ -1,3 +1,8 @@
+from typing import Optional, Callable
+
+from dataclasses import dataclass
+from math import dist
+
 from textual import on
 from textual.app import ComposeResult
 from textual.screen import Screen
@@ -8,19 +13,14 @@ from textual.renderables.gradient import LinearGradient
 from textual.widget import Widget
 from textual._box_drawing import BOX_CHARACTERS 
 from textual.reactive import reactive
+from rich.text import Text
 
 from textual_hires_canvas import Canvas, HiResMode
 from textual_plot.plot_widget import PlotWidget, LegendLocation
-from rich.text import Text
 
 from ...expressions import Expression, Variable
 from ...operations import sym_eval, compile_approximation, get_symbols, trig_simplify, derivative
 from ...parser import parse
-
-from dataclasses import dataclass
-from math import dist
-
-from typing import Optional
 
 # Graph config
 MAX_PLOTS        = 4
@@ -43,6 +43,10 @@ COLOR_GRADIENT = LinearGradient(
         (1.0, "#FF00DD"),
     )
 )
+# Sampling config
+MAX_DEPTH     = 10
+MAX_INTERVALS = 25
+
 
 class ExpressionInput(Widget):
     """Single-line expression input field widget.
@@ -262,8 +266,8 @@ class CasPlot(PlotWidget):
         # parameters for plot resolution
         #  raising either will increase computed points, while decreasing performance. 
         #  max_depth = 10 and initial_intervals = 25 works reasonably well for `tan(x)` & `1/x`.
-        max_depth = 10
-        initial_intervals = max(25, self._scale_rectangle.width // 2)
+        # initial_intervals = max(MAX_INTERVALS, self._scale_rectangle.width // 15)
+        initial_intervals = min(MAX_INTERVALS, self._scale_rectangle.width // 5)
         edges = [
             self._x_min + i * (self._x_max - self._x_min) / initial_intervals
             for i in range(initial_intervals + 1)
@@ -274,15 +278,15 @@ class CasPlot(PlotWidget):
                 continue
             f = compile_approximation(expr)
 
-            pixels = []
-            segments = []
+            pixels, segments = [], []
             for i in range(initial_intervals):
                 new_pixels, new_segments = self._adaptive_sample(
-                    f, edges[i], edges[i+1],
-                    depth=max_depth,
+                    f,
+                    edges[i], edges[i+1],
+                    MAX_DEPTH,
                 )
-                pixels += new_pixels
-                segments += new_segments
+                pixels.extend(new_pixels)
+                segments.extend(new_segments)
 
             if pixels:
                 canvas.set_hires_pixels(pixels, DEFAULT_RES_MODE, PLOT_COLORS[color_idx])
@@ -291,11 +295,26 @@ class CasPlot(PlotWidget):
 
     def _adaptive_sample(
         self, 
-        f,
-        a, c,
-        depth,
-        fa=None, fb=None, fc=None,
-    ) -> list[tuple[float, float]]:
+        f: Callable[[float], Optional[float]],
+        a: float, c: float,
+        depth: int,
+        fa: float = None, fb: float = None, fc: float = None,
+    ) -> list[tuple[float], tuple[float]]:
+        """Sample the function recursively until the requested resolution is 
+        reached or max depth is hit.
+
+        Args:
+            f (Callable[[float], Optional[float]]): The function to evaluate.
+            a (float): left-hand side of the interval (x-min)
+            c (float): right-hand side of the interval (x-max)
+            depth (int): recursive depth
+            fa (float, optional): Optional value for f(x) at the left-hand side. Defaults to None.
+            fb (float, optional): Optional value for f(x) at the midpoint. Defaults to None.
+            fc (float, optional): Optional value for f(x) at the right-hand side. Defaults to None.
+
+        Returns:
+            list[tuple[float], tuple[float]]: The list [Pixels, Segments] where Pixels is a list of coordinates to plot and Segments is a list of lines to draw.
+        """
         b  = (a + c) / 2
         a1 = (a + b) / 2
         b1 = (b + c) / 2
