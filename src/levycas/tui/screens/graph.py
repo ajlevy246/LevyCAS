@@ -273,25 +273,27 @@ class CasPlot(PlotWidget):
             for i in range(initial_intervals + 1)
         ]
 
-        for expr, color_idx in self.expressions:
-            if expr is None: 
-                continue
-            f = compile_approximation(expr)
+        canvas = self.query_one("#plot", Canvas)
+        with canvas.batch_refresh():
+            for expr, color_idx in self.expressions:
+                if expr is None: 
+                    continue
+                f = compile_approximation(expr)
 
-            pixels, segments = [], []
-            for i in range(initial_intervals):
-                new_pixels, new_segments = self._adaptive_sample(
-                    f,
-                    edges[i], edges[i+1],
-                    MAX_DEPTH,
-                )
-                pixels.extend(new_pixels)
-                segments.extend(new_segments)
+                pixels, segments = [], []
+                for i in range(initial_intervals):
+                    new_pixels, new_segments = self._adaptive_sample(
+                        f,
+                        edges[i], edges[i+1],
+                        MAX_DEPTH,
+                    )
+                    pixels.extend(new_pixels)
+                    segments.extend(new_segments)
 
-            if pixels:
-                canvas.set_hires_pixels(pixels, DEFAULT_RES_MODE, PLOT_COLORS[color_idx])
-            if segments:
-                canvas.draw_hires_lines(segments, DEFAULT_RES_MODE, PLOT_COLORS[color_idx])
+                if pixels:
+                    canvas.set_hires_pixels(pixels, DEFAULT_RES_MODE, PLOT_COLORS[color_idx])
+                if segments:
+                    canvas.draw_hires_lines(segments, DEFAULT_RES_MODE, PLOT_COLORS[color_idx])
 
     def _adaptive_sample(
         self, 
