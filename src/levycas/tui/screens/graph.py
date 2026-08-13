@@ -45,8 +45,8 @@ COLOR_GRADIENT = LinearGradient(
 )
 # Sampling config
 MAX_DEPTH     = 10
-MAX_INTERVALS = 25
-
+MIN_INTERVALS = 25
+MAX_INTERVALS = 150
 
 class ExpressionInput(Widget):
     """Single-line expression input field widget.
@@ -266,8 +266,8 @@ class CasPlot(PlotWidget):
         # parameters for plot resolution
         #  raising either will increase computed points, while decreasing performance. 
         #  max_depth = 10 and initial_intervals = 25 works reasonably well for `tan(x)` & `1/x`.
-        # initial_intervals = max(MAX_INTERVALS, self._scale_rectangle.width // 15)
-        initial_intervals = min(MAX_INTERVALS, self._scale_rectangle.width // 5)
+        initial_intervals = max(MIN_INTERVALS, min(MAX_INTERVALS, self._scale_rectangle.width // 2))
+        self.log(f"\n\n{initial_intervals=}\n\n")
         edges = [
             self._x_min + i * (self._x_max - self._x_min) / initial_intervals
             for i in range(initial_intervals + 1)
