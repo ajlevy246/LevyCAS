@@ -16,10 +16,12 @@ license-files = ["LICENSE.txt"]
 [project.optional-dependencies]
 tui = [
     "textual",
+    "textual-speedups",
     "textual-plot",
 ]
 dev = [
     "textual",
+    "textual-speedups",
     "textual-plot",
     "textual-dev",
     "pytest-textual-snapshot",
