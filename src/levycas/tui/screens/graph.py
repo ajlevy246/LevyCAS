@@ -330,7 +330,12 @@ class CasPlot(PlotWidget):
         ys = ( fa, fa1, fb, fb1, fc )
 
         if depth <= 0:
-            samples = [self.get_hires_pixel_from_coordinate(x, y) for x, y in zip(xs, ys) if y is not None]
+            # at max depth with no line approximation,
+            #   just draw the computed points.
+            samples = [
+                self.get_hires_pixel_from_coordinate(x, y) for x, y in zip(xs, ys)
+                if y is not None and self._y_min < y < self._y_max # bounds check avoids the coordinate mapping failing for extremely large inputs.
+            ]
             return [samples, []]
 
         # Check oscillation/discontinuity criteria
