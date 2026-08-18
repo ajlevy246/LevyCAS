@@ -80,6 +80,9 @@ class TestGraphing:
             # and disabling legend
             await pilot.press("l")
 
+            # then change the line style
+            await pilot.press("m")
+
             # move plot around
             for _ in range(15):
                 await pilot.press("right", "up")

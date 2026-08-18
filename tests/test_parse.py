@@ -4,10 +4,9 @@ from levycas.parser import parse
 from levycas.expressions import Rational, Factorial, Sin, Cos
 from levycas.operations import integrate, symbols
 
+x, y, z = symbols('x y z')
 
 def test_parse():
-    x, y, z = symbols('x y z')
-
     #Basic order of operations tests
     assert (
         parse("1 + 2 * 3")
@@ -63,8 +62,6 @@ def test_parse_errors():
 
 def test_tests():
     """Reruns some tests, but with parsing"""
-    x, y, z = parse('x'), parse('y'), parse('z')
-
     assert (
         integrate(x*Cos(x), x)
         == x*Sin(x) + Cos(x)
