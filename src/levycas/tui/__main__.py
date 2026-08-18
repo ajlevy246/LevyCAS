@@ -1,16 +1,12 @@
 """A Textual interface for the LevyCAS package"""
 
-#TODO:
-# Two Interfaces:
-# REPL: One-line input and outputs. Choose operation type (parse, derivate, integrate, et cetera). Input is parsed directly to output.
-# Scripting: Full scripting support using ";" to deliminate instructions. 
-# Buttons to switch screens have event handler in main App. Format: name = 'switch-screen', id = 'demo', e.g. (name of screen) 
-
 from textual.app import App
 from textual.widgets import Button
 from textual.theme import Theme
 
-from .screens import WelcomeScreen, ScriptingScreen, GraphingScreen
+from .graphing  import GraphingScreen
+from .welcome   import WelcomeScreen
+from .scripting import ScriptingScreen
 
 levycas_theme = Theme(
     name="levycas",
@@ -46,7 +42,8 @@ class LevyCasApp(App):
         self.theme = 'levycas'
         self.push_screen("welcome")
         if self.launch_graphing: 
-            self.push_screen(GraphingScreen(self.exprs))
+            # push a temporary GraphingScreen pre-loaded with the requested plots
+            self.push_screen(GraphingScreen(self.exprs)) 
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle a switch-screen request"""

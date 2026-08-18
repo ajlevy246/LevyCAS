@@ -7,8 +7,9 @@ from textual.widgets import Header, Static, Button, TextArea, Log
 from ...scripting import run_script, lex_script
 
 class ScriptingScreen(Screen):
+    """A Matlab-esque scripting IDE."""
     TITLE = "LevyCAS - Scripting"
-    CSS_PATH = "styles/scripting.tcss"
+    CSS_PATH = "./scripting.tcss"
 
     def __init__(self) -> None:
         super().__init__()
@@ -24,11 +25,10 @@ class ScriptingScreen(Screen):
         self.script_output.border_title = "script output"
         self.script_output.border_subtitle = "logging"
 
-        self.run_button = Button("Run", id="run-script")
-        self.save_button = Button("Save", id="save-script")
-        self.load_button = Button("Load", id="load-script")
-        self.clear_button = Button("Clear", id="clear-script")
-
+        self.run_button     = Button("Run", id="run-script")
+        self.save_button    = Button("Save", id="save-script")
+        self.load_button    = Button("Load", id="load-script")
+        self.clear_button   = Button("Clear", id="clear-script")
         self.example_button = Button("Load Example", id="load-example")
 
     def compose(self) -> ComposeResult:

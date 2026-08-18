@@ -6,7 +6,7 @@ from textual.containers import Horizontal
 class WelcomeScreen(Screen):
     """Home screen for the LevyCAS TUI"""
 
-    CSS_PATH = "styles/welcome.tcss"
+    CSS_PATH = "./welcome.tcss"
 
     def compose(self) -> ComposeResult:
         yield Header()
