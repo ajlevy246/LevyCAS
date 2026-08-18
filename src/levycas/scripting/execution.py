@@ -208,7 +208,7 @@ class CommandStatement:
             try:
                 result = integrate(expr, wrt)
             except Exception as e:
-                raise ExecutionError(f"Could not inetgrate {expr} w.r.t. {wrt}")
+                raise ExecutionError(f"Could not integrate {expr} w.r.t. {wrt}")
             return result 
         else:
             raise SyntaxError(f"Command: {self.cmd_type} not yet implemented.")
