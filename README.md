@@ -95,7 +95,7 @@ In addition, LevyCAS includes a native Pratt parser capable of interpreting natu
 
 - [`parser/`](./src/levycas/parser/__init__.py): All of the Pratt parsing logic is contained here. Lexing converts and input string into tokens, and the parsing logic converts it to native objects.
 
-- [`cli/`](./src/levycas/cli/__init__.py): All of the logic for the textual user interface is contained here. This module does not expose any external functions, but the scripts here may be interesting to those building simple Textual apps themselves.
+- [`tui/`](./src/levycas/tui/__init__.py): All of the logic for the textual user interface is contained here. This module does not expose any external functions, but the scripts and widgets here may be interesting to those building simple Textual apps themselves.
 
 - [`scripting/`](./src/levycas/scripting/__init__.py): The custom scripting language logic is written here. See the grammar and examples in [`GRAMMAR.md`](./src/levycas/scripting/GRAMMAR.md). Use the TUI to run scripts or load them from disk.
 
@@ -206,4 +206,3 @@ Ln(x)
 >>> rad(18)
 6
 ```
-
