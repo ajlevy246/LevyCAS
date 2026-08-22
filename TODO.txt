@@ -1,0 +1,91 @@
+TUI:
+    - Support for graphing implicit equations, e.g. vertical lines `x=1`, or complex: `x = lny`
+    - Add a quit button or header/footer option? Work on keybind bindings on each screen for ease of use.
+    - Actually implement the scripting save/load, maybe with a textual file explorer widget?
+    - Add dark mode theme!
+    - Implement concurrency in the graph calculations? e.g. label simplification (sin(50x)) should run in another thread?
+        - Speaking of trig_simplify, experiment wiht lru_cache decorator?
+
+    - Add support for changing plot colors (color-picker modal?)
+    - Add command for switching hi_res mode. 
+
+CLI:
+    - CLI arguments should be allowed to start with '-'... don't use argparse?
+    - Add '-v' '--version' for version information.
+    - Add launch for an interactive python session a la sympy? e.g. 'levycas session' or similar.
+
+Scripting/Parsing:
+    - Add new operations (e.g. factor) to scripting, data types like lists? 
+    - Fix casing with scripting and parsing (sinx vs Sinx)
+    - Add support for constant: e, pi, ...
+    - Add clear error messaging for both scripting and parsing
+        - Should identify the exact symbol in error, or the suggested next symbol that's missing.
+        - Try for example, unclosed parens, functions expecting arguments, et cetera.
+        - See desmos error messages for reference
+        - Scripting shouldn't crash on error... add a debug app notification?
+    - Update the `run_script` function to take log=None by default
+        - should just print results to stdout by default.
+        - update tests to remove the log fixture.
+        - update GRAMMAR.md description to reflect the usage without TUI.
+    - Add "sqrt()" recognition (printing already supported).
+Core:
+    - Add constants:
+        - See singleton pattern in exp.py   
+        - Refactor Constant so that Integer inherits from Rational,
+            - move key Rational specific methods from Constant into Rational/Integer
+            - then implement irrationals. 
+    - Expression printing (ordering of factors and terms is backwards): need thorough testing to lock in behavior.
+        - Print (1/(x+1)) should print as 1/(x+1), not (x+1)^-1.
+        - Print (x+1)**2 should print (1+x)²
+    - Add a set of solving routines for, e.g., differential equations, polynomial systems (w/ synthetic division? Rational root theorem?)
+        - Move the guass linear system solver to the new module.
+    - Add support for constants: e, pi, ...
+    - Test more thoroughly with rational coefficients and add support for multivariate polynomials in factoring routines.
+    - Change `__repr__` vs. `__str__` mismatch?
+    - Add automatic simplification for exponentials, e.g. Ln(Exp(x)) == x != exp(ln(x)), Exp(x) * Exp(x) == Exp(2x)
+        - See the rules implemented in Computer Algebra II - Elementary Algorithms, chapter 7
+    - Add property-based testing with `hypothesis` package
+        - E.g. enforce diff(integrate(expr)) == expr, numeric evaluation at random points should of trig_simplify and simplify() should be the same.
+    - Combine rational like-terms with non-constant numerators:
+        - e.g. 1/(x+1) + x/(x+1) == (x+1)/(x+1) == 1
+            - use .denom
+    - Go back to the basics! The textbook has a ton of extensions implemented in exercises... do those!
+        - e.g. radical_form integral extension
+    - Factor out like-terms for sums? 
+        - e.g. (1/6)((x + 2)^-1) - (1/6)((x + 1)^-1) - (1/6)((x - 1)^-1) + (1/6)((x - 2)^-1) -> 1/6(x+2)^-1(x+1)^-1(x-1)^-1(x-2)^-1
+    - Add log_contract per Computer Algebra II, Chapter 7.2 Exercise 4;
+        - then tests
+        - then see about log_simplify?
+
+Calculus:
+    - Add explicit step tracking for diff and integrate?
+        - Step by step solution for hard integrals could be interesting.
+        
+Factoring:
+    - Fix the rational coefficient explosion, try to push the denom back into factors with lcm?
+    - Test univariate factoring more thoroughly.
+
+Repo:
+    - Refactor: organize routines into different folder, e.g. `calculus/`
+    - Add `releases` on github and fix release workflow; then upload release 1.0.0 to PyPi when ready.
+    - Update README with new CLI interface.
+    - Remove gradio apps after new LevySite interface is established w/ Vercel Services.
+    - Are the __init__s set up correctly? i.e. importing allat
+    - Resolve all ruff checks.
+
+1. Add a _build_polynomial() operator that finds the largest subset of variables that is a valid polynomial.
+    - e.g. _build_polynomial(2 + 2y^2 + z + Ln(x)^2 -> {y, z, Ln(x)})
+
+clear; python -ic "from levycas import *; x = Variable('x'); clear = type('', tuple(), {'__repr__': lambda self: (__import__('os').system('clear'), '')[1]})()"
+
+Notes from the GRAMMAR.md file:
+
+> **NOTE**: Allowing expressions like `f(f(a, 2))` (that is, arbitrary expressions as arguments) prevents implicit multiplication in expressions like `x(4x + 3)`, although these expressions can be parsed by LevyCAS. Normal implicit multiplication is still supported, like `(x + 1)(x + 2)` or `2(x^2)`.
+
+> **TODO**: Check for problems with referencing functions that take no arguments, arising from empty `expression` rules.
+
+> **NOTE**: Parsing of the final argument in a list of arguments will consume the `RPAREN` that was meant to close the list... thus parantheses are disallowed in arguments. Exceptions are when they appear as a reference, like `f(f(x))`. 
+> - Allowed: `f(2x, 3x+4, a*b^c)`
+> - Disallowed: `f(Sin(x), \derivate(2x))`...
+
+> **TODO**: Due to the above, test for commands as arguments, as in `f(\derivate(Sin(x)))`, and just parens in commands by themselves, as in `\derivate(sin(x))`. Solution may be to add expression grammar (would not need to encode operator precedence or associativity).
