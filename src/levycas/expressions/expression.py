@@ -448,82 +448,6 @@ class Elementary(Expression):
     def _get_str(self):
         args_repr = "(" + ", ".join([str(arg) for arg in self.args]) + ")"
         return type(self).__name__ + args_repr
-        
-# class Function(Expression):
-#     """Placeholder for a future implementation of user-defined functions.
-    
-#     f(x) = x**2 + y, e.g.
-#     """
-#     def __init__(self, name):
-#         self.name = name
-#         self.args = None
-#         self.parameters = None
-#         self.definition = None
-
-#     def add_args(self, *arguments, **symbols):
-#         self.args = list(arguments)
-#         assert len(self.args) == len(self.parameters), f"Number of arguments does not match number of parameters for {self}"
-
-#     def set_parameters(self, *parameters: list[Variable]):
-#         assert Variable(self.name) not in parameters, f"Function {self.name} cannot depend on itself"
-#         self.parameters = parameters
-
-#     def set_definition(self, definition: Expression):
-#         self.definition = definition
-
-#     def sym_eval(self, **symbols):
-#         if not self.args:
-#             return self
-        
-#         for i in range(len(self.parameters)):
-#             param = str(self.parameters[i])
-#             param_def = self.args[i].sym_eval(**symbols)
-#             symbols[param] = param_def
-        
-#         definition = symbols.get(self.name, None).definition
-#         assert definition is not None, f"Function {self.name} was cleared?"
-#         return definition.sym_eval(**symbols)
-
-#     def _get_repr(self):
-#         if self.args:
-#             args_repr = [repr(arg) for arg in self.args]
-#             return f"{self.name}({', '.join(args_repr)})"
-#         if self.definition:
-#             return f"{self.definition}"
-#         if self.definition:
-#             return f"{self.name}({', '.join(self.parameters)})"
-#         return f"Function({self.name})"
-
-#     def __lt__(self, other):
-#         if isinstance(other, Function):
-#             if self.name < other.name:
-#                 return True
-            
-#             num_left = len(self.args)
-#             num_right = len(other.args)
-#             min_num = min(num_left, num_right)
-#             for i in range(min_num):
-#                 if self.factors[i] == other.factors[i]:
-#                     continue
-#                 return self.factors[i] < other.factors[i]
-            
-#             #O-3 (2) If all terms are equal, compare number of terms
-#             return num_left < num_right
-        
-#         return NotImplemented
-    
-#     def copy(self):
-#         copied = Function(self.name)
-#         copied.set_definition(self.definition.copy())
-#         copied.set_parameters(self.parameters) #Parameters not copied.
-#         if self.args:
-#             copied.add_args(*self.args)
-#         return copied
-    
-#     def operands(self):
-#         if self.definition:
-#             return [self.definition]
-#         return 
 
 #=============== CONSTANTS ===============
 
@@ -722,13 +646,13 @@ class Rational(Constant):
     def __float__(self) -> float:
         return self.eval()
 
-class Integer(Constant):
+class Integer(Rational):
     """Integers are boxed ints. The wrapper facilitates simplification and 
     algebraic routines that require type checking."""
 
-    def __init__(self, value: int):
-        """Creates a new Integer object"""
-        self.value = value
+    def __new__(self, *args):
+        """Create a new Integer object."""
+        ...
 
     def _get_str(self):
         """Returns the value of the integer"""

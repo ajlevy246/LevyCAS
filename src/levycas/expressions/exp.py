@@ -1,12 +1,25 @@
 from .expression import *
-from .trig import Trig
+from .._utils import singleton
+
+@singleton
+class _E(Constant):
+    """Euler's number.
+    
+    Implemented as a singleton."""
+    def __init__(self):
+        pass
+ 
+    def _get_str(self):
+        return "e"
+
+E = _E()
+"""Euler's number - singleton."""
 
 class Exp(Elementary):
     """Exp represents the exponential e^(...)"""
 
     def __new__(cls, *args):
-        """To facilitate automatic simplification of the exponential,
-        the __new__ method is overwritten.
+        """Perform automatic simplification of the Exponential function.
         
         Performs the simplification Exp(0) -> 1.
         """
@@ -25,8 +38,7 @@ class Ln(Elementary):
     """Ln represents the natural logarithm"""
     
     def __new__(cls, *args):
-        """To facilitate automatic simplification of logarithmic expressions,
-        the __new__ method is overwritten.
+        """Perform automatic simplification of the Logarithm function.
 
         Performs the simplification Ln(x^n * y^m) -> nLn(x) + mLn(y) and
         Ln(1) -> 0 and Ln(0) -> UNDEFINED
