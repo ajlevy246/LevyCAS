@@ -1,44 +1,47 @@
 """Operations acting on Constants (rationals)."""
 from functools import cache
 
-from ..expressions import Constant, Integer, Rational, convert_primitive
+from ..expressions import Integer, Rational, convert_primitive
 
-def gcd(a: Constant, b: Constant) -> Integer:
-    """Computes the greated common divisor of two integers using binary gcd algorithm.
+
+def gcd(a: Rational, b: Rational) -> Integer:
+    """Computes the greated common divisor of two rational constants using binary gcd algorithm.
 
     Args:
-        a (Integer): First integer
-        b (Integer): Second integer
+        a (Rational): First integer
+        b (Rational): Second integer
 
     Returns:
         Integer: gcd(a, b)
     """
     a, b = convert_primitive(a), convert_primitive(b)
     
-    if isinstance(a, Rational) or isinstance(b, Rational):
+    if Rational in (type(a), type(b)):
         return Integer(1)
-    
-    a, b = int(a), int(b)
+
+    a: Integer = abs(a)
+    b: Integer = abs(b)
+
     if a == 1 or b == 1:
         return Integer(1)
     if a == 0:
-        return abs(b)
+        return b
     if b == 0:
-        return abs(a)
+        return a
 
-    a, a_d = _reduce(abs(a))
-    b, b_d = _reduce(abs(b))
-    d = a_d if a_d < b_d else b_d
+    a, a_d = _reduce(a)
+    b, b_d = _reduce(b)
+    d = min(a_d, b_d)
 
     while a != b:
         if b < a:
-            a = _reduce(a - b)[0]
+            a, _ = _reduce(a - b)
         else:
-            b = _reduce(b - a)[0]
+            b, _ = _reduce(b - a)
 
-    return Integer(2**d * abs(a))
+    return Integer((2**d) * a)
 
-def _reduce(a: Integer) -> tuple[Integer]:
+def _reduce(a: Integer) -> tuple[Integer, Integer]:
     """Helper method to reduce an even number to an odd one,
     keeping track of the number of divisions by 2.
 
@@ -48,9 +51,10 @@ def _reduce(a: Integer) -> tuple[Integer]:
     Returns:
         tuple[Integer]: (a', d) where a' and d are such that a' = a/2**d
     """
-    a = int(a)
     d = 0
     while a % 2 == 0:
+        if a == 0:
+            break
         d += 1
         a //= 2
     return a, d
@@ -69,7 +73,7 @@ def factor_integer(a: Integer | int) -> dict[int, int]:
     """
     a = int(a)
     
-    factors = dict()
+    factors = {}
     while a != 1:
         #Base case
         if is_prime(a):
@@ -190,7 +194,7 @@ def radical(n: Integer) -> Integer:
     n = int(n)
     factors = factor_integer(n)
     rad = Integer(1)
-    for factor in factors.keys():
+    for factor in factors:
         rad *= factor
     return rad
 
