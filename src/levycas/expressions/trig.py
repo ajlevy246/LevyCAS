@@ -1,5 +1,23 @@
-from .expression import *
 import math
+
+from .expression import *
+
+
+class _Pi(Constant):
+    """Pi constant.
+    
+    Exposed as a singleton."""
+    def __init__(self):
+        pass
+
+    def _get_str(self):
+        return "\u03C0"
+
+    def eval(self):
+        return math.pi
+
+PI = _Pi()
+"""Pi - flyweight."""
 
 class Trig(Elementary):
     """Trig functions represent the trigonometric functions"""
@@ -11,11 +29,11 @@ class Sin(Trig):
         """To facilitate automatic simplifcation of trigonometric expressions,
         the __new__ method is overwritten.
         """
-        assert len(args) == 1, f"Sin expects a single argument"
+        assert len(args) == 1, "Sin expects a single argument"
         arg = convert_primitive(args[0])
 
         coefficient = arg.coefficient()
-        if coefficient == 0:
+        if coefficient in (0, PI):
             return Integer(0)
         elif coefficient.is_negative():
             return -Sin(-arg)
@@ -29,11 +47,13 @@ class Cos(Trig):
         """To facilitate automatic simplifcation of trigonometric expressions,
         the __new__ method is overwritten.
         """
-        assert len(args) == 1, f"Cos expects a single argument"
+        assert len(args) == 1, "Cos expects a single argument"
         arg = convert_primitive(args[0])
         coefficient = arg.coefficient()
         if coefficient == 0:
             return Integer(1)
+        elif coefficient is PI:
+            return Integer(-1)
         
         new_instance = super().__new__(cls)
         new_instance.args = [arg]
