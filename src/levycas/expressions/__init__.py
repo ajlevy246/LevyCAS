@@ -1,33 +1,48 @@
 """The expressions module contains the core LevyCAS classes making up an expression tree."""
+from .exp import E, Exp, Ln
 from .expression import (
-    UNDEFINED, Expression, Sum, Product, Div, Power, 
-    Factorial, Constant, Integer,
-    Rational, Variable, Elementary,
-    convert_primitive
+    UNDEFINED,
+    Constant,
+    Div,
+    Elementary,
+    Expression,
+    Factorial,
+    Integer,
+    Power,
+    Product,
+    Rational,
+    Sum,
+    Variable,
+    convert_primitive,
 )
-
-from .trig import (
-    Trig, Sin, Cos, 
-    Tan, Csc, Sec, Cot, 
-    Arctan, Arccos, Arcsin
-)
-
-from .exp import (
-    Exp, Ln
-)
+from .trig import PI, Arccos, Arcsin, Arctan, Cos, Cot, Csc, Sec, Sin, Tan, Trig
 
 __all__ = [
-    # Expression
-    "UNDEFINED", "Expression", "Sum", "Product", "Div", "Power", 
-    "Factorial", "Constant", "Integer",
-    "Rational", "Variable", "Elementary",
+    "PI",
+    "UNDEFINED",
+    "Arccos",
+    "Arcsin",
+    "Arctan",
+    "Constant",
+    "Cos",
+    "Cot",
+    "Csc",
+    "Div",
+    "E",
+    "Elementary",
+    "Exp",
+    "Expression",
+    "Factorial",
+    "Integer",
+    "Ln",
+    "Power",
+    "Product",
+    "Rational",
+    "Sec",
+    "Sin",
+    "Sum",
+    "Tan",
+    "Trig",
+    "Variable",
     "convert_primitive",
-
-    # Trigonometric
-    "Trig", "Sin", "Cos", 
-    "Tan", "Csc", "Sec", "Cot", 
-    "Arctan", "Arccos", "Arcsin",
-
-    # Exponentials
-    "Exp", "Ln",
 ]
