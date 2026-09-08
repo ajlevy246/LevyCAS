@@ -32,21 +32,23 @@ The parser constructs an AST as it iterates over each token. The AST consists of
 that each contain a 'run' method.
 """
 
+import re
+from dataclasses import dataclass
 from enum import Enum
+
 from .execution import (
-    Script,
-    ForLoop,
-    WhileLoop,
-    ExpressionStatement,
-    CommandStatement,
     AssignmentStatement,
-    ReferenceStatement,
+    CommandStatement,
+    ExpressionStatement,
+    ForLoop,
     PrintStatement,
+    ReferenceStatement,
+    Script,
+    WhileLoop,
     execute,
 )
-import re
 
-"""Recognized Token Types"""
+"""Recognized Token types"""
 class TokenType(Enum):
     COMMAND = "COMMAND"
     FLOAT = "FLOAT"
@@ -87,7 +89,7 @@ TOKEN_SPEC: list[tuple[TokenType, str]] = [
     (TokenType.RPAREN, r"\)"),
     (TokenType.LBRACKET, r"\{"),
     (TokenType.RBRACKET, r"\}"),
-    (TokenType.OPERATION, r"exp|arcsin|arccos|arctan|sin|cos|tan|[\+\-\*\/\^]"),
+    (TokenType.OPERATION, r"ln|exp|arcsin|arccos|arctan|sin|cos|tan|[\+\-\*\/\^]"),
     (TokenType.SYMBOL, r"[a-z]"),
     (TokenType.SPACE, r"\s+"),
     (TokenType.OTHER, r".")
@@ -96,23 +98,20 @@ TOKEN_SPEC: list[tuple[TokenType, str]] = [
 class ParserError(SystemError):
     pass
 
+@dataclass
 class ScriptToken:
     """Simple token implementation."""
-    def __init__(self, literal: str, type: TokenType):
-        self.literal = literal
-        self.type = TokenType(type)
+    literal: str
+    type: TokenType
 
     def __repr__(self) -> str:
         return f"<Token :: {self.literal} [{self.type}]>"
 
 def lex_script(script: str) -> list[ScriptToken]:
     """Tokenize a script"""
-    try:
-        token_pattern = '|'.join(f'(?P<{type.value}>{pattern})' for type, pattern in TOKEN_SPEC)
-    except:
-        raise SyntaxError("Incorrect token specification")
+    token_pattern = '|'.join(f'(?P<{type.value}>{pattern})' for type, pattern in TOKEN_SPEC)
     
-    tokens = list()
+    tokens = []
     for match in re.finditer(token_pattern, script):
         token_type = match.lastgroup
         token_value = match.group()
@@ -124,7 +123,7 @@ def lex_script(script: str) -> list[ScriptToken]:
             raise SyntaxError(f"Invalid token: {token_value}")
         
         else:
-            tokens.append(ScriptToken(token_value, token_type))
+            tokens.append(ScriptToken(token_value, TokenType(token_type)))
     return tokens      
 
 def run_script(script: str, log) -> None:
@@ -147,23 +146,23 @@ def parse_iterator_assignment():
     <iterator_assignment> := LPAREN SYMBOL COLON INTEGER RPAREN
     """
     next_token = tokens.pop()
-    if next_token.type != TokenType.LPAREN:
+    if next_token.type is not TokenType.LPAREN:
         raise SyntaxError("Expected left paren while parsing iterator assignment.")
 
     iterator = tokens.pop()
-    if iterator.type != TokenType.SYMBOL:
+    if iterator.type is not TokenType.SYMBOL:
         raise SyntaxError("Iterator in a for-loop must be a variable.")
 
     next_token = tokens.pop()
-    if next_token.type != TokenType.COLON:
+    if next_token.type is not TokenType.COLON:
         raise SyntaxError("Expected a colon in iterator assignment.")
 
     count = tokens.pop()
-    if count.type != TokenType.INTEGER:
+    if count.type is not TokenType.INTEGER:
         raise SyntaxError("Number of iterations must be an integer.")
 
     next_token = tokens.pop()
-    if next_token.type != TokenType.RPAREN:
+    if next_token.type is not TokenType.RPAREN:
         raise SyntaxError("Expected a closing parenthesis (')') while parsing iterator assignment.")
     
     return iterator.literal, count.literal
@@ -174,18 +173,19 @@ def parse_for_loop():
     <for_loop> := FOR <iterator_assignment> LBRACKET <script> RBRACKET
     """
     next_token = tokens.pop()
-    if next_token.type != TokenType.FOR:
+    if next_token.type is not TokenType.FOR:
         raise ParserError("Error in parsing logic...")
 
     iterator, count = parse_iterator_assignment()
     next_token = tokens.pop()
-    if next_token.type != TokenType.LBRACKET:
+    if next_token.type is not TokenType.LBRACKET:
         raise SyntaxError("Expected an opening brace '{' to open the body of a for loop.")
     
     body = parse_script()
 
-    if len(tokens) == 0 or tokens.pop().type != TokenType.RBRACKET:
+    if len(tokens) == 0 or tokens.pop().type is not TokenType.RBRACKET:
         raise SyntaxError("Expected a closing brace '}' to end the body of a for loop.")
+
     return ForLoop(
         iterator=iterator,
         count=int(count),
@@ -197,16 +197,15 @@ def parse_while_loop():
     
     <while_loop> := WHILE <iterator_condition> LBRACKET <script> RBRACKET
     """
-    raise ParserError("WHILE LOOPS NOT YET IMPLEMENTED")
     #TODO: Implement while loop grammar and logic.
+    raise ParserError("WHILE LOOPS NOT YET IMPLEMENTED")
 
 def parse_control_block(): 
     """Parse a control block.
     
     <control_block> := <for_loop> | <while_loop>
     """
-    next_token_type = tokens[-1].type
-    if next_token_type == TokenType.FOR:
+    if tokens[-1].type is TokenType.FOR:
         return parse_for_loop()
     else:
         return parse_while_loop()
@@ -217,19 +216,19 @@ def parse_arguments_list():
     <arguments_list> := LPAREN <expression> <arguments> RPAREN
     """
     next_token = tokens.pop()
-    if next_token.type != TokenType.LPAREN:
+    if next_token.type is not TokenType.LPAREN:
         raise ParserError("Expected left paren ('(') to start a list of arguments.")
     
     arguments = [parse_expression()]
 
     next_token = tokens[-1]
-    while next_token.type == TokenType.COMMA:
+    while next_token.type is TokenType.COMMA:
         tokens.pop()
         arguments.append(parse_expression())
         next_token = tokens[-1]
 
     next_token = tokens.pop()
-    if next_token.type != TokenType.RPAREN:
+    if next_token.type is not TokenType.RPAREN:
         raise SyntaxError("Expected right paren (')') to close a list of arguments.")
     return arguments
 
@@ -247,15 +246,16 @@ def parse_reference():
     
     <reference> := SYMBOL | SYMBOL <arguments_list>
     """
-    name_token = tokens.pop()
-    if name_token.type != TokenType.SYMBOL:
-        raise ParserError("Expected a symbol as a function/variable name.") 
-    name = name_token.literal
+    symbol = tokens.pop()
+    name = symbol.literal
+    if symbol.type is not TokenType.SYMBOL:
+        raise ParserError(f"Expected a symbol as a function/variable name, not {name}")         
 
     arguments = None
     next_token = tokens[-1]
-    if next_token.type == TokenType.LPAREN:
+    if next_token.type is TokenType.LPAREN:
         arguments = parse_arguments_list()
+
     reference = ReferenceStatement(name=name, arguments=arguments)
     return reference
 
@@ -268,7 +268,6 @@ def parse_expression():
     <expression> := LPAREN <expression> RPAREN | command <expression>
       | FLOAT <expression> | <reference> <expression> | INTEGER <expression> | OPERATION <expression> | ε
     """
-    #TODO: Update this method to reflect the new rule.
     expression = ExpressionStatement()
     next_token = tokens[-1]
     if next_token.type not in (
@@ -279,28 +278,33 @@ def parse_expression():
         TokenType.INTEGER,
         TokenType.OPERATION,
     ):
-        raise ParserError("Expected valid expression token.")
-    
-    if next_token.type == TokenType.LPAREN:
-        tokens.pop()
-        expression.add_child(next_token.literal)
-        next_token = tokens[-1]
-        if next_token.type != TokenType.RPAREN:
-            expression.add_child(parse_expression())
-        next_token = tokens.pop()
-        if next_token.type != TokenType.RPAREN:
-            raise SyntaxError("Expected closing parenthesis at the end of a subexpression.")
-        expression.add_child(next_token.literal)
+        raise ParserError("Expected valid expression token, not {next_token.literal}")
 
-    elif next_token.type == TokenType.COMMAND:
-        expression.add_child(parse_command())
+    match next_token:
+        case ScriptToken(literal, TokenType.LPAREN):
+            # parse a subexpression, then check for the closing paren
+            tokens.pop()
+            expression.add_child(literal)
 
-    elif next_token.type == TokenType.SYMBOL:
-        expression.add_child(parse_reference())
+            next_token = tokens[-1]
+            if next_token.type is not TokenType.RPAREN:
+                expression.add_child(parse_expression())
 
-    else: #integer, float, or operation token
-        tokens.pop()
-        expression.add_child(next_token.literal)
+            next_token = tokens.pop()
+            if next_token.type is not TokenType.RPAREN:
+                raise SyntaxError(f"Expected closing parenthesis at the end of a subexpression, not {next_token.literal}")
+            expression.add_child(next_token.literal)
+
+        case ScriptToken(_, TokenType.COMMAND):
+            expression.add_child(parse_command())
+
+        case ScriptToken(_, TokenType.SYMBOL):
+            expression.add_child(parse_reference())
+
+        case ScriptToken(literal, _):
+            tokens.pop()
+            expression.add_child(next_token.literal)
+
 
     next_token = tokens[-1]
     if next_token.type in (
@@ -317,27 +321,31 @@ def parse_expression():
 def parse_parameters_list():
     """Parse a list of parameters (symbols)."""
     next_token = tokens.pop()
-    if next_token.type != TokenType.LPAREN:
+    if next_token.type is not TokenType.LPAREN:
         raise ParserError("Expected left paren ('(') to start a list of parameters.")
     
-    parameters = list()
+    parameters = []
+
     sym = tokens.pop()
-    if sym.type != TokenType.SYMBOL:
+    if sym.type is not TokenType.SYMBOL:
         raise SyntaxError("Parameters must be symbols.")
     parameters.append(sym.literal)
 
     next_token = tokens[-1]
-    while next_token.type == TokenType.COMMA:
+    while next_token.type is TokenType.COMMA:
         tokens.pop()
+
         sym = tokens.pop()
-        if sym.type != TokenType.SYMBOL:
-            raise SyntaxError("Parameters must be symbols.")
+        if sym.type is not TokenType.SYMBOL:
+            raise SyntaxError(f"Parameters must be symbols, not {sym.literal}")
+        
         parameters.append(sym.literal)
         next_token = tokens[-1]
 
     next_token = tokens.pop()
-    if next_token.type != TokenType.RPAREN:
-        raise SyntaxError("Expected closing parenthesis (')') to end a list of parameters.")
+    if next_token.type is not TokenType.RPAREN:
+        raise SyntaxError(f"Expected closing parenthesis (')') to end a list of parameters, not {next_token.literal}")
+    
     return parameters
 
 def parse_assignment():
@@ -347,22 +355,22 @@ def parse_assignment():
     
     <assignment> := SYMBOL <arguments_list> EQUALS <expression> | SYMBOL EQUALS <expression>
     """
-    name_token = tokens.pop()
-    if name_token.type != TokenType.SYMBOL:
-        raise SyntaxError("Cannot assign a value to a non-symbol.")
+    symbol = tokens.pop()
+    if symbol.type is not TokenType.SYMBOL:
+        raise SyntaxError(f"Cannot assign a value to a non-symbol. Expected a symbol from: {symbol}")
 
     parameters = None
-    next_token = tokens[-1]
-    if next_token.type == TokenType.LPAREN: #Function assignment
-        parameters = parse_parameters_list()
+    match tokens[-1]:
+        case ScriptToken(_, TokenType.LPAREN):
+            parameters = parse_parameters_list()
 
-    next_token = tokens.pop()
-    if next_token.type != TokenType.EQUALS:
-        raise ParserError("Expected an equals ('=') in an assignment.")
+        case ScriptToken(literal, token_type) if token_type is not TokenType.EQUALS:
+            raise ParserError(f"Expected an equals ('=') in an assignment, not {literal}")
 
+    tokens.pop()
     definition = parse_expression()
     return AssignmentStatement(
-        name=name_token.literal,
+        name=symbol.literal,
         parameters=parameters,
         definition=definition
     )
@@ -373,7 +381,7 @@ def parse_print():
     <print> := PRINT <expression>
     """
     next_token = tokens.pop()
-    if next_token.type != TokenType.PRINT:
+    if next_token.type is not TokenType.PRINT:
         raise ParserError("Expected 'print' command...")
 
     return PrintStatement(expression=parse_expression())
@@ -383,24 +391,24 @@ def parse_statement():
     
     statement := assignment SEMICOLON | print SEMICOLON
     """
-    next_token_type = tokens[-1].type
     statement = None
+    match tokens[-1]:
+        case ScriptToken(_, TokenType.SYMBOL):
+            statement = parse_assignment()
 
-    if next_token_type == TokenType.SYMBOL:
-        statement = parse_assignment()
+        case ScriptToken(_, TokenType.PRINT):
+            statement = parse_print()
 
-    elif next_token_type == TokenType.PRINT:
-        statement = parse_print()
+        case token:
+            raise SyntaxError(f"Expected a print statement or symbol assignment, not {token}")
 
-    if statement is None:
-        raise SyntaxError("Expected a print statement or symbol assignment.")
-
+    # statement should end in a semicolon
     next_token = tokens.pop()
-    if next_token.type != TokenType.SEMICOLON:
-        raise SyntaxError("Expected a semicolon ';' at the end of a statement.")
-    
+    if next_token.type is not TokenType.SEMICOLON:
+        raise SyntaxError(f"Expected a semicolon ';' at the end of a statement, not {next_token}")
+
     return statement
-    
+
 def parse_script():
     """Parsing entry point. 
     
@@ -409,30 +417,29 @@ def parse_script():
     script = Script()
     if len(tokens) == 0:
         return script
-    
-    next_token = tokens[-1]
 
-    if next_token.type in (
-        TokenType.FOR, 
-        TokenType.WHILE
-    ):
-        script.add_executable(parse_control_block())
-        script.add_executable(parse_script())
-    
-    elif next_token.type in (
-        TokenType.SYMBOL,
-        TokenType.PRINT,
-    ):
-        script.add_executable(parse_statement())
-        script.add_executable(parse_script())
+    match tokens[-1]:
+        case ScriptToken(_, TokenType.FOR | TokenType.WHILE):
+            script.add_executable(parse_control_block())
+            script.add_executable(parse_script())
 
-    elif next_token.type == TokenType.LBRACKET:
-        tokens.pop()
-        script = parse_script()
-        if len(tokens) == 0 or tokens.pop().type != TokenType.RBRACKET:
-            raise SyntaxError("Expected closing bracket to match script's opening brace")
+        case ScriptToken(_, TokenType.SYMBOL | TokenType.PRINT):
+            script.add_executable(parse_statement())
+            script.add_executable(parse_script())
 
-    elif next_token.type != TokenType.RBRACKET:
-        raise SyntaxError(f"Expected the start of a valid statement, not '{next_token.literal}'")
+        case ScriptToken(_, TokenType.LBRACKET):
+            tokens.pop()
+            script = parse_script()
+            if len(tokens) == 0 or tokens.pop().type is not TokenType.RBRACKET:
+                raise SyntaxError("Expected closing bracket to match script's opening brace")
+            
+        case ScriptToken(_, TokenType.RBRACKET):
+            pass
+
+        case ScriptToken(literal, token_type):
+            raise SyntaxError(f"Expected the start of a valid statement, not '{literal}' ({token_type=})")
+        
+        case token:
+            raise SyntaxError(f"Expected a valid token, not: {token}")
 
     return script
