@@ -97,6 +97,11 @@ class TestSimplification:
             == (x + y + z) - (x + y + z)
             == 0
         )
+        assert (
+            2*PI/7*E
+            == 2/7*PI*E
+            == E*PI*2/7
+        )
 
         # products that were manually constructed
         #  exercise different paths
@@ -107,6 +112,22 @@ class TestSimplification:
         assert (
             simplify(Product(x))
             == x
+        )
+        assert (
+            simplify(Product())
+            == 1
+        )
+        assert (
+            simplify(Product(x**2, x**3))
+            == x**5
+        )
+        assert (
+            simplify(Product(2*x, 3*y))
+            == 6*x*y
+        )
+        assert (
+            simplify(Product(Product(x, y), z))
+            == x*y*z
         )
 
     def test_power(self):
