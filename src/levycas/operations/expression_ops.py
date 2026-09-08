@@ -174,8 +174,7 @@ def substitute(expr: Expression, sub_expr: Expression, replacement: Expression) 
         return replacement
     
     operation = type(expr)
-
-    if operation in [Variable, Integer, Rational]:
+    if operation in [Variable, Constant, Rational, Integer]:
         return expr
     
     replaced_operands = [substitute(operand, sub_expr, replacement) for operand in expr.operands()]

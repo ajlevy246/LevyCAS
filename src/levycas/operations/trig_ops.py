@@ -41,14 +41,12 @@ def trig_substitute(expr: Expression) -> Expression:
     Returns:
         Expression: An expression containing no trig functions other than sin/cos
     """
-    if isinstance(expr, Constant) or isinstance(expr, Variable):
+    if isinstance(expr, (Constant, Variable)):
         return expr
 
     operation = type(expr)
 
     new_operands = [trig_substitute(operand) for operand in expr.operands()]
-    new_expr = construct(new_operands, operation)
-    # new_expr = operation(*new_operands)
 
     if operation == Tan:
         return Sin(*new_operands) / Cos(*new_operands)
@@ -72,14 +70,14 @@ def trig_expand(expr: Expression) -> Expression:
         Expression: An expression in trigonometric-expanded form.
     """
     operation = type(expr)
-    if operation in [Integer, Rational, Variable]:
+    if isinstance(expr, (Constant, Variable)):
         return expr
     
     expanded_operands = [trig_expand(operand) for operand in expr.operands()]
-    if operation == Sin:
+    if operation is Sin:
         arg = expanded_operands[0]
         return algebraic_expand(_trig_expand_recursive(arg)[0])
-    elif operation == Cos:
+    elif operation is Cos:
         arg = expanded_operands[0]
         return algebraic_expand(_trig_expand_recursive(arg)[1])
     else:
@@ -155,7 +153,6 @@ def _multiple_angle_cos(n: Integer, theta: Expression) -> Expression:
     Returns:
         Expression: Expanded form
     """
-    expanded = 0
 
     if isinstance(theta, Sum):
         sin_theta, cos_theta = _trig_expand_recursive(theta)
@@ -178,7 +175,7 @@ def trig_contract(expr: Expression) -> Expression:
         Expression: The contracted expression
     """
     operation = type(expr)
-    if operation in [Integer, Rational, Variable]:
+    if isinstance(expr, (Constant, Variable)):
         return expr
     contracted_operands = [trig_contract(operand) for operand in expr.operands()]
     contracted_operation = construct(contracted_operands, operation)

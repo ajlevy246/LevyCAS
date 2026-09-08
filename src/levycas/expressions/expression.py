@@ -131,6 +131,15 @@ class Expression:
         other = convert_primitive(other)
         return (other % self) if isinstance(other, Expression) else NotImplemented
 
+    def __float__(self):
+        """Attempt to evaluate this expression."""
+        from ..operations import sym_eval
+        res = sym_eval(self, approximate=True)
+        if isinstance(res, Expression) and not isinstance(res, Constant):
+            raise TypeError(f"Could not evaluate {self!r}")
+
+        return float(res)
+
 class Sum(Expression):
     """Sums represent the sum of two or more terms."""
 
@@ -145,9 +154,9 @@ class Sum(Expression):
         for i in range(num_terms - 1):
             next = terms[i + 1]
             if next.coefficient().is_negative():
-                string += f" - {str(-next)}"
+                string += f" - {-next!s}"
             else:
-                string += f" + {str(next)}"
+                string += f" + {next!s}"
         return string
 
     def __lt__(self, other):
@@ -165,7 +174,7 @@ class Sum(Expression):
             #O-3 (2) If all terms are equal, compare number of terms
             return num_left < num_right
         
-        if isinstance(other, Expression) and not isinstance(other, Constant) and not isinstance(other, Power):
+        if isinstance(other, Expression) and not isinstance(other, (Constant, Power)):
             #O-10 (Unary Sum)
             return self < Sum(other)
         
@@ -329,11 +338,15 @@ class Power(Expression):
         
         return string
 
-    def __lt__(self, other):       
+    def __lt__(self, other):
         if isinstance(other, Expression) and not isinstance(other, Product):
-            if self.base() == other.base():
+            if isinstance(other, Constant):
+                return False
+            elif self.base() == other.base():
                 return self.exponent() < other.exponent()
-            return self.base() < other.base()
+            else:
+                return self.base() < other.base()
+
         return NotImplemented
 
     def base(self):
@@ -448,82 +461,6 @@ class Elementary(Expression):
     def _get_str(self):
         args_repr = "(" + ", ".join([str(arg) for arg in self.args]) + ")"
         return type(self).__name__ + args_repr
-        
-# class Function(Expression):
-#     """Placeholder for a future implementation of user-defined functions.
-    
-#     f(x) = x**2 + y, e.g.
-#     """
-#     def __init__(self, name):
-#         self.name = name
-#         self.args = None
-#         self.parameters = None
-#         self.definition = None
-
-#     def add_args(self, *arguments, **symbols):
-#         self.args = list(arguments)
-#         assert len(self.args) == len(self.parameters), f"Number of arguments does not match number of parameters for {self}"
-
-#     def set_parameters(self, *parameters: list[Variable]):
-#         assert Variable(self.name) not in parameters, f"Function {self.name} cannot depend on itself"
-#         self.parameters = parameters
-
-#     def set_definition(self, definition: Expression):
-#         self.definition = definition
-
-#     def sym_eval(self, **symbols):
-#         if not self.args:
-#             return self
-        
-#         for i in range(len(self.parameters)):
-#             param = str(self.parameters[i])
-#             param_def = self.args[i].sym_eval(**symbols)
-#             symbols[param] = param_def
-        
-#         definition = symbols.get(self.name, None).definition
-#         assert definition is not None, f"Function {self.name} was cleared?"
-#         return definition.sym_eval(**symbols)
-
-#     def _get_repr(self):
-#         if self.args:
-#             args_repr = [repr(arg) for arg in self.args]
-#             return f"{self.name}({', '.join(args_repr)})"
-#         if self.definition:
-#             return f"{self.definition}"
-#         if self.definition:
-#             return f"{self.name}({', '.join(self.parameters)})"
-#         return f"Function({self.name})"
-
-#     def __lt__(self, other):
-#         if isinstance(other, Function):
-#             if self.name < other.name:
-#                 return True
-            
-#             num_left = len(self.args)
-#             num_right = len(other.args)
-#             min_num = min(num_left, num_right)
-#             for i in range(min_num):
-#                 if self.factors[i] == other.factors[i]:
-#                     continue
-#                 return self.factors[i] < other.factors[i]
-            
-#             #O-3 (2) If all terms are equal, compare number of terms
-#             return num_left < num_right
-        
-#         return NotImplemented
-    
-#     def copy(self):
-#         copied = Function(self.name)
-#         copied.set_definition(self.definition.copy())
-#         copied.set_parameters(self.parameters) #Parameters not copied.
-#         if self.args:
-#             copied.add_args(*self.args)
-#         return copied
-    
-#     def operands(self):
-#         if self.definition:
-#             return [self.definition]
-#         return 
 
 #=============== CONSTANTS ===============
 
@@ -538,12 +475,19 @@ class Constant(Expression):
     def term(self):
         return Integer(1)
 
+    def eval(self) -> float:
+        return NotImplemented
+
     def __lt__(self, other):
         """Total ordering for Constants: O-1"""
         if isinstance(other, Constant):
             return self.eval() < other.eval()
         
         if isinstance(other, Expression):
+            # constants are always ordered less than other Expressions.
+            #  this allows for simplification routines that assume, e.g.
+            #  that sorted([x, 1/2, y, 2]) -> [2, 1/2, x, y], i.e. that
+            #  constants will group first
             return True
         
         return self.eval() < other
@@ -553,6 +497,68 @@ class Constant(Expression):
 
     def __ge__(self, other):
         return repr(self) == repr(other) or self > other
+
+    def is_negative(self):
+        return self < 0
+
+    def operands(self):
+        return [self.eval()]
+
+class Rational(Constant):
+    """Rationals represent fractions in LevyCAS.
+
+    These are automatically reduced to lowest terms (or Integers) when instantiated."""
+
+    def __new__(cls, *args):
+        """Automatic simplification of rational numbers.
+        
+        Reduces to lowest terms or Integer when possible. X / 0 returns UNDEFINED."""
+        if cls is not Rational:
+            # Subclasses should define their own __new__.
+            raise TypeError(f"Rational subclass {cls.__name__} should define it's own __new__.")
+        
+        if len(args) == 1:
+            n, d = int(args[0]), 1
+        elif len(args) == 2:
+            n, d = int(args[0]), int(args[1])
+        else:
+            raise ValueError(f"Expected two integers, got {args}")
+
+        #Simplify to lowest terms
+        if d == 0:
+            return UNDEFINED
+
+        if n % d == 0:
+            return Integer(n // d)
+
+        from ..operations import gcd
+        g = int(gcd(n, d))
+
+        self = super().__new__(cls)
+        if  d > 0:
+            self.left = n // g
+            self.right = d // g
+        else:
+            self.left = -n // g
+            self.right = -d // g
+
+        return self
+
+    def __init__(self, *args):
+        """The __new__ function is responsible for automatic simplification
+        no mutation is done here.
+        """
+
+    def _get_str(self):
+        return f"{self.left}/{self.right}"
+
+    def __eq__(self, other):
+        if isinstance(other, Number):
+            return super().__eq__(convert_primitive(other))
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
 
     def __add__(self, other):
         other = convert_primitive(other)
@@ -578,7 +584,7 @@ class Constant(Expression):
 
     def __mul__(self, other):
         other = convert_primitive(other)
-        if not isinstance(other, Constant):
+        if not isinstance(other, Rational):
             return super().__mul__(other)
 
         new_num = self.num() * other.num()
@@ -595,8 +601,13 @@ class Constant(Expression):
         if not isinstance(other, Constant):
             return NotImplemented
         
-        div = self / other
-        return Integer(div.num() // div.denom())
+        num = self.num() * other.denom()
+        den = self.denom() * other.num()
+
+        if den == 0:
+            return UNDEFINED
+
+        return Integer(num // den)
 
     def __rfloordiv__(self, other):
         other = convert_primitive(other)
@@ -609,55 +620,6 @@ class Constant(Expression):
         if not isinstance(other, Constant):
             return NotImplemented
         return (self - other * (self // other))
-
-class Rational(Constant):
-    """Rationals represent fractions in LevyCAS. 
-    These are automatically reduced to lowest terms when instantiated."""
-
-    def __new__(cls, *args):
-        """Automatic simplification of rational expressions"""
-        if len(args) == 1:
-            args = [args[0], 1]
-
-        new_instance = super().__new__(cls)
-        n = int(args[0])
-        d = int(args[1])
-
-        #Simplify to lowest terms
-        if d == 0:
-            return UNDEFINED
-
-        if n % d == 0:
-            return Integer(n // d)
-
-        from ..operations import gcd
-        g = int(gcd(n, d))
-        if  d > 0:
-            new_instance.left = n // g
-            new_instance.right = d // g
-
-        else:
-            new_instance.left = -n // g
-            new_instance.right = -d // g
-
-        return new_instance
-
-    def __init__(self, *args):
-        """The __new__ function is responsible for automatic simplification
-        no mutation is done here.
-        """
-        pass
-
-    def _get_str(self):
-        return f"{self.left}/{self.right}"
-
-    def __eq__(self, other):
-        if isinstance(other, Number):
-            return super().__eq__(convert_primitive(other))
-        return super().__eq__(other)
-
-    def __hash__(self):
-        return super().__hash__()
 
     def __pow__(self, other):
         other = convert_primitive(other)
@@ -722,13 +684,32 @@ class Rational(Constant):
     def __float__(self) -> float:
         return self.eval()
 
-class Integer(Constant):
+class Integer(Rational):
     """Integers are boxed ints. The wrapper facilitates simplification and 
     algebraic routines that require type checking."""
 
-    def __init__(self, value: int):
-        """Creates a new Integer object"""
+    _cache = {}  # noqa: RUF012
+
+    def __new__(cls, value):
+        """Integers are cached."""
+        value = int(value)
+
+        cached = cls._cache.get(value)
+        if cached is not None:
+            return cached
+
+        self = object.__new__(cls)
         self.value = value
+        cls._cache[value] = self
+        return self
+
+    @property
+    def left(self):
+        return self.value
+
+    @property 
+    def right(self):
+        return 1
 
     def _get_str(self):
         """Returns the value of the integer"""
@@ -742,9 +723,9 @@ class Integer(Constant):
         if not isinstance(other, Expression):
             return NotImplemented
 
-        if not isinstance(other, Constant):
+        if not isinstance(other, Rational):
             return super().__pow__(other)
-        
+
         if mod is not None:
             mod = convert_primitive(mod)
             if not isinstance(other, Integer) or not isinstance(mod, Integer):
@@ -755,13 +736,15 @@ class Integer(Constant):
             return Integer(1)
 
         if other.is_negative():
+            if self.value == 0:
+                return UNDEFINED
             nexpt = -other
             if self.is_negative():
-                return (-1)**int(other) * Rational(1, -self.value) ** nexpt
+                return (-1) ** int(other) * Rational(1, -self.value) ** nexpt
             return Rational(1, self.value) ** nexpt
-        
+
         if isinstance(other, Integer):
-            return Integer(self.value ** int(other))
+            return Integer(self.value ** other.value)
 
         assert isinstance(other, Rational), f"{other} is not Rational exponent?"
         ep, eq = other.num(), other.denom()
@@ -779,7 +762,7 @@ class Integer(Constant):
         from ..operations import factor_integer, gcd
         factors = factor_integer(abs(self))
         out_int, out_rad = 1, 1
-        sqr_dict = dict()
+        sqr_dict = {}
 
         #Remove multiples of q
         for prime, exponent in factors.items():
@@ -809,9 +792,7 @@ class Integer(Constant):
             #No simplification could be performed
             return Power(self, other)
 
-        # Returns a direct Product instance -> no simplification needed.
-        # result = out_int * out_rad * (sqr_int ** Rational(sqr_gcd, eq))
-        result = Product(out_int * out_rad, sqr_int ** Rational(sqr_gcd, eq))
+        result = Integer(out_int * out_rad) * Integer(sqr_int) ** Rational(sqr_gcd, eq)
         if self.is_negative():
             result *= (-1) ** other
         return result
@@ -842,6 +823,9 @@ class Integer(Constant):
 
     def __index__(self):
         return self.value
+
+    def __float__(self):
+        return float(self.value)
     
     def __mod__(self, other):
         other = convert_primitive(other)
@@ -849,16 +833,25 @@ class Integer(Constant):
             return super().__mod__(other)
         return Integer(self.eval() % other.eval())
 
+    def __floordiv__(self, other):
+        other = convert_primitive(other)
+
+        if not isinstance(other, Integer):
+            return NotImplemented
+
+        return Integer(self.value // other.value)
+
+        
 #============== METHODS =================
 
-@cache
 def convert_primitive(num: Number | str) -> Constant:
     """Parse a native number into a LevyCAS Constant (in lowest terms).
     
     Takes advantage of the quick Fraction constructor from `fractions`.
     """
-    if num is UNDEFINED or isinstance(num, Expression): return num
-    if isinstance(num, int): return Integer(num)
+    if num is UNDEFINED or isinstance(num, Expression): 
+        return num
+
     try:
         as_frac = Fraction(num).limit_denominator()
         return Rational(as_frac.numerator, as_frac.denominator)

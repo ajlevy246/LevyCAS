@@ -1,6 +1,7 @@
 """Tests for the numerical operations module."""
 import pytest
 
+from levycas import Power, Integer, Rational
 from levycas.operations.numerical_ops import *
 
 def test_gcd():
@@ -109,4 +110,8 @@ def test_issues():
     assert (
         2 * Integer(4)**Rational(1, 2)
         == 4
+    )
+    assert (
+        Integer(4) ** Rational(1,3)
+        == Integer(2) ** Rational(2,3)
     )

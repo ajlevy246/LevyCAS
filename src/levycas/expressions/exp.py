@@ -1,16 +1,38 @@
+import math
+
+from .._utils import singleton
 from .expression import *
-from .trig import Trig
+
+
+@singleton
+class _E(Constant):
+    """Euler's number.
+    
+    Exposed as a singleton."""
+    def __init__(self):
+        pass
+ 
+    def _get_str(self):
+        return "e"
+
+    def eval(self):
+        return math.e
+
+    def __exp__(self, other) -> "Exp":
+        return Exp(other)
+
+E = _E()
+"""Euler's number - flyweight."""
 
 class Exp(Elementary):
     """Exp represents the exponential e^(...)"""
 
     def __new__(cls, *args):
-        """To facilitate automatic simplification of the exponential,
-        the __new__ method is overwritten.
+        """Perform automatic simplification of the Exponential function.
         
         Performs the simplification Exp(0) -> 1.
         """
-        assert len(args) == 1, f"Exp expects a single argument"
+        assert len(args) == 1, f"Exp expects a single argument, got {args}"
         arg = convert_primitive(args[0])
 
         if arg == 0:
@@ -25,17 +47,19 @@ class Ln(Elementary):
     """Ln represents the natural logarithm"""
     
     def __new__(cls, *args):
-        """To facilitate automatic simplification of logarithmic expressions,
-        the __new__ method is overwritten.
+        """Perform automatic simplification of the Logarithm function.
 
         Performs the simplification Ln(x^n * y^m) -> nLn(x) + mLn(y) and
         Ln(1) -> 0 and Ln(0) -> UNDEFINED
         """
-        assert len(args) == 1, f"Ln expects a single argument"
+        assert len(args) == 1, f"Ln expects a single argument, got {args}"
         arg = convert_primitive(args[0])
 
         if arg == 1:
             return Integer(0)
+
+        if arg is E:
+            return Integer(1)
 
         if isinstance(arg, Constant):
             coefficient = arg.coefficient()

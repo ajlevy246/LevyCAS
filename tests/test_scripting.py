@@ -137,7 +137,7 @@ class TestScriptingParsing:
         with pytest.raises(SyntaxError, match=r"Parameters must be symbols."):
             run_script("f(x, 1) = x + 3;", log)
         with pytest.raises(SyntaxError, match=r"Expected closing parenthesis"):
-            run_script(f"f(x, y = x + 3;", log)
+            run_script("f(x, y = x + 3;", log)
 
     def test_expression_errors(self):
         with pytest.raises(SyntaxError, match=r"Expected closing parenthesis"):
