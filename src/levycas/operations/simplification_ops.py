@@ -1,12 +1,14 @@
 """Methods acting on an expression's AST. 
 These operations perform simplification procedures, to transform binary ASTs into a normal form.
 """
-from typing import Callable, Optional
-from functools import cache
 import math
+from collections.abc import Callable
+from functools import cache
+from typing import Optional
 
 from ..expressions import *
-from ..operations import construct, get_symbols
+from ..operations import construct
+
 
 def simplify(expr: Expression) -> Expression:
     """Given an algebraic expression expr, performs simplification procedures as
@@ -46,7 +48,7 @@ def simplify(expr: Expression) -> Expression:
         return expr
 
 def simplify_power(expr: Power) -> Expression:
-    """Given a power v ^ w, returns a simplified expression or the 
+    """Given a power v ^ w (with simplified operands) returns a simplified expression or the 
     symbol UNDEFINED.
 
     Args:
@@ -71,7 +73,9 @@ def simplify_power(expr: Power) -> Expression:
         return Integer(1)
     
     if isinstance(w, Constant):
-        if isinstance(v, Constant):
+        if v is E:
+            return Exp(w)
+        if isinstance(v, Rational):
             return v ** w
         elif w == 0:
             return Integer(1)
@@ -93,7 +97,7 @@ def simplify_power(expr: Power) -> Expression:
     return expr
 
 def simplify_product(expr: Product) -> Expression:
-    """Given a product, returns an equivalent simplified expression or the 
+    """Given a product of simplified factors, returns an equivalent simplified expression or the 
     symbol UNDEFINED
 
     Args:
@@ -105,29 +109,98 @@ def simplify_product(expr: Product) -> Expression:
     if not isinstance(expr, Product):
         return expr
     
-    factors = expr.operands()
-    if 0 in factors:
-        return Integer(0)
+    coeff = Integer(1)
+    factors: list[Expression] = []
 
-    elif len(factors) == 1:
-        return factors[0]
+    # 1. Flatten and extract coefficients
+    queue = list(expr.operands())
+    while queue:
+        factor = convert_primitive(queue.pop())
+        if isinstance(factor, Product):
+            queue.extend(factor.operands())
+        elif isinstance(factor, Rational):
+            if factor == 0:
+                return Integer(0)
+            coeff *= factor
+        else:
+            factors.append(factor)
 
-    elif len(factors) == 2:
-        if isinstance(factors[0], Constant):
-            if isinstance(factors[1], Sum):
-                return sum([factors[0] * term for term in factors[1].operands()])
+    # 2. Sorting groups like-bases
+    factors = sorted(factors)
+    # 3. Merge factors with like-bases
+    merged_factors = []
+    if factors:
+        current_factor = factors[0]
 
-        elif isinstance(factors[1], Constant):
-            return simplify_product(Product(factors[1], factors[0]))
+        for i in range(1, len(factors)):
+            next_factor = factors[i]
 
-    flattened = flatten_factors(factors) 
-    num_flattened = len(flattened)
-    if num_flattened == 0:
-        return Integer(1)
-    elif num_flattened == 1:
-        return flattened[0]
-    else:
-        return Product(*flattened)
+            if current_factor.base() == next_factor.base():
+                new_exp = current_factor.exponent() + next_factor.exponent()
+                current_factor = simplify_power(Power(current_factor.base(), new_exp))
+            else:
+                if isinstance(current_factor, Rational):
+                    coeff *= current_factor
+                else:
+                    merged_factors.append(current_factor)
+                current_factor = next_factor
+
+        if isinstance(current_factor, Rational):
+            coeff *= current_factor
+        else:
+            merged_factors.append(current_factor)
+
+    if not merged_factors:
+        return coeff
+
+    if len(merged_factors) == 1:
+        factor = merged_factors[0]
+        if coeff == 1:
+            return factor
+        elif isinstance(factor, Rational):
+            return coeff*factor
+        elif isinstance(factor, Sum):
+            return sum(coeff*term for term in factor.operands())
+        return Product(coeff, factor)
+
+    return Product(coeff, *merged_factors) if coeff != 1 else Product(*merged_factors)
+        
+# def simplify_product(expr: Product) -> Expression:
+#     """Given a product with simplified operands, returns an equivalent simplified expression or the 
+#     symbol UNDEFINED
+
+#     Args:
+#         expr (Product): The product to simplify
+
+#     Returns:
+#         Expression: The simplified expression or UNDEFINED
+#     """
+#     if not isinstance(expr, Product):
+#         return expr
+    
+#     factors = expr.operands()
+#     if 0 in factors:
+#         return Integer(0)
+
+#     elif len(factors) == 1:
+#         return factors[0]
+
+#     elif len(factors) == 2:
+#         if isinstance(factors[0], Constant):
+#             if isinstance(factors[1], Sum):
+#                 return sum(factors[0] * term for term in factors[1].operands())
+
+#         elif isinstance(factors[1], Constant):
+#             return simplify_product(Product(factors[1], factors[0]))
+
+#     flattened = flatten_factors(factors) 
+#     num_flattened = len(flattened)
+#     if num_flattened == 0:
+#         return Integer(1)
+#     elif num_flattened == 1:
+#         return flattened[0]
+#     else:
+#         return Product(*flattened)
 
 def simplify_sum(expr: Sum) -> Expression:
     """Given a sum, returns an equivalent simplified expression or the
@@ -169,7 +242,7 @@ def simplify_div(expr: Div) -> Expression:
     """
     numerator = expr.num()
     denominator = expr.denom()
-    if isinstance(numerator, Constant) and isinstance(denominator, Constant):
+    if isinstance(numerator, Rational) and isinstance(denominator, Rational):
         return numerator / denominator
     else:
         power = denominator ** Integer(-1)
@@ -215,13 +288,16 @@ def flatten_factors(factors: list[Expression]) -> list[Expression]:
             if u_2_prod:
                 return merge_factors([u_1], u_2.operands())
 
-        if isinstance(u_1, Constant) and isinstance(u_2, Constant):
+        if isinstance(u_1, Rational) and isinstance(u_2, Rational):
             coefficient = u_1 * u_2
             if coefficient == 1:
                 return []
             else:
                 return [coefficient]
-            
+
+        elif isinstance(u_1, Constant) and isinstance(u_2, Constant):
+            return [u_1, u_2] if u_1 < u_2 else [u_2, u_1]
+        
         elif u_1 == 1:
             return [u_2]
         
@@ -427,8 +503,7 @@ def sym_eval(expr: Expression, approximate: bool=False, **symbols: dict[Expressi
         we special case here.
         """
         base, exp = evaluated_operands[0], evaluated_operands[1]
-        if approximate:
-            if isinstance(base, Constant) and isinstance(exp, Constant):
+        if approximate and isinstance(base, Constant) and isinstance(exp, Constant):
                 return convert_primitive(float(base) ** float(exp))
         return simplify(base ** exp)
     
